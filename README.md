@@ -8,3 +8,5 @@ The catalogs are deposited to Zenodo at [doi:10.5281/zenodo.8401181](http://dx.d
 Note that lensing magnification is treated consistently during SED-fitting; see [Eq. 1-2](https://arxiv.org/pdf/2310.01276). For general usage that does not require the lensing magnification term in the likelihood, simply remove the `lnprobfn` function in `uncover_*_params.py`, and use the default `lnprobfn` function from Prospector.
 
 If, however, lensing magnification is relevant, then the convergence and shear maps are required as inputs for the script `mu_from_maps.py`, which can be obstained from the UNCOVER DR webpage.
+
+`submit.py` contains the scripts used for submitting cluster jobs using slurm; also it outlines the sequence for calling the related scripts in this repository for creating a Prospector catalog.

@@ -25,8 +25,6 @@ parser.add_argument('--free_gas_logu', type=int, default=0, help='0: False; 1: T
 args = parser.parse_args()
 print(args)
 
-import postprocess_parrot
-
 import postprocess_parrot as pp
 
 n_split_arr = args.narr
@@ -90,7 +88,6 @@ sps = build_sps_fsps(**run_params)
 
 for mid in groups[i_split_arr]:
     if mid not in flist_finished:
-        print(mid)
         pp.run_all(objid=mid, fit=args.fit, prior=args.prior,
                    mod_fsps=mod_fsps, mod_for_prior=mod_for_prior, sps=sps,
                    input_folder=args.indir, output_folder=args.outdir, catalog_file=catalog_file)
