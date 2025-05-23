@@ -118,7 +118,7 @@ if __name__ == '__main__':
     sps = 'parrot'
     if 'zspec' in catalog:
         indir = 'chains_parrot_zspec_{}_{}'.format(ver, spsver)
-        prior = 'phisfhzfixed'
+        prior = 'phisfhzspec'
     else:
         indir = 'chains_parrot_{}_{}'.format(ver, spsver)
         prior = 'phisfh'
@@ -152,13 +152,19 @@ if __name__ == '__main__':
 
     ########################## step 3. parse individual results into summary files ##########################
 
+    # saves transformed chains (i.e., those published in the data release)
     _cmd = 'save_chain.py --catalog UNCOVER_{}_CATALOG.fits --indir post_parrot_{}_{}'.format(ver, ver, spsver)
     print(_cmd)
-    run_params(_cmd, jobname='chain_01', log_dir='log', acc='sc', i=0, wtime=10)
+    run_params(_cmd, jobname='chain', log_dir='log', acc='sc', i=0, wtime=10)
+
+    # saves zred, total_mass, logsfr_ratios
+    _cmd = 'save_chain_untrans.py --catalog UNCOVER_{}_CATALOG.fits --indir post_parrot_{}_{} --prior {}'.format(ver, ver, spsver, prior)
+    print(_cmd)
+    run_params(_cmd, jobname='chainu', log_dir='log', acc='sc', i=0, wtime=10)
     
     _cmd = 'save_sfh.py --catalog UNCOVER_{}_CATALOG.fits --indir post_parrot_{}_{}'.format(ver, ver, spsver)
     print(_cmd)
-    run_params(_cmd, jobname='sfh_01', log_dir='log', acc='sc', i=0, wtime=10)
+    run_params(_cmd, jobname='sfh', log_dir='log', acc='sc', i=0, wtime=10)
     
     _cmd = 'save_spec.py --catalog UNCOVER_{}_CATALOG.fits --chain_indir chains_parrot_{}_{} --perc_indir chains_parrot_{}_{} --outdir results'.format(ver, ver, spsver, ver, spsver)
     print(_cmd)
