@@ -11,6 +11,7 @@ from prospect.models import priors_beta as PZ
 import utils as ut_cwd
 ddir = ut_cwd.data_dir('cwd')
 
+'''TODO: update defaults for MINERVA '''
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--prior', type=str, default='phisfh', help='phisfh')

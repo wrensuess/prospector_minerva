@@ -15,7 +15,6 @@ from sedpy import observate
 
 import utils as ut_cwd
 import utils_unit as ut_u
-import mu_from_maps as lens_mu
 
 percents = [0.1,2.3,15.9,50,84.1,97.7,99.9]
 nsamp = 1000
@@ -333,6 +332,7 @@ def run_all(h5_fname=None,
     for i, _subidx in enumerate(sub_idx):
         modspec, modmags, sm = mod_fsps.predict(res['chain'][int(_subidx)], sps=sps, obs=obs)
 
+        ''' TODO: remove magnification! '''
         # magnification
         _mu = lens_mu.scale_mu(zred=res['chain'][int(_subidx)][res['theta_index']['zred']],
                                px=obs['x_lensmap'], py=obs['y_lensmap'], verbose=False)
@@ -406,7 +406,8 @@ def run_all(h5_fname=None,
     percentiles['rest_NUVrJ_map'] = nuv_abmag_map
     percentiles['rest_NUVrJ_colors'] = np.percentile(nuv_color, percents, axis=0).T
     percentiles['rest_NUVrJ_colors_map'] = nuv_color_map
-        
+    
+    ''' TODO: remove magnification! '''    
     # mu
     _mu = []
     for _z in percentiles['zred']:

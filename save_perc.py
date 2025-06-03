@@ -1,6 +1,9 @@
 '''creates *_perc_*.npz
 ALL prospector model paramters are saved
 '''
+
+''' TODO: remove mu / magnification '''
+
 import os, sys, time
 import numpy as np
 from astropy.table import Table

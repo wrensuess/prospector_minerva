@@ -4,6 +4,9 @@ from astropy.table import Table
 
 def data_dir():
 
+    ''' 
+    TODO: update for our data storage directories
+    '''
     dat_dirs = ['/storage/home/bbw5389/group/',
                 '/Users/bwang/research/']
 
@@ -16,6 +19,9 @@ def run_params(pycmd, log_dir='log', acc='bc', i=0, jobname='p', wtime=48, env='
     
     ts = time.strftime("%y%b%d-%H.%M", time.localtime())
 
+    ''' 
+    TODO: update slurm file for our supercomputer, whatever we end up using
+    '''
     if acc == 'bc':
         txt_acc = '\n'.join(["#!/bin/bash -l",
                              "#SBATCH --account=jql6565_bc\n"])
@@ -60,16 +66,18 @@ def run_params(pycmd, log_dir='log', acc='bc', i=0, jobname='p', wtime=48, env='
 
 if __name__ == '__main__':
     
-    ver = 'v5.0.1_LW_SUPER'
+    field = 'UDS'
+    ver = 'v0.0_LW_Kf444w_SUPER'
     spsver = 'spsv0.0'
 
     ################################## step 1. sed fit ####################################
 
-    catalog = 'UNCOVER_{}_CATALOG.fits'.format(ver)
+    catalog = 'MINERVA-{}_{}_CATALOG.fits'.format(field, ver)
 
     cat = Table.read('../phot_catalog/' + catalog)
     tot = np.arange(len(cat))
 
+    ''' TODO: what is nfiles_phot? how do we fit sub-portion of the phot catalog? '''
     tot = []
     for _id in cat['id'].data:
         if _id not in nfiles_phot:
@@ -79,6 +87,7 @@ if __name__ == '__main__':
     tot = tot - 1 # id to idx # this only works if using the full phot catalog
     ncores = len(tot)
 
+    ''' TODO: update number of cores, etc, for our supercomputer'''
     acc = 'bc'
     ncores = 840 # number of cores to request
     wtime = int(24*7) # time
@@ -113,7 +122,7 @@ if __name__ == '__main__':
     ################################ step 2. post-prsocessing ################################
 
     wtime = 48
-    catalog = 'UNCOVER_{}_CATALOG.fits'.format(ver)
+    catalog = 'MINERVA-{}_{}_CATALOG.fits'.format(field, ver)
 
     sps = 'parrot'
     if 'zspec' in catalog:

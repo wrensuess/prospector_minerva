@@ -9,6 +9,7 @@ import prospect
 from prospect.fitting import fit_model
 from prospect.sources import FastStepBasis
 from prospect.models.sedmodel import PolySpecModel
+from prospect.likelihood import lnprobfn
 
 import dynesty
 
@@ -20,6 +21,7 @@ import emulator as Emu
 pdir = ut_cwd.data_dir(data='pirate')
 multiemul_file = os.path.join(pdir, "parrot_v4_obsphot_512n_5l_24s_00z24.npy")
 
+'''TODO: update parser for good MINERVA defaults; make sure we match general phisfh_params '''
 # - Parser with default arguments -
 parser = prospect.prospect_args.get_parser()
 parser.add_argument('--catalog', type=str, default="zspec_UNCOVER_v5.0.1_LW_SUPER_CATALOG.fits")
@@ -97,7 +99,7 @@ if 'f_alma' in cat.colnames:
     alma = True
 else:
     alma = False
-if 'f_f480m' in cat.colnames:
+if 'f_f460m' in cat.colnames:
     mb = True
 else:
     mb = False
@@ -159,94 +161,6 @@ def load_sps(**extras):
     return None
 
 
-# ---------------- lensing
-from copy import deepcopy
-from prospect.likelihood import lnlike_spec, lnlike_phot, chi_spec, chi_phot, write_log
-
-def lnprobfn(theta, model=None, obs=None, sps=None, noise=(None, None),
-             residuals=False, nested=False, negative=False, verbose=False):
-
-    _obs = deepcopy(obs)
-    mu = lens_mu.scale_mu(zred=theta[0], px=obs['x_lensmap'], py=obs['y_lensmap'], verbose=verbose)
-
-    if residuals:
-        lnnull = np.zeros(_obs["ndof"]) - 1e18  # np.infty
-        #lnnull = -np.infty
-    else:
-        lnnull = -np.infty
-
-    # --- Calculate prior probability and exit if not within prior ---
-    lnp_prior = model.prior_product(theta, nested=nested)
-    if not np.isfinite(lnp_prior):
-        return lnnull
-
-    #  --- Update Noise Model ---
-    spec_noise, phot_noise = noise
-    vectors, sigma_spec = {}, None
-    model.set_parameters(theta)
-    if spec_noise is not None:
-        spec_noise.update(**model.params)
-        vectors.update({"unc": _obs.get('unc', None)})
-        sigma_spec = spec_noise.construct_covariance(**vectors)
-    if phot_noise is not None:
-        phot_noise.update(**model.params)
-        vectors.update({'phot_unc': _obs.get('maggies_unc', None),
-                        'phot': _obs.get('maggies', None)})
-
-    # --- Generate mean model ---
-    try:
-        t1 = time.time()
-        spec, phot, x = model.predict(theta, _obs, sps=sps, sigma_spec=sigma_spec)
-        spec *= mu
-        phot *= mu
-        d1 = time.time() - t1
-    except(ValueError):
-        return lnnull
-    except:
-        print("There was an error during the likelihood call at parameters {}".format(theta))
-        raise
-
-    # --- Optionally return chi vectors for least-squares ---
-    # note this does not include priors!
-    if residuals:
-        chispec = chi_spec(spec, _obs)
-        chiphot = chi_phot(phot, _obs)
-        return np.concatenate([chispec, chiphot])
-
-    #  --- Mixture Model ---
-    f_outlier_spec = model.params.get('f_outlier_spec', 0.0)
-    if (f_outlier_spec != 0.0):
-        sigma_outlier_spec = model.params.get('nsigma_outlier_spec', 10)
-        vectors.update({'nsigma_outlier_spec': sigma_outlier_spec})
-    f_outlier_phot = model.params.get('f_outlier_phot', 0.0)
-    if (f_outlier_phot != 0.0):
-        sigma_outlier_phot = model.params.get('nsigma_outlier_phot', 10)
-        vectors.update({'nsigma_outlier_phot': sigma_outlier_phot})
-
-    # --- Emission Lines ---
-
-    # --- Calculate likelihoods ---
-    t1 = time.time()
-    lnp_spec = lnlike_spec(spec, obs=_obs,
-                           f_outlier_spec=f_outlier_spec,
-                           spec_noise=spec_noise,
-                           **vectors)
-    lnp_phot = lnlike_phot(phot, obs=_obs,
-                           f_outlier_phot=f_outlier_phot,
-                           phot_noise=phot_noise, **vectors)
-    lnp_eline = getattr(model, '_ln_eline_penalty', 0.0)
-
-    d2 = time.time() - t1
-    if verbose:
-        write_log(theta, lnp_prior, lnp_spec, lnp_phot, d1, d2)
-
-    lnp = lnp_prior + lnp_phot + lnp_spec + lnp_eline
-    if negative:
-        lnp *= -1
-
-    return lnp
-
-
 # ---------------- fit !
 badobs_ids_list = []
 for ifit in np.arange(args.idx0, args.idx1, 1):
@@ -271,7 +185,6 @@ for ifit in np.arange(args.idx0, args.idx1, 1):
         obs['ra'] = cat[ifit]['ra']; obs['dec'] = cat[ifit]['dec']
         ra = obs['ra']*u.deg
         dec = obs['dec']*u.deg
-        obs['x_lensmap'], obs['y_lensmap'] = lens_mu.xy_in_kappa_and_gamma(ra, dec)
         
         obs['zspec'] = cat[ifit]['z_spec']
 
@@ -284,11 +197,7 @@ for ifit in np.arange(args.idx0, args.idx1, 1):
         ts = time.strftime("%y%b%d-%H.%M", time.localtime())
         hfile = os.path.join(run_params['outdir'], "id_{0}_mcmc_phisfhzfixed.h5".format(objid))
 
-        if obs['x_lensmap'] < 0 or obs['y_lensmap'] < 0:
-            # outside lens model FoV
-            output = fit_model(obs, model, sps, **run_params)
-        else:
-            output = fit_model(obs, model, sps, lnprobfn=lnprobfn, **run_params)
+        output = fit_model(obs, model, sps, **run_params)
         print('done in {0}s'.format(output["sampling"][1]))
 
         prospect.io.write_results.write_hdf5(hfile, run_params, model, obs,

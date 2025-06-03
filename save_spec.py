@@ -1,5 +1,8 @@
 '''creates *_spec_*.npz
 '''
+
+''' TODO: remove mu / magnification '''
+
 import os, sys, time
 import numpy as np
 import numpy.ma as ma

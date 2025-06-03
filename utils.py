@@ -8,6 +8,8 @@ import astropy.units as u
 from astropy.table import Table
 from astropy.cosmology import WMAP9 as cosmo
 
+''' TODO: update paths!'''
+
 def rt_dir():
 
     dat_dirs = ['/storage/home/bbw5389/group/',
@@ -71,6 +73,8 @@ def finished_id(indir=None, prior='phisfh', dtype='phot', rt_fname=False, verbos
         return _idxs
 
 # ----------------- catalog specific
+
+''' TODO: update mapping from catalog names to sedpy filter curve names'''
 
 def filter_dictionary(mb=True, alma=True):
     '''alma bands includes upper limits, which requires special treatment;
