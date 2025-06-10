@@ -2,8 +2,6 @@
 ALL prospector model paramters are saved
 '''
 
-''' TODO: remove mu / magnification '''
-
 import os, sys, time
 import numpy as np
 from astropy.table import Table
@@ -63,8 +61,6 @@ ssfr10 = []
 ssfr30 = []
 ssfr100 = []
 
-mu = []
-
 rest_UVJugi = []
 rest_UVJugi_map = []
 rest_UVJugi_colors = []
@@ -121,8 +117,6 @@ for this_file in all_files:
         duste_umin.append(perc['duste_umin'])
         log_duste_gamma.append(perc['log_duste_gamma'])
 
-        mu.append(perc['mu'])
-
         rest_UVJugi.append(perc['rest_UVJugi'])
         rest_UVJugi_map.append(perc['rest_UVJugi_map'])
         rest_UVJugi_colors.append(perc['rest_UVJugi_colors'])
@@ -159,7 +153,6 @@ np.savez(sname, objid=objid_list,
          mwa=mwa,
          sfr10=sfr10, sfr30=sfr30, sfr100=sfr100,
          ssfr10=ssfr10, ssfr30=ssfr30, ssfr100=ssfr100,
-         mu=mu,
          rest_UVJugi=rest_UVJugi, rest_UVJugi_map=rest_UVJugi_map, rest_UVJugi_colors=rest_UVJugi_colors, rest_UVJugi_colors_map=rest_UVJugi_colors_map,
          rest_gz=rest_gz, rest_gz_map=rest_gz_map, rest_gz_colors=rest_gz_colors, rest_gz_colors_map=rest_gz_colors_map,
          rest_NUVrJ=rest_NUVrJ, rest_NUVrJ_map=rest_NUVrJ_map, rest_NUVrJ_colors=rest_NUVrJ_colors, rest_NUVrJ_colors_map=rest_NUVrJ_colors_map,

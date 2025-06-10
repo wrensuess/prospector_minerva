@@ -16,7 +16,6 @@ from prospect.models import priors_beta as PZ
 import dynesty
 
 import utils as ut_cwd
-import mu_from_maps as lens_mu
 
 import emulator as Emu
 

@@ -1,8 +1,6 @@
 '''creates *_spec_*.npz
 '''
 
-''' TODO: remove mu / magnification '''
-
 import os, sys, time
 import numpy as np
 import numpy.ma as ma
@@ -52,8 +50,6 @@ list_chi2_fsps = []
 
 list_spec_map = []
 list_modmag_map = []
-list_mu_map = []
-list_mu_med = []
 
 list_obsmag = []
 list_obsmag_unc = []
@@ -88,8 +84,6 @@ for this_file in all_files:
         dat = np.load(os.path.join(perc_dir, this_file), allow_pickle=True)
         list_spec_map.append(dat['modspec_map'])
         list_modmag_map.append(dat['modmags_map'])
-        list_mu_map.append(dat['mu_map'])
-        list_mu_med.append(dat['mu_med'])
 
         _idx = np.where(cat['id']==mid)[0][0]
 
@@ -111,7 +105,7 @@ for this_file in all_files:
         obsmags = obs_fnu[mask]
         obsunc = obs_enu[mask]
         list_nbands.append(len(obsmags))
-        fsps_mags = dat['modmags_map'][mask]*dat['mu_map']
+        fsps_mags = dat['modmags_map'][mask]
         
         chi2_fsps = chi2(fsps_mags, obsmags, obsunc)
         list_chi2_fsps.append(chi2_fsps)
@@ -123,7 +117,7 @@ for this_file in all_files:
             print(cnt)
         
 np.savez(sname, objid=objid_list, obsmag=list_obsmag, obsmag_unc=list_obsmag_unc,
-         modspec_map=list_spec_map, modmag_map=list_modmag_map, mu_map=list_mu_map,
+         modspec_map=list_spec_map, modmag_map=list_modmag_map, 
          chi2_fsps=list_chi2_fsps,
          nbands=list_nbands,
         )

@@ -299,7 +299,6 @@ def run_all(h5_fname=None,
     nuv_abmag = []
     nuv_color = []
 
-    mu_all = []
     modmags_all = []
     modspecs_all = []
     
@@ -332,13 +331,8 @@ def run_all(h5_fname=None,
     for i, _subidx in enumerate(sub_idx):
         modspec, modmags, sm = mod_fsps.predict(res['chain'][int(_subidx)], sps=sps, obs=obs)
 
-        ''' TODO: remove magnification! '''
-        # magnification
-        _mu = lens_mu.scale_mu(zred=res['chain'][int(_subidx)][res['theta_index']['zred']],
-                               px=obs['x_lensmap'], py=obs['y_lensmap'], verbose=False)
-        mu_all.append(_mu)
-        modmags_all.append(modmags*_mu)
-        modspecs_all.append(modspec*_mu)
+        modmags_all.append(modmags)
+        modspecs_all.append(modspec)
 
         _mass = res['chain'][int(_subidx)][res['theta_index']['total_mass']]
         stellarmass.append(np.log10(10**_mass*sm))
@@ -385,7 +379,6 @@ def run_all(h5_fname=None,
     nuv_color = np.array(nuv_color)
     nuv_color_map = np.array(nuv_color_map)
 
-    mu_all = np.array(mu_all)
     modmags_all = np.array(modmags_all)
     modspecs_all = np.array(modspecs_all)
 
@@ -406,13 +399,6 @@ def run_all(h5_fname=None,
     percentiles['rest_NUVrJ_map'] = nuv_abmag_map
     percentiles['rest_NUVrJ_colors'] = np.percentile(nuv_color, percents, axis=0).T
     percentiles['rest_NUVrJ_colors_map'] = nuv_color_map
-    
-    ''' TODO: remove magnification! '''    
-    # mu
-    _mu = []
-    for _z in percentiles['zred']:
-        _mu.append(lens_mu.scale_mu(zred=_z, px=obs['x_lensmap'], py=obs['y_lensmap'], verbose=False))
-    percentiles['mu'] = np.array(_mu)
 
     perc_fname = _h5_fname.replace('mcmc', 'perc')
     perc_fname = perc_fname.replace('.h5', '.npz')
@@ -427,14 +413,12 @@ def run_all(h5_fname=None,
     sname = os.path.join(_out_dir, unw_fname)
     np.savez(sname, chains=chains, chain_ml=chain_ml, sub_idx=sub_idx)
     print('saved chains to', sname)
-
-    mu_map = lens_mu.scale_mu(zred=chain_ml[res['theta_index']['zred']], px=obs['x_lensmap'], py=obs['y_lensmap'], verbose=False)
     
     spec_fname = _h5_fname.replace('mcmc', 'spec')
     spec_fname = spec_fname.replace('.h5', '.npz')
     sname = os.path.join(_out_dir, spec_fname)
     np.savez(sname,
-             modspec_map=modspec_map, modmags_map=modmags_map, mu_map=mu_map,
+             modspec_map=modspec_map, modmags_map=modmags_map,
              modmags_perc=np.percentile(modmags_all, percents, axis=0).T,
              modspecs_perc=np.percentile(modspecs_all, percents, axis=0).T
             )
