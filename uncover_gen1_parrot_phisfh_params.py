@@ -6,10 +6,9 @@ from astropy import units as u
 
 import sedpy
 import prospect
-from prospect.fitting import fit_model
+from prospect.fitting import fit_model, lnprobfn
 from prospect.sources import FastStepBasis
 from prospect.models.sedmodel import PolySpecModel
-from prospect.likelihood import lnprobfn
 
 import dynesty
 

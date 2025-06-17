@@ -19,25 +19,29 @@ def rt_dir():
         if os.path.isdir(_dir): return _dir
 
 def data_dir(data='cwd'):
+    
+    ''' this will need updating! right now i'm just ignoring her unknown file structure and 
+    sticking everything in the same directory... '''
 
     rt_roar = '/storage/home/bbw5389/group/'
-    rt_mac = '/Users/bwang/research/'
+    rt_mac = '/Users/wren/Projects/MINERVA/test_prospector/'
 
     if data == 'cwd':
         dat_dirs = [rt_roar + 'uncover_sps_gen1/stellar_pop_catalog_mb/',
-                    rt_mac + 'uncover_sps_gen1/stellar_pop_catalog_mb/'
+                    rt_mac #+ 'uncover_sps_gen1/stellar_pop_catalog_mb/'
                    ]
     elif data == 'pbeta':
         dat_dirs = [rt_roar + 'uncover_sps_gen1/prospector_beta/',
-                    rt_mac + 'uncover_sps_gen1/prospector_beta/'
+                    rt_mac #+ 'uncover_sps_gen1/prospector_beta/'
                    ]
     elif data == 'gen1':
         dat_dirs = [rt_roar + 'uncover_sps_gen1/',
-                    rt_mac + 'uncover_sps_gen1/'
+                    rt_mac #+ 'uncover_sps_gen1/'
                    ]
     elif data == 'pirate':
         dat_dirs = [rt_roar + 'sed/pirate/pirate/data/nn/',
-                    rt_mac + 'software/MathewsEtAl2023/data/']
+                    rt_mac #+ 'software/MathewsEtAl2023/data/'
+                ]
     else:
         return None
 

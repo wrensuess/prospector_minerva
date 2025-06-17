@@ -5,28 +5,29 @@ import numpy as np
 import jax
 
 from prospect.models import ProspectorParams
+from utils import rt_dir, data_dir
 
-def rt_dir():
-
-    dat_dirs = ['/storage/home/bbw5389/group/',
-                '/Users/bwang/research/']
-
-    for _dir in dat_dirs:
-        if os.path.isdir(_dir): return _dir
-
-def data_dir(data='pirate'):
-
-    rt_roar = '/storage/home/bbw5389/group/'
-    rt_mac = '/Users/bwang/research/'
-
-    if data == 'pirate':
-        dat_dirs = [rt_roar + 'sed/pirate/pirate/data/nn/',
-                    rt_mac + 'software/MathewsEtAl2023/data/']
-    else:
-        return None
-
-    for _dir in dat_dirs:
-        if os.path.isdir(_dir): return _dir
+# def rt_dir():
+#
+#     dat_dirs = ['/storage/home/bbw5389/group/',
+#                 '/Users/bwang/research/']
+#
+#     for _dir in dat_dirs:
+#         if os.path.isdir(_dir): return _dir
+#
+# def data_dir(data='pirate'):
+#
+#     rt_roar = '/storage/home/bbw5389/group/'
+#     rt_mac = '/Users/bwang/research/'
+#
+#     if data == 'pirate':
+#         dat_dirs = [rt_roar + 'sed/pirate/pirate/data/nn/',
+#                     rt_mac + 'software/MathewsEtAl2023/data/']
+#     else:
+#         return None
+#
+#     for _dir in dat_dirs:
+#         if os.path.isdir(_dir): return _dir
 
 multiemul_file = os.path.join(data_dir(data='pirate'), "parrot_v4_obsphot_512n_5l_24s_00z24.npy")
 
