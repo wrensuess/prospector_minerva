@@ -15,10 +15,7 @@ print(args)
 
 which_prior = args.prior
 
-foo = args.indir[:]
-if foo.endswith('/'):
-    foo = foo[:-1]
-sname = os.path.join(args.outdir, 'sfh_{}_{}'.format(args.prior, foo)+'.npz')
+sname = os.path.join(args.indir, 'sfh_{}'.format(args.prior)+'.npz')
 print('sfhs will be saved to', sname)
 
 objid_list = []

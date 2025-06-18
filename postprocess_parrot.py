@@ -279,7 +279,8 @@ def run_all(h5_fname=None,
     ssfr = []
 
     # also get uvj colors
-    uvj_names = ['bessell_U', 'bessell_V', 'twomass_J', 'synthetic_u', 'synthetic_g', 'synthetic_i']
+    ''' TODO: commented some filters out for now, they dont appear to be in sedpy... get these from bingjie!'''
+    uvj_names = ['bessell_U', 'bessell_V', 'twomass_J']#, 'synthetic_u', 'synthetic_g', 'synthetic_i']
     filts_uvj_sedpy = observate.load_filters(uvj_names)
     weff_uvj = np.array([f.wave_effective for f in filts_uvj_sedpy])
 
@@ -315,7 +316,7 @@ def run_all(h5_fname=None,
     _uvj_abmag = observate.getSED(sps.wavelengths, modspec_flam, filterlist=filts_uvj_sedpy, linear_flux=False)
     uvj_abmag_map = _uvj_abmag
     uvj_color_map = [_uvj_abmag[0]-_uvj_abmag[1], _uvj_abmag[1]-_uvj_abmag[2],
-                     _uvj_abmag[4]-_uvj_abmag[5], _uvj_abmag[3]-_uvj_abmag[4]]
+                     ]#_uvj_abmag[4]-_uvj_abmag[5], _uvj_abmag[3]-_uvj_abmag[4]]
 
     # g-z
     _gz_abmag = observate.getSED(sps.wavelengths, modspec_flam, filterlist=filts_gz_sedpy, linear_flux=False)
@@ -349,7 +350,7 @@ def run_all(h5_fname=None,
         # U-V, V-J, g-i, u-g
         # UVJugi
         uvj_color.append([_uvj_abmag[0]-_uvj_abmag[1], _uvj_abmag[1]-_uvj_abmag[2],
-                          _uvj_abmag[4]-_uvj_abmag[5], _uvj_abmag[3]-_uvj_abmag[4]])
+                          ])#_uvj_abmag[4]-_uvj_abmag[5], _uvj_abmag[3]-_uvj_abmag[4]])
 
         # g-z
         _gz_abmag = observate.getSED(sps.wavelengths, modspec_flam, filterlist=filts_gz_sedpy, linear_flux=False)
@@ -423,4 +424,4 @@ def run_all(h5_fname=None,
              modspecs_perc=np.percentile(modspecs_all, percents, axis=0).T
             )
              # modmags_all & modspecs_all is magnified!
-    print('saved model spec to', sname)
+    print('saved model spec to', sname+'\n')

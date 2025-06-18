@@ -16,8 +16,8 @@ import utils as ut_cwd
 
 import emulator as Emu
 
-pdir = ut_cwd.data_dir(data='pirate')
-multiemul_file = os.path.join(pdir, "parrot_v4_obsphot_512n_5l_24s_00z24.npy")
+pdir = ut_cwd.piratedir
+multiemul_file = os.path.join(ut_cwd.get_dir(dirtype='pirate', outdir=pdir), "parrot_v4_obsphot_512n_5l_24s_00z24.npy")
 
 # - Parser with default arguments -
 '''TODO: update parser for good MINERVA defaults '''
@@ -90,7 +90,7 @@ if not os.path.exists(run_params['outdir']):
     print("new directory created:", run_params['outdir'])
 print(run_params)
 
-mdir = ut_cwd.data_dir('gen1') + 'phot_catalog/'
+mdir = ut_cwd.photdir
 cat = Table.read(mdir+catalog_file)
 
 if 'f_alma' in cat.colnames:
@@ -207,5 +207,5 @@ for ifit in np.arange(args.idx0, args.idx1, 1):
         except(AttributeError):
             pass
 
-        print('Finished. Saved to {}'.format(hfile))
+        print('Finished. Saved to {}'.format(hfile)+'\n')
         

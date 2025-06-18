@@ -10,37 +10,26 @@ from astropy.cosmology import WMAP9 as cosmo
 
 ''' TODO: update paths!'''
 
-def rt_dir():
+piratedir='../test_prospector/'
+photdir='../test_prospector/phot_catalog/'
 
-    dat_dirs = ['/storage/home/bbw5389/group/',
-                '/Users/bwang/research/']
-
-    for _dir in dat_dirs:
-        if os.path.isdir(_dir): return _dir
-
-def data_dir(data='cwd'):
+def get_dir(dirtype='cwd', outdir=None):
     
-    ''' this will need updating! right now i'm just ignoring her unknown file structure and 
-    sticking everything in the same directory... '''
+    ''' this needs some updating. '''
 
-    rt_roar = '/storage/home/bbw5389/group/'
-    rt_mac = '/Users/wren/Projects/MINERVA/test_prospector/'
+    if outdir == None:
+        print('NO outdirectory given! using default ("../results")')
+        outdir = '../results/'    
 
-    if data == 'cwd':
-        dat_dirs = [rt_roar + 'uncover_sps_gen1/stellar_pop_catalog_mb/',
-                    rt_mac #+ 'uncover_sps_gen1/stellar_pop_catalog_mb/'
+    if dirtype == 'phot':
+        dat_dirs = [outdir + 'phot_catalog/'
+                   ] # in principle we can have multiple filepaths here and it'll look through all of them
+    elif dirtype == 'out':
+        dat_dirs = [outdir + 'merged/'
                    ]
-    elif data == 'pbeta':
-        dat_dirs = [rt_roar + 'uncover_sps_gen1/prospector_beta/',
-                    rt_mac #+ 'uncover_sps_gen1/prospector_beta/'
-                   ]
-    elif data == 'gen1':
-        dat_dirs = [rt_roar + 'uncover_sps_gen1/',
-                    rt_mac #+ 'uncover_sps_gen1/'
-                   ]
-    elif data == 'pirate':
-        dat_dirs = [rt_roar + 'sed/pirate/pirate/data/nn/',
-                    rt_mac #+ 'software/MathewsEtAl2023/data/'
+    # this is where the emulator lives. should be "parrot_v4_obsphot_512n_5l_24s_00z24.npy"               
+    elif dirtype == 'pirate':
+        dat_dirs = [outdir + 'emulator_files/'
                 ]
     else:
         return None

@@ -9,7 +9,6 @@ from prospect.models.sedmodel import PolySpecModel
 from prospect.models import priors_beta as PZ
 
 import utils as ut_cwd
-ddir = ut_cwd.data_dir('cwd')
 
 '''TODO: update defaults for MINERVA '''
 import argparse
@@ -17,12 +16,13 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--prior', type=str, default='phisfh', help='phisfh')
 parser.add_argument('--fit', type=str, default='fid')
 parser.add_argument('--catalog', type=str, default="UNCOVER_v5.0.1_LW_SUPER_CATALOG.fits")
-parser.add_argument('--indir', type=str, default='chains', help='input folder storing chains')
-parser.add_argument('--outdir', type=str, default='chains', help='output folder storing unweighted chains and quantiles')
+parser.add_argument('--indir', type=str, default='chains', help='input subfolder storing chains')
+parser.add_argument('--outdir', type=str, default='chains', help='output subfolder storing unweighted chains and quantiles')
 parser.add_argument('--narr', type=int, default=70, help='divide the total number into xxx cores')
 parser.add_argument('--iarr', type=int, default=0, help='run on the ith sub-array')
 parser.add_argument('--ids_file', type=str, default='None', help='None: get ids from indir; else: read in from the file')
 parser.add_argument('--free_gas_logu', type=int, default=0, help='0: False; 1: True')
+parser.add_argument('--ddir', type=str, default='../test/', help='main working folder')
 args = parser.parse_args()
 print(args)
 
@@ -36,7 +36,8 @@ run_params = {
 'free_gas_logu':bool(args.free_gas_logu),
 'verbose':True,
 'debug': False,
-'outdir': ddir+args.outdir,
+'outdir': args.outdir,
+'ddir': args.ddir,
 'nofork': True,
 # dynesty params
 'dynesty': True,
@@ -73,10 +74,10 @@ def build_sps_fsps(zcontinuous=2, compute_vega_mags=False, interp_type='logarith
     sps = FastStepBasis(zcontinuous=zcontinuous, compute_vega_mags=compute_vega_mags)
     return sps
 
-_fdir = os.path.join(ddir, args.outdir)
+_fdir = os.path.join(args.ddir, args.outdir)
 flist_finished = ut_cwd.finished_id(indir=_fdir, prior=args.prior, dtype='_spec')
 
-_indir = os.path.join(ddir, args.indir)
+_indir = os.path.join(args.ddir, args.indir)
 if args.ids_file == 'None':
     flist = ut_cwd.finished_id(indir=_indir, prior=args.prior, dtype='_mcmc')
 else:
@@ -89,6 +90,7 @@ sps = build_sps_fsps(**run_params)
 
 for mid in groups[i_split_arr]:
     if mid not in flist_finished:
+        print('passed to pp.run_all: '+args.ddir+args.outdir)
         pp.run_all(objid=mid, fit=args.fit, prior=args.prior,
                    mod_fsps=mod_fsps, mod_for_prior=mod_for_prior, sps=sps,
-                   input_folder=args.indir, output_folder=args.outdir, catalog_file=catalog_file)
+                   input_folder=args.ddir+args.indir, output_folder=args.ddir+args.outdir, catalog_file=catalog_file)

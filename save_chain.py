@@ -28,10 +28,9 @@ keys = ['zred', 'total_mass', 'stellar_mass', 'logzsol', 'mwa',
         'log_fagn', 'log_agn_tau', 'gas_logz',
         'duste_qpah', 'duste_umin', 'log_duste_gamma']
 
-foo = args.indir
-if foo.endswith('/'):
-    foo = foo[:-1]
-sname = os.path.join(args.outdir, 'chains_{}_{}'.format(args.prior, foo)+'.npz')
+if not os.path.exists(os.path.join(args.indir, args.outdir)):
+    os.makedirs(os.path.join(args.indir, args.outdir))
+sname = os.path.join(args.indir, args.outdir, 'chains_{}'.format(args.prior)+'.npz')
 print('will be saved to', sname)
 
 cnt = 0

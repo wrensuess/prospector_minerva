@@ -15,7 +15,8 @@ _indir = args.indir[:]
 objid_list = []
 chains_all = []
 
-all_files = os.listdir(_indir)
+all_files = os.listdir(args.indir)#os.path.join(args.outdir,args.indir))
+print(all_files)
 
 keys = ['zred', 'total_mass']
 for this_file in all_files:
@@ -29,10 +30,7 @@ for this_file in all_files:
                 keys.append(t)
         break
 
-foo = args.indir
-if foo.endswith('/'):
-    foo = foo[:-1]
-sname = os.path.join(args.outdir, 'chains_sfrr_{}_{}'.format(args.prior, foo)+'.npz')
+sname = os.path.join(_indir, 'chains_sfrr_{}'.format(args.prior)+'.npz')
 print('will be saved to', sname)
 
 cnt = 0

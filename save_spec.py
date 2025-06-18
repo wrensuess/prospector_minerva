@@ -10,8 +10,7 @@ import prospect.io.read_results as reader
 import utils as ut_cwd
 import emulator as Emu
 
-pdir = ut_cwd.data_dir(data='pirate')
-multiemul_file = os.path.join(pdir, "parrot_v4_obsphot_512n_5l_24s_00z24.npy")
+multiemul_file = os.path.join(get_dir(dirtype='pirate', outdir=piratedir), "parrot_v4_obsphot_512n_5l_24s_00z24.npy")
 
 import argparse
 parser = argparse.ArgumentParser()
