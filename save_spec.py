@@ -10,36 +10,39 @@ import prospect.io.read_results as reader
 import utils as ut_cwd
 import emulator as Emu
 
-multiemul_file = os.path.join(get_dir(dirtype='pirate', outdir=piratedir), "parrot_v4_obsphot_512n_5l_24s_00z24.npy")
+multiemul_file = os.path.join(ut_cwd.get_dir(dirtype='pirate', outdir=ut_cwd.piratedir), 
+    "parrot_v4_obsphot_512n_5l_24s_00z24.npy")
 
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--prior', type=str, default='phisfh', help='phisfh, phisfhzfixed')
 parser.add_argument('--catalog', type=str, default="UNCOVER_v5.0.1_LW_SUPER_CATALOG.fits")
-parser.add_argument('--indir', type=str, default='chains_parrot', help='input folder storing inidividual results')
-parser.add_argument('--outdir', type=str, default='results', help='output folder storing unweighted chains and quantiles')
+parser.add_argument('--dir_indiv', type=str, default='chains_parrot', help='input folder storing inidividual results')
+parser.add_argument('--dir_collected', type=str, default='results', help='output folder storing unweighted chains and quantiles')
+parser.add_argument('--basedir', type=str, default='../test/', help='base directory for all outputs')
 args = parser.parse_args()
 print(args)
 
 which_prior = args.prior
 catalog_file = args.catalog
 
-foo = args.indir[:]
-if foo.endswith('/'):
-    foo = foo[:-1]
-sname = os.path.join(args.outdir, 'spec_{}_{}'.format(args.prior, foo)+'.npz')
+sname = os.path.join(args.dir_collected, 'chains_{}'.format(args.prior)+'.npz')
 print('will be saved to', sname)
 
-perc_dir = args.indir
-chain_dir = args.indir
+perc_dir = args.dir_collected
+chain_dir = args.dir_indiv
 
-mdir = ut_cwd.data_dir('gen1') + 'phot_catalog/'
+mdir = ut_cwd.get_dir("phot", args.basedir) 
 cat = Table.read(mdir+catalog_file)
 if 'f_alma' in cat.colnames:
     alma = True
 else:
     alma = False
-filter_dict = ut_cwd.filter_dictionary(alma=alma)
+if 'f_f460m' in cat.colnames:
+    mb = True
+else:
+    mb = False    
+filter_dict = ut_cwd.filter_dictionary(alma=alma, mb=mb)
 filts = list(filter_dict.keys())
 filternames = list(filter_dict.values())
 
@@ -56,7 +59,7 @@ list_obsmag_unc = []
 list_nbands = []
 
 print(perc_dir)
-all_files = os.listdir(perc_dir)
+all_files = os.listdir(chain_dir)
 cnt = 0
 
 def chi2(modmags, obsmags, obsunc):
@@ -80,7 +83,7 @@ model = build_model(obs=obs)
 for this_file in all_files:
     if this_file.endswith('_spec_{}.npz'.format(which_prior)):
         mid = int(this_file.split('_')[1])
-        dat = np.load(os.path.join(perc_dir, this_file), allow_pickle=True)
+        dat = np.load(os.path.join(chain_dir, this_file), allow_pickle=True)
         list_spec_map.append(dat['modspec_map'])
         list_modmag_map.append(dat['modmags_map'])
 

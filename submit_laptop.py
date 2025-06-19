@@ -90,23 +90,23 @@ if __name__ == '__main__':
         print("new log directory created:", logdir)
 
     # saves transformed chains (i.e., those published in the data release)
-    _cmd = 'save_chain.py --indir {}/chains_parrot_{}_{} --outdir {}results'.format(outdir, ver, spsver, outdir)
+    _cmd = 'save_chain.py --dir_indiv {}/chains_parrot_{}_{} --dir_collected {}post_parrot_{}_{}/results'.format(outdir, ver, spsver, outdir, ver, spsver)
     print(_cmd)
     os.system('python '+_cmd) 
     # run_params(_cmd, jobname='chain', log_dir='log', acc='sc', i=0, wtime=10)
 
     # saves zred, total_mass, logsfr_ratios
-    _cmd = 'save_chain_untrans.py --indir {}/chains_parrot_{}_{} --prior {} --outdir {}results'.format(outdir, ver, spsver, prior, outdir)
+    _cmd = 'save_chain_untrans.py --dir_indiv {}/chains_parrot_{}_{} --dir_collected {}post_parrot_{}_{}/results'.format(outdir, ver, spsver, outdir, ver, spsver)
     print(_cmd)
     # run_params(_cmd, jobname='chainu', log_dir='log', acc='sc', i=0, wtime=10)
     os.system('python '+_cmd) 
        
-    _cmd = 'save_sfh.py --indir {}/chains_parrot_{}_{} --prior {} --outdir {}results'.format(outdir, ver, spsver, prior, outdir)
+    _cmd = 'save_sfh.py --dir_indiv {}/chains_parrot_{}_{} --dir_collected {}post_parrot_{}_{}/results'.format(outdir, ver, spsver, outdir, ver, spsver)
     print(_cmd)
     # run_params(_cmd, jobname='sfh', log_dir='log', acc='sc', i=0, wtime=10)
     os.system('python '+_cmd)
     
-    _cmd = 'save_spec.py --indir {}/chains_parrot_{}_{} --perc_indir chains_parrot_{}_{} --outdir results'.format(ver, ver, spsver, ver, spsver)
+    _cmd = 'save_spec.py --dir_indiv {}/chains_parrot_{}_{} --dir_collected {}post_parrot_{}_{}/results --catalog {} --basedir {}'.format(outdir, ver, spsver, outdir, ver, spsver, catalog, outdir)
     print(_cmd)
     # run_params(_cmd, jobname='spec', log_dir='log/', acc='sc', i=0, wtime=10)
     os.system('python '+_cmd)

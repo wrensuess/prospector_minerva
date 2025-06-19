@@ -8,18 +8,17 @@ import prospect.io.read_results as reader
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--prior', type=str, default='phisfh')
-parser.add_argument('--indir', type=str, default='chains_parrot', help='input folder storing chains')
-parser.add_argument('--outdir', type=str, default='results', help='output folder storing unweighted chains and quantiles')
+parser.add_argument('--dir_indiv', type=str, default='chains_parrot', help='input folder storing chains')
+parser.add_argument('--dir_collected', type=str, default='results', help='output folder storing unweighted chains and quantiles')
 args = parser.parse_args()
 print(args)
 
 which_prior = args.prior
-_indir = args.indir[:]
 
 objid_list = []
 chains_all = []
 
-all_files = os.listdir(_indir)
+all_files = os.listdir(args.dir_indiv)
 
 keys = ['zred', 'total_mass', 'stellar_mass', 'logzsol', 'mwa',
         'sfr10', 'sfr30', 'sfr100',
@@ -28,9 +27,9 @@ keys = ['zred', 'total_mass', 'stellar_mass', 'logzsol', 'mwa',
         'log_fagn', 'log_agn_tau', 'gas_logz',
         'duste_qpah', 'duste_umin', 'log_duste_gamma']
 
-if not os.path.exists(os.path.join(args.indir, args.outdir)):
-    os.makedirs(os.path.join(args.indir, args.outdir))
-sname = os.path.join(args.indir, args.outdir, 'chains_{}'.format(args.prior)+'.npz')
+if not os.path.exists(args.dir_collected):
+    os.makedirs(args.dir_collected)
+sname = os.path.join(args.dir_collected, 'chains_{}'.format(args.prior)+'.npz')
 print('will be saved to', sname)
 
 cnt = 0
@@ -38,7 +37,7 @@ missed = []
 for this_file in all_files:
     if this_file.endswith('unw_{}.npz'.format(which_prior)):
         mid = int(this_file.split('_')[1])
-        _ffile = os.path.join(_indir, this_file)
+        _ffile = os.path.join(args.dir_indiv, this_file)
         
         dat = np.load(_ffile, allow_pickle=True)
         chains = dat['chains'][()]
@@ -65,4 +64,4 @@ for this_file in all_files:
 np.savez(sname, objid=objid_list, chains=chains_all, theta_labels=keys)
 
 print('length:', len(objid_list))
-print('saved to', sname)
+print('saved to', sname+'\n')
