@@ -20,7 +20,6 @@ keys = ['zred', 'total_mass']
 for this_file in all_files:
     if this_file.endswith('unw_{}.npz'.format(which_prior)):
         _ini_file = os.path.join(args.dir_indiv, this_file)
-        print(_indir)
         dat = np.load(_ini_file, allow_pickle=True)
         chains = dat['chains'][()]
         
