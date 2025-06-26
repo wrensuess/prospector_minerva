@@ -26,7 +26,7 @@ print(args)
 which_prior = args.prior
 catalog_file = args.catalog
 
-sname = os.path.join(args.dir_collected, 'chains_{}'.format(args.prior)+'.npz')
+sname = os.path.join(args.dir_collected, 'spec_{}'.format(args.prior)+'.npz')
 print('will be saved to', sname)
 
 perc_dir = args.dir_collected
