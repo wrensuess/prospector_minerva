@@ -116,3 +116,9 @@ if __name__ == '__main__':
     print(_cmd)
     # run_params(_cmd, jobname='chainu', log_dir='log', acc='sc', i=0, wtime=10)
     os.system('python '+_cmd)
+    
+    # make final SPS catalog
+    _cmd = 'make_final_sps_catalog.py --dir_indiv {}/chains_parrot_{}_{} --dir_collected {}post_parrot_{}_{}/results --catalog {} --basedir {} --ver {}'.format(outdir, ver, spsver, outdir, ver, spsver, catalog, outdir, ver)
+    print(_cmd)
+    # run_params(_cmd, jobname='chainu', log_dir='log', acc='sc', i=0, wtime=10)
+    os.system('python '+_cmd)
