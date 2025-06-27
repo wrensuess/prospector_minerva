@@ -110,3 +110,9 @@ if __name__ == '__main__':
     print(_cmd)
     # run_params(_cmd, jobname='spec', log_dir='log/', acc='sc', i=0, wtime=10)
     os.system('python '+_cmd)
+    
+    # saves percentiles
+    _cmd = 'save_perc.py --dir_indiv {}/chains_parrot_{}_{} --dir_collected {}post_parrot_{}_{}/results --catalog {} --basedir {}'.format(outdir, ver, spsver, outdir, ver, spsver, catalog, outdir)
+    print(_cmd)
+    # run_params(_cmd, jobname='chainu', log_dir='log', acc='sc', i=0, wtime=10)
+    os.system('python '+_cmd)

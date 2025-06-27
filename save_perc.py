@@ -6,28 +6,27 @@ import os, sys, time
 import numpy as np
 from astropy.table import Table
 import prospect.io.read_results as reader
+import utils as ut_cwd
 
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--prior', type=str, default='phisfh')
 parser.add_argument('--catalog', type=str, default="UNCOVER_v5.0.1_LW_SUPER_CATALOG.fits")
-parser.add_argument('--indir', type=str, default='chains_parrot', help='input folder storing chains')
-parser.add_argument('--outdir', type=str, default='results', help='output folder storing unweighted chains and quantiles')
+parser.add_argument('--dir_indiv', type=str, default='chains_parrot', help='input folder storing inidividual results')
+parser.add_argument('--dir_collected', type=str, default='results', help='output folder storing unweighted chains and quantiles')
+parser.add_argument('--basedir', type=str, default='../test/', help='base directory for all outputs')
 args = parser.parse_args()
 print(args)
 
 which_prior = args.prior
 catalog_file = args.catalog
 
-foo = args.indir
-if foo.endswith('/'):
-    foo = foo[:-1]
-sname = os.path.join(args.outdir, 'quant_{}_{}'.format(args.prior, foo)+'.npz')
+sname = os.path.join(args.dir_collected, 'quant_{}'.format(args.prior)+'.npz')
 print('will be saved to', sname)
 
-perc_dir = args.indir
+perc_dir = args.dir_indiv
 
-mdir = 'phot_catalog/'
+mdir = ut_cwd.get_dir("phot", args.basedir) 
 cat = Table.read(mdir+catalog_file)
 
 objid_list = []
@@ -159,4 +158,4 @@ np.savez(sname, objid=objid_list,
         )
 
 print('length:', len(objid_list))
-print('saved to', sname)
+print('saved to', sname, '\n')

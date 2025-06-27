@@ -124,4 +124,4 @@ np.savez(sname, objid=objid_list, obsmag=list_obsmag, obsmag_unc=list_obsmag_unc
          nbands=list_nbands,
         )
 print('length:', len(objid_list))
-print('saved to', sname)
+print('saved to', sname,'\n')
