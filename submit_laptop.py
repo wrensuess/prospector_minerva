@@ -7,8 +7,10 @@ from utils import get_dir
 if __name__ == '__main__':
     
     field = 'UDS'
-    ver = 'test' #'v0.0_LW_Kf444w_SUPER'
-    spsver = 'spsv0.0'
+    ###ver = 'test' #'v0.0_LW_Kf444w_SUPER'
+    ###spsver = 'spsv0.0'
+    ver = 'v0.01_LW_Kf444w_SUPER'
+    spsver = 'spsv0.01'
     outdir = '../test_prospector/' # make sure slash at end
     ncores = 1 # this might actually be the number of fits that each core does? test.
     chaindir = 'chains_parrot_{}_{}'.format(ver, spsver) # where to put the chains
