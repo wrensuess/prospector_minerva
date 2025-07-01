@@ -92,7 +92,7 @@ if __name__ == '__main__':
 
     isExist = os.path.exists(outdir+chaindir)
     if not isExist:
-        os.makedirs(outdir)
+        os.makedirs(outdir+chaindir)
         print("new output directory created:", outdir+chaindir)
     isExist = os.path.exists(logdir)
     if not isExist:
