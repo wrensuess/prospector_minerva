@@ -56,6 +56,36 @@ def run_params(pycmd, log_dir='log', acc='bc', i=0, jobname='p', wtime=48, env='
     os.system('rm _params.slurm')
     return None
 
+def run_params_test(pycmd):    
+    ts = time.strftime("%y%b%d-%H.%M", time.localtime())        
+    txt_acc += "#SBATCH --time={:d}:00:00\n".format(wtime)
+
+    txt_2 = '\n'.join([
+        "#SBATCH --nodes=1",
+        "#SBATCH --job-name=array_test",
+        "#SBATCH --array=0-9",
+        "#SBATCH --output=test_array/test.out",
+        "#SBATCH --error=test_array/test.err",
+        "",
+        'now=$(date +"%T")',
+        'echo "start time ... $now"',
+        'echo "Running task ID: ${SLURM_ARRAY_TASK_ID}"',
+        "",
+        "python {}".format(pycmd),
+        "",
+        'now=$(date +"%T")',
+        'echo "end time ... $now"',
+        ""])
+
+    txt = txt_acc + txt_2
+
+    f = open('_params.slurm','w')
+    f.write(txt)
+    f.close()
+    os.system('sbatch _params.slurm')
+    os.system('rm _params.slurm')
+    return None
+
 
 if __name__ == '__main__':
     
@@ -99,7 +129,8 @@ if __name__ == '__main__':
     if not isExist:
         os.makedirs(logdir)
         print("new log directory created:", logdir)
-   
+
+    '''
     for igroup in range(len(groups)):
         idx0 = groups[igroup][0]
         idx1 = groups[igroup][-1] + 1 # +1 b/c id1 is not included when running the fit
@@ -111,6 +142,9 @@ if __name__ == '__main__':
             print(_cmd)
         run_params(_cmd, jobname='bb', log_dir=logdir, acc=acc, i=idx0, wtime=wtime, env=env)
         time.sleep(0.05)
+    '''
+    _cmd = "test_job.py" ####### for very simple slurm file test
+    run_params_test(_cmd)
 
 
     '''
