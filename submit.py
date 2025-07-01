@@ -61,7 +61,7 @@ def run_params_test(pycmd):
     txt_acc = '\n'.join(["#!/bin/bash -l",
                          "#SBATCH --account=ucb-general\n",
                          "#SBATCH --partition=amilan\n"])
-    txt_acc += "#SBATCH time=--00:10:00\n"
+    txt_acc += "#SBATCH --time=00:10:00\n"
 
     txt_2 = '\n'.join([
         "#SBATCH --nodes=1",
