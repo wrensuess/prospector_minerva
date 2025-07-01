@@ -40,7 +40,7 @@ def run_params(pycmd, log_dir='log', acc='bc', i=0, jobname='p', wtime=48, env='
         'module load anaconda',
         "source activate {}".format(env),
         "",
-        "cd /projects/ikmi3774/minerva_sps_gen1/stellar_pop_catalog_bb/prospector_minerva",
+        "cd /projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/prospector_minerva",
         "python {}".format(pycmd),
         "",
         'now=$(date +"%T")',
