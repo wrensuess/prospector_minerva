@@ -7,13 +7,12 @@ def data_dir():
     ''' 
     TODO: update for our data storage directories
     '''
-    dat_dirs = ['/storage/home/bbw5389/group/',
-                '/Users/bwang/research/']
-
+    dat_dirs = ['/projects/ikmi3774/']
+    
     for _dir in dat_dirs:
         if os.path.isdir(_dir): return _dir
 
-def run_params(pycmd, log_dir='log', acc='bc', i=0, jobname='p', wtime=48, env='prosp-dev'):
+def run_params(pycmd, log_dir='log', acc='bc', i=0, jobname='p', wtime=48, env='prosp'):
     
     jname = '{}_{}'.format(jobname, i)
     
@@ -24,14 +23,8 @@ def run_params(pycmd, log_dir='log', acc='bc', i=0, jobname='p', wtime=48, env='
     '''
     if acc == 'bc':
         txt_acc = '\n'.join(["#!/bin/bash -l",
-                             "#SBATCH --account=jql6565_bc\n"])
-    elif acc == 'sc':
-        txt_acc = '\n'.join(["#!/bin/bash -l",
-                             "#SBATCH --account=jql6565_sc\n",
-                             "#SBATCH --mem=10G\n"])
-    else:
-        txt_acc = '\n'.join(["#!/bin/bash -l",
-                             "#SBATCH --account=open\n"])
+                             "#SBATCH --account=ucb-general\n",
+                             "#SBATCH --partition=amilan\n"])
         
     txt_acc += "#SBATCH --time={:d}:00:00\n".format(wtime)
 
@@ -44,10 +37,10 @@ def run_params(pycmd, log_dir='log', acc='bc', i=0, jobname='p', wtime=48, env='
         'now=$(date +"%T")',
         'echo "start time ... $now"',
         "",
-        'module load anaconda3',
+        'module load anaconda',
         "source activate {}".format(env),
         "",
-        "cd /storage/home/bbw5389/group/uncover_sps_gen1/stellar_pop_catalog_mb",
+        "cd /projects/ikmi3774/minerva_sps_gen1/stellar_pop_catalog_bb/prospector_minerva",
         "python {}".format(pycmd),
         "",
         'now=$(date +"%T")',
@@ -67,8 +60,17 @@ def run_params(pycmd, log_dir='log', acc='bc', i=0, jobname='p', wtime=48, env='
 if __name__ == '__main__':
     
     field = 'UDS'
-    ver = 'v0.0_LW_Kf444w_SUPER'
-    spsver = 'spsv0.0'
+    ver = 'v0.01_LW_Kf444w_SUPER'
+    spsver = 'spsv0.01'
+    outdir = '../test_slurm/'
+    chaindir = outdir+'chains_parrot_{}_{}'.format(ver, spsver)
+    logdir = outdir+'log/{}'.format(outdir)
+    fast_dyn = 2
+
+    #ncores = len(tot)
+    acc = 'bc' ### we do not have to use this specification, but useful if we use both alpine&blanca
+    ncores = 5 #840 # number of cores to request
+    wtime = int(24) #int(24*7) # time
 
     ################################## step 1. sed fit ####################################
 
@@ -80,27 +82,18 @@ if __name__ == '__main__':
     ''' TODO: what is nfiles_phot? how do we fit sub-portion of the phot catalog? '''
     tot = []
     for _id in cat['id'].data:
-        if _id not in nfiles_phot:
-            tot.append(_id)
+        #if _id not in nfiles_phot:### nfiles_photo is not clear
+        tot.append(_id)
     tot = np.array(tot)
     print(tot)
     tot = tot - 1 # id to idx # this only works if using the full phot catalog
-    ncores = len(tot)
-
-    ''' TODO: update number of cores, etc, for our supercomputer'''
-    acc = 'bc'
-    ncores = 840 # number of cores to request
-    wtime = int(24*7) # time
 
     groups = np.array_split(tot, ncores) # divide the total number into xxx cores
 
-    outdir = 'chains_parrot_{}_{}'.format(ver, spsver)
-
-    isExist = os.path.exists(outdir)
+    isExist = os.path.exists(outdir+chaindir)
     if not isExist:
         os.makedirs(outdir)
-        print("new output directory created:", outdir)
-    logdir = 'log/{}'.format(outdir)
+        print("new output directory created:", outdir+chaindir)
     isExist = os.path.exists(logdir)
     if not isExist:
         os.makedirs(logdir)
@@ -109,16 +102,17 @@ if __name__ == '__main__':
     for igroup in range(len(groups)):
         idx0 = groups[igroup][0]
         idx1 = groups[igroup][-1] + 1 # +1 b/c id1 is not included when running the fit
-        if 'zspec' in catalog:
+        if 'zspec' in catalog: ### not edited
             _cmd = 'uncover_gen1_parrot_phisfhzspec_params.py --catalog {} --idx0 {} --idx1 {} --outdir {}'.format(catalog, idx0, idx1, outdir)
         else:
-            _cmd = 'uncover_gen1_parrot_phisfh_params.py --catalog {} --idx0 {} --idx1 {} --outdir {}'.format(catalog, idx0, idx1, outdir)
+            _cmd = 'uncover_gen1_parrot_phisfh_params.py --catalog {} --idx0 {} --idx1 {} --outdir {} --dyn {}'.format(catalog, idx0, idx1, outdir+chaindir, fast_dyn)
         if igroup == 0:
             print(_cmd)
-        run_params(_cmd, jobname='mb', log_dir=logdir, acc=acc, i=idx0, wtime=wtime, env='prosp-dev')
+        run_params(_cmd, jobname='bb', log_dir=logdir, acc=acc, i=idx0, wtime=wtime, env='prosp-dev')
         time.sleep(0.05)
 
 
+    '''
     ################################ step 2. post-prsocessing ################################
 
     wtime = 48
@@ -178,3 +172,4 @@ if __name__ == '__main__':
     _cmd = 'save_spec.py --catalog UNCOVER_{}_CATALOG.fits --chain_indir chains_parrot_{}_{} --perc_indir chains_parrot_{}_{} --outdir results'.format(ver, ver, spsver, ver, spsver)
     print(_cmd)
     run_params(_cmd, jobname='spec', log_dir='log/', acc='sc', i=0, wtime=10)
+    '''
