@@ -69,6 +69,7 @@ if __name__ == '__main__':
 
     #ncores = len(tot)
     acc = 'bc' ### we do not have to use this specification, but useful if we use both alpine&blanca
+    env = 'prosp'
     ncores = 5 #840 # number of cores to request
     wtime = int(24) #int(24*7) # time
 
@@ -108,7 +109,7 @@ if __name__ == '__main__':
             _cmd = 'uncover_gen1_parrot_phisfh_params.py --catalog {} --idx0 {} --idx1 {} --outdir {} --dyn {}'.format(catalog, idx0, idx1, outdir+chaindir, fast_dyn)
         if igroup == 0:
             print(_cmd)
-        run_params(_cmd, jobname='bb', log_dir=logdir, acc=acc, i=idx0, wtime=wtime, env='prosp-dev')
+        run_params(_cmd, jobname='bb', log_dir=logdir, acc=acc, i=idx0, wtime=wtime, env=env)
         time.sleep(0.05)
 
 
