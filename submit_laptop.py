@@ -21,7 +21,7 @@ if __name__ == '__main__':
     catalog = 'MINERVA-{}_{}_CATALOG.fits'.format(field, ver)
 
     #cat = Table.read(get_dir("phot", outdir)+catalog) # this can be updated as needed
-    cat = Table.read('../phot_catalog/' + catalog)
+    cat = Table.read('../phot_catalog/' + catalog) ###
     tot = np.arange(len(cat))
     assert len(tot) <= 5 # let's not go crazy here -- obviously update later!
     
