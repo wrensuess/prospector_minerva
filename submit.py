@@ -57,7 +57,10 @@ def run_params(pycmd, log_dir='log', acc='bc', i=0, jobname='p', wtime=48, env='
     return None
 
 def run_params_test(pycmd):    
-    ts = time.strftime("%y%b%d-%H.%M", time.localtime())        
+    ts = time.strftime("%y%b%d-%H.%M", time.localtime())
+    txt_acc = '\n'.join(["#!/bin/bash -l",
+                         "#SBATCH --account=ucb-general\n",
+                         "#SBATCH --partition=amilan\n"])
     txt_acc += "#SBATCH --time={:d}:00:00\n".format(wtime)
 
     txt_2 = '\n'.join([
