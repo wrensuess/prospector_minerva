@@ -165,7 +165,6 @@ badobs_ids_list = []
 for ifit in np.arange(args.idx0, args.idx1, 1):
 
     # run on the full catalog
-    print(cat['id'])
     objid = cat['id'][ifit]
     print("\nFitting {}".format(objid))
     print("------------------\n")
