@@ -34,11 +34,13 @@ def run_params(pycmd, log_dir='log', acc='bc', i=0, jobname='p', wtime=48, env='
     txt_2 = '\n'.join([
         "#SBATCH --nodes=1",
         "#SBATCH --job-name={}".format(jname[:16]),
+        "#SBATCH --array=0-9",
         "#SBATCH --output={}/{}_{}.out".format(log_dir, jname, ts),
         "#SBATCH --error={}/{}_{}.err".format(log_dir, jname, ts),
         "",
         'now=$(date +"%T")',
         'echo "start time ... $now"',
+        'echo "Running task ID: ${SLURM_ARRAY_TASK_ID}"',
         "",
         'module load anaconda',
         "source activate {}".format(env),
