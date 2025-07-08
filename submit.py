@@ -75,7 +75,7 @@ if __name__ == '__main__':
     outdir = '../test_slurm/'
     chaindir = outdir+'chains_parrot_{}_{}'.format(ver, spsver)
     logdir = outdir+'log'
-    fast_dyn = 2
+    fast_dyn = 0
 
     #ncores = len(tot)
     acc = 'bc' ### we do not have to use this specification, but useful if we use both alpine&blanca
