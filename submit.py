@@ -86,7 +86,7 @@ if __name__ == '__main__':
     ################################## step 1. sed fit ####################################
 
     catalog = 'MINERVA-{}_{}_CATALOG.fits'.format(field, ver)
-    fitcatalog = 'fitid_MINERVA-{}_{}_CATALOG.txt' #need update name
+    fitcatalog = 'fitid_MINERVA-{}_{}_CATALOG.txt'.format(field, ver) #need update name
 
     ''' TODO: what is nfiles_phot? how do we fit sub-portion of the phot catalog? '''
     ''' tot=tot-1 is not working when we use the splitted catalog, so why not to use full photo catalog and specify id here'''
