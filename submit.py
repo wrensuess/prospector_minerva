@@ -115,7 +115,7 @@ if __name__ == '__main__':
         print("new log directory created:", logdir)
 
     _cmd = 'uncover_gen1_parrot_phisfh_params.py --catalog {} --fitcatalog {} --outdir {} --dyn {}'.format(catalog, fitcatalog, outdir+chaindir, fast_dyn)
-    run_params(_cmd, jobname='bb', log_dir=logdir, acc=acc, i=idx0, wtime=wtime, env=env)
+    run_params(_cmd, jobname='bb', log_dir=logdir, acc=acc, wtime=wtime, env=env)
 
     '''
     print(tot,groups)
