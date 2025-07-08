@@ -96,8 +96,8 @@ def run_params_test(pycmd):
 if __name__ == '__main__':
     
     field = 'UDS'
-    ver = 'v0.01_LW_Kf444w_SUPER'
-    spsver = 'spsv0.01'
+    ver = 'v0.02_LW_Kf444w_SUPER'
+    spsver = 'spsv0.02'
     outdir = '../test_slurm/'
     chaindir = outdir+'chains_parrot_{}_{}'.format(ver, spsver)
     logdir = outdir+'log/{}'.format(outdir)
@@ -108,6 +108,7 @@ if __name__ == '__main__':
     env = 'prosp'
     ncores = 5 #840 # number of cores to request
     wtime = int(24) #int(24*7) # time
+    fit_id = [1,2,3,4,5]
 
     ################################## step 1. sed fit ####################################
 
@@ -117,9 +118,11 @@ if __name__ == '__main__':
     tot = np.arange(len(cat))
 
     ''' TODO: what is nfiles_phot? how do we fit sub-portion of the phot catalog? '''
+    ''' tot=tot-1 is not working when we use the splitted catalog, so why not to use full photo catalog and specify id here'''
     tot = []
     for _id in cat['id'].data:
         #if _id not in nfiles_phot:### nfiles_photo is not clear
+        if _id in fit_id:
         tot.append(_id)
     tot = np.array(tot)
     tot = tot - 1 # id to idx # this only works if using the full phot catalog
