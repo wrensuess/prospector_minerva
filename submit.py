@@ -42,11 +42,12 @@ def run_params(pycmd, log_dir='log', acc='bc', jobname='p', wtime=12, env='prosp
         'echo "Running task ID: ${SLURM_ARRAY_TASK_ID}"',
         "",
         "start=$((SLURM_ARRAY_TASK_ID*10))",
-        "end=$((start+9+2))", ###full_fit_id_array[start:end] will be fitted
+        "end=$((start+9+1))", ###full_fit_id_array[start:end] will be fitted
         "",
         'module load anaconda',
         "source activate {}".format(env),
         "",
+        'echo "$start -to- $end"',
         "cd /projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/prospector_minerva",
         "python {} --idx0 $start --idx1 $end".format(pycmd),
         "",

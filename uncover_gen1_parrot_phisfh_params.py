@@ -169,10 +169,10 @@ badobs_ids_list = []
 print(fit_cat_id)
 
 for _ifit in fit_cat_id:
-    ifit = np.where(cat['id']==_ifit)[0]
-
+    
     _can_exist = False
     try:
+        ifit = np.where(cat['id']==_ifit)[0][0]
         objid = cat['id'][ifit]
         print("\nFitting {}".format(objid))
         print("------------------\n")
