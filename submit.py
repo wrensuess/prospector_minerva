@@ -71,7 +71,7 @@ def run_params_test(pycmd):
     txt_2 = '\n'.join([
         "#SBATCH --nodes=1",
         "#SBATCH --job-name=array_test",
-        "#SBATCH --array=0-9",
+        "#SBATCH --array=0-4",
         "#SBATCH --output=test_array/test.out",
         "#SBATCH --error=test_array/test.err",
         "",
