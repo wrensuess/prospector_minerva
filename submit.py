@@ -122,7 +122,6 @@ if __name__ == '__main__':
         #if _id not in nfiles_phot:### nfiles_photo is not clear
         tot.append(_id)
     tot = np.array(tot)
-    print(tot)
     tot = tot - 1 # id to idx # this only works if using the full phot catalog
 
     groups = np.array_split(tot, ncores) # divide the total number into xxx cores
@@ -140,7 +139,6 @@ if __name__ == '__main__':
     for igroup in range(len(groups)):
         idx0 = groups[igroup][0]
         idx1 = groups[igroup][-1] + 1 # +1 b/c id1 is not included when running the fit
-        print(idx0,idx1)
         if 'zspec' in catalog: ### not edited
             _cmd = 'uncover_gen1_parrot_phisfhzspec_params.py --catalog {} --idx0 {} --idx1 {} --outdir {}'.format(catalog, idx0, idx1, outdir)
         else:
