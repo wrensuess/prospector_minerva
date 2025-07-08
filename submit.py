@@ -33,7 +33,7 @@ def run_params(pycmd, log_dir='log', acc='bc', jobname='p', wtime=12, env='prosp
 
     txt_2 = '\n'.join([
         "#SBATCH --job-name={}".format(jname),
-        "#SBATCH --array=0-19",
+        "#SBATCH --array=0-9", ###Narray=Ntot/Nfit_par_core
         "#SBATCH --output={}/{}_{}_%A_%a.out".format(log_dir, jname, ts),
         "#SBATCH --error={}/{}_{}_%A_%a.err".format(log_dir, jname, ts),
         "",
@@ -41,8 +41,8 @@ def run_params(pycmd, log_dir='log', acc='bc', jobname='p', wtime=12, env='prosp
         'echo "start time ... $now"',
         'echo "Running task ID: ${SLURM_ARRAY_TASK_ID}"',
         "",
-        "start=$((SLURM_ARRAY_TASK_ID*10))",
-        "end=$((start+9+1))", ###full_fit_id_array[start:end] will be fitted
+        "start=$((SLURM_ARRAY_TASK_ID*2))", ###Nfit_par_core=10
+        "end=$((start+1+1))", ###full_fit_id_array[start:end] will be fitted
         "",
         'module load anaconda',
         "source activate {}".format(env),
