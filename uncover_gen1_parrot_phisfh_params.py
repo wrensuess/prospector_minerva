@@ -32,6 +32,7 @@ parser.add_argument('--dyn', type=int, default=0,
                     help="If 0, std run; if 1, quick dynesty run; if 2, debug, max=1100")
 args = parser.parse_args()
 catalog_file = args.catalog
+fit_file = args.fitcatalog
 
 run_params = vars(args)
 run_params.update({
@@ -92,6 +93,7 @@ print(run_params)
 
 mdir = ut_cwd.photdir
 cat = Table.read(mdir+catalog_file)
+fit_cat_id = np.loadtxt(mdir+fit_file)[args.idx0:args.idx1]
 
 if 'f_alma' in cat.colnames:
     alma = True
@@ -162,22 +164,34 @@ def load_sps(**extras):
 
 # ---------------- fit !
 badobs_ids_list = []
-for ifit in np.arange(args.idx0, args.idx1, 1):
+#for ifit in np.arange(args.idx0, args.idx1, 1):
+print(fit_cat_id)
 
-    # run on the full catalog
-    objid = cat['id'][ifit]
-    print("\nFitting {}".format(objid))
-    print("------------------\n")
-    run_params['idx'] = ifit # choose a galaxy
-    _can_fit = False
+for _ifit in fit_cat_id:
+    ifit = np.where(cat['id']==_ifit)[0]
+
+    _can_exist = False
     try:
-        obs = load_obs(**run_params)
-        _can_fit = True
+        objid = cat['id'][ifit]
+        print("\nFitting {}".format(objid))
+        print("------------------\n")
+        run_params['idx'] = ifit # choose a galaxy
+        _can_exist = True
     except(AssertionError):
-        # all NaNs, etc.
-        _can_fit = False
+        _can_exist = False
         badobs_ids_list.append(objid)
-        print('no phot')
+        print('no corresponding id')
+
+    _can_fit = False
+    if _can_exist:
+        try:
+            obs = load_obs(**run_params)
+            _can_fit = True
+        except(AssertionError):
+            # all NaNs, etc.
+            _can_fit = False
+            badobs_ids_list.append(objid)
+            print('no phot')
 
     if _can_fit:
         obs['x_pixel'] = 0; obs['y_pixel'] = 0

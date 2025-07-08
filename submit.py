@@ -32,21 +32,23 @@ def run_params(pycmd, log_dir='log', acc='bc', i=0, jobname='p', wtime=48, env='
     txt_acc += "#SBATCH --time={:d}:00:00\n".format(wtime)
 
     txt_2 = '\n'.join([
-        "#SBATCH --nodes=1",
-        "#SBATCH --job-name={}".format(jname[:16]),
-        "#SBATCH --array=0-9",
-        "#SBATCH --output={}/{}_{}.out".format(log_dir, jname, ts),
-        "#SBATCH --error={}/{}_{}.err".format(log_dir, jname, ts),
+        "#SBATCH --job-name={}".format(jname),
+        "#SBATCH --array=0-19",
+        "#SBATCH --output={}/{}_{}_%A_%a.out".format(log_dir, jname, ts),
+        "#SBATCH --error={}/{}_{}_%A_%a.err".format(log_dir, jname, ts),
         "",
         'now=$(date +"%T")',
         'echo "start time ... $now"',
         'echo "Running task ID: ${SLURM_ARRAY_TASK_ID}"',
+        "",
+        "start=$((SLURM_ARRAY_TASK_ID*10))",
+        "end=$((start+9+1))", ###full_fit_id_array[start:end] will be fitted
         "",
         'module load anaconda',
         "source activate {}".format(env),
         "",
         "cd /projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/prospector_minerva",
-        "python {}".format(pycmd),
+        "python {} --idx0 $start --idx1 $end".format(pycmd),
         "",
         'now=$(date +"%T")',
         'echo "end time ... $now"',
@@ -61,38 +63,7 @@ def run_params(pycmd, log_dir='log', acc='bc', i=0, jobname='p', wtime=48, env='
     os.system('rm _params.slurm')
     return None
 
-def run_params_test(pycmd):    
-    ts = time.strftime("%y%b%d-%H.%M", time.localtime())
-    txt_acc = '\n'.join(["#!/bin/bash -l",
-                         "#SBATCH --account=ucb-general\n",
-                         "#SBATCH --partition=amilan\n"])
-    txt_acc += "#SBATCH --time=00:10:00\n"
 
-    txt_2 = '\n'.join([
-        "#SBATCH --nodes=1",
-        "#SBATCH --job-name=array_test",
-        "#SBATCH --array=0-4",
-        "#SBATCH --output=test_array/test.out",
-        "#SBATCH --error=test_array/test.err",
-        "",
-        'now=$(date +"%T")',
-        'echo "start time ... $now"',
-        'echo "Running task ID: ${SLURM_ARRAY_TASK_ID}"',
-        "",
-        "python {}".format(pycmd),
-        "",
-        'now=$(date +"%T")',
-        'echo "end time ... $now"',
-        ""])
-
-    txt = txt_acc + txt_2
-
-    f = open('_params.slurm','w')
-    f.write(txt)
-    f.close()
-    os.system('sbatch _params.slurm')
-    os.system('rm _params.slurm')
-    return None
 
 
 if __name__ == '__main__':
@@ -115,12 +86,14 @@ if __name__ == '__main__':
     ################################## step 1. sed fit ####################################
 
     catalog = 'MINERVA-{}_{}_CATALOG.fits'.format(field, ver)
-
-    cat = Table.read(mdir+catalog)
-    tot = np.arange(len(cat))
+    fitcatalog = 'fitid_MINERVA-{}_{}_CATALOG.txt' #need update name
 
     ''' TODO: what is nfiles_phot? how do we fit sub-portion of the phot catalog? '''
     ''' tot=tot-1 is not working when we use the splitted catalog, so why not to use full photo catalog and specify id here'''
+    ''' we no longer need to split the catalog here, since we need to specify id in parrot.py'''
+    '''
+    cat = Table.read(mdir+catalog)
+    tot = np.arange(len(cat))
     tot = []
     for _id in cat['id'].data:
         #if _id not in nfiles_phot:### nfiles_photo is not clear
@@ -130,6 +103,7 @@ if __name__ == '__main__':
     tot = tot - 1 # id to idx # this only works if using the full phot catalog
 
     groups = np.array_split(tot, ncores) # divide the total number into xxx cores
+    '''
 
     isExist = os.path.exists(outdir+chaindir)
     if not isExist:
@@ -140,6 +114,10 @@ if __name__ == '__main__':
         os.makedirs(logdir)
         print("new log directory created:", logdir)
 
+    _cmd = 'uncover_gen1_parrot_phisfh_params.py --catalog {} --fitcatalog{} --outdir {} --dyn {}'.format(catalog, fitcatalog, outdir+chaindir, fast_dyn)
+    run_params(_cmd)
+
+    '''
     print(tot,groups)
     for igroup in range(len(groups)):
         idx0 = groups[igroup][0]
@@ -155,6 +133,7 @@ if __name__ == '__main__':
 
     #_cmd = "test_job.py" ####### for very simple slurm file test
     #run_params_test(_cmd)
+    '''
 
 
     '''
@@ -218,3 +197,37 @@ if __name__ == '__main__':
     print(_cmd)
     run_params(_cmd, jobname='spec', log_dir='log/', acc='sc', i=0, wtime=10)
     '''
+
+
+def run_params_test(pycmd):    
+    ts = time.strftime("%y%b%d-%H.%M", time.localtime())
+    txt_acc = '\n'.join(["#!/bin/bash -l",
+                         "#SBATCH --account=ucb-general\n",
+                         "#SBATCH --partition=amilan\n"])
+    txt_acc += "#SBATCH --time=00:10:00\n"
+
+    txt_2 = '\n'.join([
+        "#SBATCH --nodes=1",
+        "#SBATCH --job-name=array_test",
+        "#SBATCH --array=0-4",
+        "#SBATCH --output=test_array/test.out",
+        "#SBATCH --error=test_array/test.err",
+        "",
+        'now=$(date +"%T")',
+        'echo "start time ... $now"',
+        'echo "Running task ID: ${SLURM_ARRAY_TASK_ID}"',
+        "",
+        "python {}".format(pycmd),
+        "",
+        'now=$(date +"%T")',
+        'echo "end time ... $now"',
+        ""])
+
+    txt = txt_acc + txt_2
+
+    f = open('_params.slurm','w')
+    f.write(txt)
+    f.close()
+    os.system('sbatch _params.slurm')
+    os.system('rm _params.slurm')
+    return None
