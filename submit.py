@@ -123,7 +123,7 @@ if __name__ == '__main__':
     for _id in cat['id'].data:
         #if _id not in nfiles_phot:### nfiles_photo is not clear
         if _id in fit_id:
-        tot.append(_id)
+            tot.append(_id)
     tot = np.array(tot)
     tot = tot - 1 # id to idx # this only works if using the full phot catalog
 
