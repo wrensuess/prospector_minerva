@@ -15,7 +15,7 @@ def data_dir():
     for _dir in dat_dirs:
         if os.path.isdir(_dir): return _dir
 
-def run_params(pycmd, log_dir='log', acc='bc', i=0, jobname='p', wtime=48, env='prosp'):
+def run_params(pycmd, log_dir='log', acc='bc', i=0, jobname='p', wtime=12, env='prosp'):
     
     jname = '{}_{}'.format(jobname, i)
     
