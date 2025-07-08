@@ -136,9 +136,11 @@ if __name__ == '__main__':
         os.makedirs(logdir)
         print("new log directory created:", logdir)
 
+    print(tot,groups)
     for igroup in range(len(groups)):
         idx0 = groups[igroup][0]
         idx1 = groups[igroup][-1] + 1 # +1 b/c id1 is not included when running the fit
+        print(idx0,idx1)
         if 'zspec' in catalog: ### not edited
             _cmd = 'uncover_gen1_parrot_phisfhzspec_params.py --catalog {} --idx0 {} --idx1 {} --outdir {}'.format(catalog, idx0, idx1, outdir)
         else:
