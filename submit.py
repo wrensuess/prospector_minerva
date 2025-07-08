@@ -2,6 +2,9 @@ import os, sys, time
 import numpy as np
 from astropy.table import Table
 
+import utils as ut_cwd
+mdir = ut_cwd.photdir
+
 def data_dir():
 
     ''' 
@@ -110,7 +113,7 @@ if __name__ == '__main__':
 
     catalog = 'MINERVA-{}_{}_CATALOG.fits'.format(field, ver)
 
-    cat = Table.read('../phot_catalog/' + catalog)
+    cat = Table.read(mdir+catalog)
     tot = np.arange(len(cat))
 
     ''' TODO: what is nfiles_phot? how do we fit sub-portion of the phot catalog? '''
