@@ -133,7 +133,6 @@ if __name__ == '__main__':
         os.makedirs(logdir)
         print("new log directory created:", logdir)
 
-    '''
     for igroup in range(len(groups)):
         idx0 = groups[igroup][0]
         idx1 = groups[igroup][-1] + 1 # +1 b/c id1 is not included when running the fit
@@ -145,9 +144,9 @@ if __name__ == '__main__':
             print(_cmd)
         run_params(_cmd, jobname='bb', log_dir=logdir, acc=acc, i=idx0, wtime=wtime, env=env)
         time.sleep(0.05)
-    '''
-    _cmd = "test_job.py" ####### for very simple slurm file test
-    run_params_test(_cmd)
+
+    #_cmd = "test_job.py" ####### for very simple slurm file test
+    #run_params_test(_cmd)
 
 
     '''
