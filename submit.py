@@ -15,9 +15,9 @@ def data_dir():
     for _dir in dat_dirs:
         if os.path.isdir(_dir): return _dir
 
-def run_params(pycmd, log_dir='log', acc='bc', i=0, jobname='p', wtime=12, env='prosp'):
+def run_params(pycmd, log_dir='log', acc='bc', jobname='p', wtime=12, env='prosp'):
     
-    jname = '{}_{}'.format(jobname, i)
+    jname = '{}'.format(jobname)
     
     ts = time.strftime("%y%b%d-%H.%M", time.localtime())
 
@@ -42,7 +42,7 @@ def run_params(pycmd, log_dir='log', acc='bc', i=0, jobname='p', wtime=12, env='
         'echo "Running task ID: ${SLURM_ARRAY_TASK_ID}"',
         "",
         "start=$((SLURM_ARRAY_TASK_ID*10))",
-        "end=$((start+9+1))", ###full_fit_id_array[start:end] will be fitted
+        "end=$((start+9+2))", ###full_fit_id_array[start:end] will be fitted
         "",
         'module load anaconda',
         "source activate {}".format(env),
@@ -73,7 +73,7 @@ if __name__ == '__main__':
     spsver = 'spsv0.03'
     outdir = '../test_slurm/'
     chaindir = outdir+'chains_parrot_{}_{}'.format(ver, spsver)
-    logdir = outdir+'log/{}'.format(outdir)
+    logdir = outdir+'log'
     fast_dyn = 2
 
     #ncores = len(tot)
@@ -114,8 +114,8 @@ if __name__ == '__main__':
         os.makedirs(logdir)
         print("new log directory created:", logdir)
 
-    _cmd = 'uncover_gen1_parrot_phisfh_params.py --catalog {} --fitcatalog{} --outdir {} --dyn {}'.format(catalog, fitcatalog, outdir+chaindir, fast_dyn)
-    run_params(_cmd)
+    _cmd = 'uncover_gen1_parrot_phisfh_params.py --catalog {} --fitcatalog {} --outdir {} --dyn {}'.format(catalog, fitcatalog, outdir+chaindir, fast_dyn)
+    run_params(_cmd, jobname='bb', log_dir=logdir, acc=acc, i=idx0, wtime=wtime, env=env)
 
     '''
     print(tot,groups)
