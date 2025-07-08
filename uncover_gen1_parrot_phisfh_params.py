@@ -23,6 +23,7 @@ multiemul_file = os.path.join(ut_cwd.get_dir(dirtype='pirate', outdir=pdir), "pa
 '''TODO: update parser for good MINERVA defaults '''
 parser = prospect.prospect_args.get_parser()
 parser.add_argument('--catalog', type=str, default="UNCOVER_v5.0.1_LW_SUPER_CATALOG.fits")
+parser.add_argument('--fitcatalog', type=str, default="UNCOVER_v5.0.1_LW_SUPER_CATALOG.txt")
 parser.add_argument('--idx0', type=int, default=0,
                     help="Range of galaxies to fit, from idx0 to idx1-1; zero-index row number of the catalog.")
 parser.add_argument('--idx1', type=int, default=1,

@@ -69,8 +69,8 @@ def run_params(pycmd, log_dir='log', acc='bc', jobname='p', wtime=12, env='prosp
 if __name__ == '__main__':
     
     field = 'UDS'
-    ver = 'v0.03_LW_Kf444w_SUPER'
-    spsver = 'spsv0.03'
+    ver = 'v0.05_LW_Kf444w_SUPER'
+    spsver = 'spsv0.05'
     outdir = '../test_slurm/'
     chaindir = outdir+'chains_parrot_{}_{}'.format(ver, spsver)
     logdir = outdir+'log'
