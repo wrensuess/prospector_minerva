@@ -23,7 +23,7 @@ multiemul_file = os.path.join(ut_cwd.get_dir(dirtype='pirate', outdir=pdir), "pa
 '''TODO: update parser for good MINERVA defaults '''
 parser = prospect.prospect_args.get_parser()
 parser.add_argument('--catalog', type=str, default="UNCOVER_v5.0.1_LW_SUPER_CATALOG.fits")
-parser.add_argument('--fitcatalog', type=str, default="fitid_UNCOVER_v5.0.1_LW_SUPER_CATALOG.txt")
+#parser.add_argument('--fitcatalog', type=str, default="fitid_UNCOVER_v5.0.1_LW_SUPER_CATALOG.txt") #w/o load balancer, for v0721
 parser.add_argument('--idx0', type=int, default=0,
                     help="Range of galaxies to fit, from idx0 to idx1-1; zero-index row number of the catalog.")
 parser.add_argument('--idx1', type=int, default=1,
@@ -33,7 +33,7 @@ parser.add_argument('--dyn', type=int, default=0,
                     help="If 0, std run; if 1, quick dynesty run; if 2, debug, max=1100")
 args = parser.parse_args()
 catalog_file = args.catalog
-fit_file = args.fitcatalog
+#fit_file = args.fitcatalog #w/o load balancer
 
 run_params = vars(args)
 run_params.update({
@@ -94,7 +94,8 @@ print(run_params)
 
 mdir = ut_cwd.photdir
 cat = Table.read(mdir+catalog_file)
-fit_cat_id = np.loadtxt(mdir+fit_file)[args.idx0:args.idx1]
+#fit_cat_id = np.loadtxt(mdir+fit_file)[args.idx0:args.idx1] #w/o load balancer, for v0721
+#print(fit_cat_id)
 
 if 'f_alma' in cat.colnames:
     alma = True
@@ -164,11 +165,11 @@ def load_sps(**extras):
 
 
 # ---------------- fit !
-badobs_ids_list = []
-#for ifit in np.arange(args.idx0, args.idx1, 1):
-print(fit_cat_id)
+#for _ifit in fit_cat_id: #w/o load balancer, for v0721
 
-for _ifit in fit_cat_id:
+badobs_ids_list = []
+print(args.idx0, args.idx1)
+for ifit in np.arange(args.idx0, args.idx1, 1):
 
     ### check the id is in fitting catalog (usephoto=1)
     _can_exist = False

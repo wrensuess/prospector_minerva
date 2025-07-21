@@ -116,7 +116,7 @@ if __name__ == '__main__':
         with open(taskfile, mode="w") as f:
             for k in range(len(ids_fit_injobarray)):
                 print(ids_fit_injobarray[k])
-                _cmd = 'uncover_gen1_parrot_phisfh_params.py --catalog {} --fitcatalog {} --outdir {} --dyn {} --idx0 {} --idx1 {}'.format(catalog, fitcatalog, outdir+chaindir, fast_dyn, int(ids_fit_split[k]), int(ids_fit_split[k]+1))
+                _cmd = 'uncover_gen1_parrot_phisfh_params.py --catalog {} --outdir {} --dyn {} --idx0 {} --idx1 {}'.format(catalog, fitcatalog, outdir+chaindir, fast_dyn, int(ids_fit_injobarray[k]), int(ids_fit_injobarray[k]+1))
                 f.write(_cmd+"\n")
     #run_params(jobname='bb', task_dir=taskdir, log_dir=logdir, acc=acc, wtime=wtime, env=env, njob=njobs)
     time.sleep(0.05)
