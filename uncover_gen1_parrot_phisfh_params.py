@@ -169,9 +169,10 @@ badobs_ids_list = []
 print(fit_cat_id)
 
 for _ifit in fit_cat_id:
-    
+
+    ### check the id is in fitting catalog (usephoto=1)
     _can_exist = False
-    try:
+    try: 
         ifit = np.where(cat['id']==_ifit)[0][0]
         objid = cat['id'][ifit]
         print("\nFitting {}".format(objid))
@@ -183,8 +184,19 @@ for _ifit in fit_cat_id:
         badobs_ids_list.append(objid)
         print('no corresponding id')
 
-    _can_fit = False
+    ### check fitting of the id is completed or not
+    hfile = os.path.join(run_params['outdir'], "id_{0}_mcmc_phisfh.h5".format(objid))
+    _notyet_fit = False
     if _can_exist:
+        if os.path.exists(hfile):
+            _notyet_fit = False
+            print(hfile,'has already fitted')
+        else:
+            _notyet_fit = True
+
+    ### check photometry exists or not
+    _can_fit = False
+    if _notyet_fit:
         try:
             obs = load_obs(**run_params)
             _can_fit = True
@@ -207,7 +219,7 @@ for _ifit in fit_cat_id:
         # print(model.theta_index)
 
         ts = time.strftime("%y%b%d-%H.%M", time.localtime())
-        hfile = os.path.join(run_params['outdir'], "id_{0}_mcmc_phisfh.h5".format(objid))
+        #hfile = os.path.join(run_params['outdir'], "id_{0}_mcmc_phisfh.h5".format(objid))
 
         output = fit_model(obs, model, sps, **run_params)
         print('done in {0}s'.format(output["sampling"][1]))

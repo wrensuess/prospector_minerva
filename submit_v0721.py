@@ -15,25 +15,25 @@ def data_dir():
     for _dir in dat_dirs:
         if os.path.isdir(_dir): return _dir
 
-def run_params(task_dir='hoge', log_dir='hoge', acc='bc', jobname='p', wtime=24, env='prosp', njob=10):
+def run_params(pycmd, log_dir='log', acc='bc', jobname='p', wtime=12, env='prosp'):
     
     jname = '{}'.format(jobname)
     
     ts = time.strftime("%y%b%d-%H.%M", time.localtime())
 
+    ''' 
+    TODO: update slurm file for our supercomputer, whatever we end up using
+    '''
     if acc == 'bc':
         txt_acc = '\n'.join(["#!/bin/bash -l",
-                             "#SBATCH --account=blanca-casa\n",
-                             "#SBATCH --partition=blanca\n",
-                             "#SBATCH --qos=preemptable\n"])
+                             "#SBATCH --account=ucb-general\n",
+                             "#SBATCH --partition=amilan\n"])
         
     txt_acc += "#SBATCH --time={:d}:00:00\n".format(wtime)
 
     txt_2 = '\n'.join([
-        "#SBATCH --nodes=1",
-        "#SBATCH --ntasks=10",
         "#SBATCH --job-name={}".format(jname),
-        "#SBATCH --array=0-{}".format(int(njob-1)),
+        "#SBATCH --array=0-9", ###Narray=Ntot/Nfit_par_core
         "#SBATCH --output={}/{}_{}_%A_%a.out".format(log_dir, jname, ts),
         "#SBATCH --error={}/{}_{}_%A_%a.err".format(log_dir, jname, ts),
         "",
@@ -41,12 +41,15 @@ def run_params(task_dir='hoge', log_dir='hoge', acc='bc', jobname='p', wtime=24,
         'echo "start time ... $now"',
         'echo "Running task ID: ${SLURM_ARRAY_TASK_ID}"',
         "",
-        'module purge',
+        "start=$((SLURM_ARRAY_TASK_ID*2))", ###Nfit_par_core=10
+        "end=$((start+1+1))", ###full_fit_id_array[start:end] will be fitted
+        "",
         'module load anaconda',
         "source activate {}".format(env),
         "",
+        'echo "$start -to- $end"',
         "cd /projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/prospector_minerva",
-        "mpirun lb {}/taskfile_${SLURM_ARRAY_TASK_ID}.txt".format(task_dir),
+        "python {} --idx0 $start --idx1 $end".format(pycmd),
         "",
         'now=$(date +"%T")',
         'echo "end time ... $now"',
@@ -54,11 +57,11 @@ def run_params(task_dir='hoge', log_dir='hoge', acc='bc', jobname='p', wtime=24,
 
     txt = txt_acc + txt_2
 
-    f = open('_params.sh','w')
+    f = open('_params.slurm','w')
     f.write(txt)
     f.close()
-    os.system('sbatch _params.sh')
-    #os.system('rm _params.sh')
+    os.system('sbatch _params.slurm')
+    os.system('rm _params.slurm')
     return None
 
 
@@ -70,27 +73,38 @@ if __name__ == '__main__':
     ver = 'v0.05_LW_Kf444w_SUPER'
     spsver = 'spsv0.05'
     outdir = '../test_slurm/'
-    catdir = '../test_prospector/phot_catalog/'
     chaindir = outdir+'chains_parrot_{}_{}'.format(ver, spsver)
     logdir = outdir+'log'
-    taskdir = outdir+'task_lists'
-    fast_dyn = 2
+    fast_dyn = 0
 
+    #ncores = len(tot)
     acc = 'bc' ### we do not have to use this specification, but useful if we use both alpine&blanca
     env = 'prosp'
-    #ncores = len(tot)
-    #ncores = 5 #840 # number of cores to request
-    njobs = 100 #number of job array, max=1000
+    ncores = 5 #840 # number of cores to request
     wtime = int(24) #int(24*7) # time
+    #fit_id = [1,2,3,4,5]
 
     ################################## step 1. sed fit ####################################
 
     catalog = 'MINERVA-{}_{}_CATALOG.fits'.format(field, ver)
-    fitcatalog = catdir+'fitid_MINERVA-{}_{}_CATALOG.txt'.format(field, ver) #need update name
-    ids_fit = np.loadtxt(fitcatalog)
-    print('total number of galaxies to fit:',len(ids_fit))
+    fitcatalog = 'fitid_MINERVA-{}_{}_CATALOG.txt'.format(field, ver) #need update name
 
-    ids_cand_split = list(np.array_split(ids_cand,Ncore))
+    ''' TODO: what is nfiles_phot? how do we fit sub-portion of the phot catalog? '''
+    ''' tot=tot-1 is not working when we use the splitted catalog, so why not to use full photo catalog and specify id here'''
+    ''' we no longer need to split the catalog here, since we need to specify id in parrot.py'''
+    '''
+    cat = Table.read(mdir+catalog)
+    tot = np.arange(len(cat))
+    tot = []
+    for _id in cat['id'].data:
+        #if _id not in nfiles_phot:### nfiles_photo is not clear
+        #if _id in fit_id:
+        tot.append(_id)
+    tot = np.array(tot)
+    tot = tot - 1 # id to idx # this only works if using the full phot catalog
+
+    groups = np.array_split(tot, ncores) # divide the total number into xxx cores
+    '''
 
     isExist = os.path.exists(outdir+chaindir)
     if not isExist:
@@ -100,25 +114,27 @@ if __name__ == '__main__':
     if not isExist:
         os.makedirs(logdir)
         print("new log directory created:", logdir)
-    isExist = os.path.exists(taskdir)
-    if not isExist:
-        os.makedirs(taskdir)
-        print("new task directory created:", taskdir)
 
+    _cmd = 'uncover_gen1_parrot_phisfh_params.py --catalog {} --fitcatalog {} --outdir {} --dyn {}'.format(catalog, fitcatalog, outdir+chaindir, fast_dyn)
+    run_params(_cmd, jobname='bb', log_dir=logdir, acc=acc, wtime=wtime, env=env)
 
-    ids_fit_split = np.array_split(ids_fit, njobs)
-    for j in range(njobs):
-        taskfile = taskdir+"/taskfile_{}.txt".format(int(j))
-        isExist = os.path.exists(taskfile)
-        if isExist:
-            os.system('rm '+taskfile)
-        with open(taskfile, mode="w") as f:
-            for k in range(0,len(ids_cand_split)):
-                _cmd = 'uncover_gen1_parrot_phisfh_params.py --catalog {} --fitcatalog {} --outdir {} --dyn {} --idx0 {} --idx1 {}'.format(catalog, fitcatalog, outdir+chaindir, fast_dyn, int(ids_fit_here), int(ids_fit_here)+1)
-                f.write(_cmd+"\n")
-    #run_params(jobname='bb', task_dir=taskdir, log_dir=logdir, acc=acc, wtime=wtime, env=env, njob=njobs)
-    time.sleep(0.05)
+    '''
+    print(tot,groups)
+    for igroup in range(len(groups)):
+        idx0 = groups[igroup][0]
+        idx1 = groups[igroup][-1] + 1 # +1 b/c id1 is not included when running the fit
+        if 'zspec' in catalog: ### not edited
+            _cmd = 'uncover_gen1_parrot_phisfhzspec_params.py --catalog {} --idx0 {} --idx1 {} --outdir {}'.format(catalog, idx0, idx1, outdir)
+        else:
+            _cmd = 'uncover_gen1_parrot_phisfh_params.py --catalog {} --idx0 {} --idx1 {} --outdir {} --dyn {}'.format(catalog, idx0, idx1, outdir+chaindir, fast_dyn)
+        if igroup == 0:
+            print(_cmd)
+        run_params(_cmd, jobname='bb', log_dir=logdir, acc=acc, i=idx0, wtime=wtime, env=env)
+        time.sleep(0.05)
 
+    #_cmd = "test_job.py" ####### for very simple slurm file test
+    #run_params_test(_cmd)
+    '''
 
 
     '''
@@ -183,3 +199,36 @@ if __name__ == '__main__':
     run_params(_cmd, jobname='spec', log_dir='log/', acc='sc', i=0, wtime=10)
     '''
 
+
+def run_params_test(pycmd):    
+    ts = time.strftime("%y%b%d-%H.%M", time.localtime())
+    txt_acc = '\n'.join(["#!/bin/bash -l",
+                         "#SBATCH --account=ucb-general\n",
+                         "#SBATCH --partition=amilan\n"])
+    txt_acc += "#SBATCH --time=00:10:00\n"
+
+    txt_2 = '\n'.join([
+        "#SBATCH --nodes=1",
+        "#SBATCH --job-name=array_test",
+        "#SBATCH --array=0-4",
+        "#SBATCH --output=test_array/test.out",
+        "#SBATCH --error=test_array/test.err",
+        "",
+        'now=$(date +"%T")',
+        'echo "start time ... $now"',
+        'echo "Running task ID: ${SLURM_ARRAY_TASK_ID}"',
+        "",
+        "python {}".format(pycmd),
+        "",
+        'now=$(date +"%T")',
+        'echo "end time ... $now"',
+        ""])
+
+    txt = txt_acc + txt_2
+
+    f = open('_params.slurm','w')
+    f.write(txt)
+    f.close()
+    os.system('sbatch _params.slurm')
+    os.system('rm _params.slurm')
+    return None
