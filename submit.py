@@ -88,7 +88,7 @@ if __name__ == '__main__':
     catalog = 'MINERVA-{}_{}_CATALOG.fits'.format(field, ver)
     fitcatalog = catdir+'fitid_MINERVA-{}_{}_CATALOG.txt'.format(field, ver) #file includes use_photo=1 sources
     ids_fit = np.loadtxt(fitcatalog)
-    print('total number of galaxies to fit:',len(ids_fit))
+    print('total number of galaxies to fit:',len(ids_fit)) #[Nfit]
 
 
     isExist = os.path.exists(outdir+chaindir)
@@ -105,16 +105,17 @@ if __name__ == '__main__':
         print("new task directory created:", taskdir)
 
 
-    ids_fit_split = np.array_split(ids_fit, njobs)
+    ids_fit_split = np.array_split(ids_fit, njobs) #split [Nfit] into [njobs] jobs
     print(ids_fit_split)
     for j in range(njobs):
         taskfile = taskdir+"/taskfile_{}.txt".format(int(j))
+        ids_fit_injobarray = ids_fit_split[j] #each list MUST include [Nfit]/[njobs]
         isExist = os.path.exists(taskfile)
         if isExist:
             os.system('rm '+taskfile)
         with open(taskfile, mode="w") as f:
-            for k in range(len(ids_fit_split)):
-                print(ids_fit_split[k])
+            for k in range(len(ids_fit_injobarray)):
+                print(ids_fit_injobarray[k])
                 _cmd = 'uncover_gen1_parrot_phisfh_params.py --catalog {} --fitcatalog {} --outdir {} --dyn {} --idx0 {} --idx1 {}'.format(catalog, fitcatalog, outdir+chaindir, fast_dyn, int(ids_fit_split[k]), int(ids_fit_split[k]+1))
                 f.write(_cmd+"\n")
     #run_params(jobname='bb', task_dir=taskdir, log_dir=logdir, acc=acc, wtime=wtime, env=env, njob=njobs)
