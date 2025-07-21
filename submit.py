@@ -46,7 +46,7 @@ def run_params(task_dir='hoge', log_dir='hoge', acc='bc', jobname='p', wtime=24,
         "source activate {}".format(env),
         "",
         "cd /projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/prospector_minerva",
-        "mpirun lb {}/taskfile_${SLURM_ARRAY_TASK_ID}.txt".format(task_dir),
+        "mpirun lb {}/taskfile_${{SLURM_ARRAY_TASK_ID}}.txt".format(task_dir),
         "",
         'now=$(date +"%T")',
         'echo "end time ... $now"',
@@ -106,7 +106,7 @@ if __name__ == '__main__':
 
 
     ids_fit_split = np.array_split(ids_fit, njobs) #split [Nfit] into [njobs] jobs
-    print(ids_fit_split)
+    print(ids_fit_split[0])
     for j in range(njobs):
         taskfile = taskdir+"/taskfile_{}.txt".format(int(j))
         ids_fit_injobarray = ids_fit_split[j] #each list MUST include [Nfit]/[njobs]
