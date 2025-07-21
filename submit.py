@@ -112,8 +112,8 @@ if __name__ == '__main__':
         if isExist:
             os.system('rm '+taskfile)
         with open(taskfile, mode="w") as f:
-            for k in range(0,len(ids_cand_split)):
-                _cmd = 'uncover_gen1_parrot_phisfh_params.py --catalog {} --fitcatalog {} --outdir {} --dyn {} --idx0 {} --idx1 {}'.format(catalog, fitcatalog, outdir+chaindir, fast_dyn, int(ids_fit_here), int(ids_fit_here)+1)
+            for k in range(0,len(ids_fit_split)):
+                _cmd = 'uncover_gen1_parrot_phisfh_params.py --catalog {} --fitcatalog {} --outdir {} --dyn {} --idx0 {} --idx1 {}'.format(catalog, fitcatalog, outdir+chaindir, fast_dyn, int(ids_fit_split[k]), int(ids_fit_split[k]+1))
                 f.write(_cmd+"\n")
     #run_params(jobname='bb', task_dir=taskdir, log_dir=logdir, acc=acc, wtime=wtime, env=env, njob=njobs)
     time.sleep(0.05)
