@@ -106,13 +106,15 @@ if __name__ == '__main__':
 
 
     ids_fit_split = np.array_split(ids_fit, njobs)
+    print(ids_fit_split)
     for j in range(njobs):
         taskfile = taskdir+"/taskfile_{}.txt".format(int(j))
         isExist = os.path.exists(taskfile)
         if isExist:
             os.system('rm '+taskfile)
         with open(taskfile, mode="w") as f:
-            for k in range(0,len(ids_fit_split)):
+            for k in range(len(ids_fit_split)):
+                print(ids_fit_split[k])
                 _cmd = 'uncover_gen1_parrot_phisfh_params.py --catalog {} --fitcatalog {} --outdir {} --dyn {} --idx0 {} --idx1 {}'.format(catalog, fitcatalog, outdir+chaindir, fast_dyn, int(ids_fit_split[k]), int(ids_fit_split[k]+1))
                 f.write(_cmd+"\n")
     #run_params(jobname='bb', task_dir=taskdir, log_dir=logdir, acc=acc, wtime=wtime, env=env, njob=njobs)
