@@ -45,6 +45,7 @@ def run_params(task_dir='hoge', log_dir='hoge', acc='bc', jobname='p', wtime=24,
         'echo "Running task ID: ${SLURM_ARRAY_TASK_ID}"',
         "",
         'module purge',
+        'module load loadbalance',
         'module load anaconda',
         "source activate {}".format(env),
         "",
@@ -122,7 +123,6 @@ if __name__ == '__main__':
                 f.write(_cmd+"\n")
     run_params(jobname='bb', task_dir=taskdir, log_dir=logdir, acc=acc, wtime=wtime, env=env, njob=njobs)
     time.sleep(0.05)
-
 
 
     '''
