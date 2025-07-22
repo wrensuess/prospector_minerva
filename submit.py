@@ -23,8 +23,10 @@ def run_params(task_dir='hoge', log_dir='hoge', acc='bc', jobname='p', wtime=24,
 
     if acc == 'bc':
         txt_acc = '\n'.join(["#!/bin/bash -l",
-                             "#SBATCH --account=blanca-casa\n",
-                             "#SBATCH --partition=blanca\n",
+                             #"#SBATCH --account=blanca-casa\n",
+                             #"#SBATCH --partition=blanca\n",
+                             "#SBATCH --account=ucb-general\n",
+                             "#SBATCH --partition=amilan\n",
                              "#SBATCH --qos=preemptable\n"])
         
     txt_acc += "#SBATCH --time={:d}:00:00\n".format(wtime)
