@@ -69,60 +69,82 @@ def finished_id(indir=None, prior='phisfh', dtype='phot', rt_fname=False, verbos
 
 ''' TODO: update mapping from catalog names to sedpy filter curve names'''
 
-def filter_dictionary(mb=True, alma=True):
+def filter_dictionary(filternames=None):
     '''alma bands includes upper limits, which requires special treatment;
     will be dealt with in get_cat_fnu() & get_cat_enu()
     '''
-    if not mb:
-        filter_dict = {'f435w': 'acs_wfc_f435w',
-                       'f606w': 'acs_wfc_f606w',
-                       'f814w': 'acs_wfc_f814w',
-                       'f090w': 'jwst_f090w',
-                       'f105w': 'wfc3_ir_f105w',
-                       'f115w': 'jwst_f115w',
-                       'f125w': 'wfc3_ir_f125w',
-                       'f140w': 'wfc3_ir_f140w',
-                       'f150w': 'jwst_f150w',
-                       'f160w': 'wfc3_ir_f160w',
-                       'f200w': 'jwst_f200w',
-                       'f277w': 'jwst_f277w',
-                       'f356w': 'jwst_f356w',
-                       'f410m': 'jwst_f410m',
-                       'f444w': 'jwst_f444w',
-                       'alma':  '1d3mm'
-                       }
-    else:
-        filter_dict = {'f435w': 'acs_wfc_f435w',
-                       'f606w': 'acs_wfc_f606w',
-                       'f814w': 'acs_wfc_f814w',
-                       'f070w': 'jwst_f070w',
-                       'f090w': 'jwst_f090w',
-                       'f105w': 'wfc3_ir_f105w',
-                       'f115w': 'jwst_f115w',
-                       'f125w': 'wfc3_ir_f125w',
-                       'f140w': 'wfc3_ir_f140w',
-                       'f140m': 'jwst_f140m',
-                       'f150w': 'jwst_f150w',
-                       'f160w': 'wfc3_ir_f160w',
-                       'f162m': 'jwst_f162m',
-                       'f182m': 'jwst_f182m',
-                       'f200w': 'jwst_f200w',
-                       'f210m': 'jwst_f210m',
-                       'f250m': 'jwst_f250m',
-                       'f277w': 'jwst_f277w',
-                       'f300m': 'jwst_f300m',
-                       'f335m': 'jwst_f335m',
-                       'f356w': 'jwst_f356w',
-                       'f360m': 'jwst_f360m',
-                       'f410m': 'jwst_f410m',
-                       'f430m': 'jwst_f430m',
-                       'f444w': 'jwst_f444w',
-                       'f460m': 'jwst_f460m',
-                       'f480m': 'jwst_f480m',
-                       'alma':  '1d3mm'
-                       }
-    if not alma:
-        filter_dict.pop('alma')
+    all_filters = {
+        # WFC3 / UVIS
+        # 'f200lp':
+        'f275w': 'wfc3_uvis_f275w',
+        # 'f350lp':
+        # 'f438w':
+        # 'f763m':
+        'f775w':'acs_wfc_f775w',
+        # 'f845m':
+        # wfc / acs +uvis
+        'f336w':'wfc3_uvis_f336w',
+        'f435w':'acs_wfc_f435w',
+        'f475w':'wfc3_uvis_f475w',
+        'f606w':'wfc3_uvis_f606w',
+        'f814w':'wfc3_uvis_f814w',
+        'f850lp':'acs_wfc_f850lp',
+        # wfc3 / IR
+        'f105w':'wfc3_ir_f105w',
+        'f110w':'wfc3_ir_f110w',
+        'f125w':'wfc3_ir_f125w',
+        'f140w':'wfc3_ir_f140w',
+        'f160w':'wfc3_ir_f160w',
+        # 'f098m':'wfc3_ir_f098m', # need to add to parrot
+        # 'f127m':
+        # 'f139m':
+        # 'f153m':
+        # jwst/nircam
+        'f070w':'jwst_f070w',
+        'f090w':'jwst_f090w',
+        'f115w':'jwst_f115w',
+        'f150w':'jwst_f150w',
+        'f200w':'jwst_f200w',
+        'f277w':'jwst_f277w',
+        'f356w':'jwst_f356w',
+        'f444w':'jwst_f444w',
+        'f140m':'jwst_f140m',
+        'f162m':'jwst_f162m',
+        'f182m':'jwst_f182m',
+        'f210m':'jwst_f210m',
+        'f250m':'jwst_f250m',
+        'f300m':'jwst_f300m',
+        'f335m':'jwst_f335m',
+        'f360m':'jwst_f360m',
+        'f410m':'jwst_f410m',
+        'f430m':'jwst_f430m',
+        'f460m':'jwst_f460m',
+        'f480m':'jwst_f480m',
+        # 'f212n':
+        # 'f470n':
+        # 'f466n':
+        # 'f405n':
+        # 'f187n':
+        # jwst/miri
+        'f560w':'jwst_f560w',
+        'f770w':'jwst_f770w',
+        'f1000w':'jwst_f1000w',
+        'f1130w':'jwst_f1130w',
+        'f1280w':'jwst_f1280w',
+        'f1500w':'jwst_f1500w',
+        'f1800w':'jwst_f1800w',
+        'f2100w':'jwst_f2100w',
+        'f2550w':'jwst_f2550w' 
+    }
+    
+    # now subselect just the filters we need
+    filter_dict = {}
+    for fil in filternames:
+        try: 
+            filter_dict[fil] = all_filters[fil]
+        except KeyError:
+            print('WARNING: no filter found for '+fil)    
+
     return filter_dict
 
 def get_cat_fnu(idx, catalog, filts):

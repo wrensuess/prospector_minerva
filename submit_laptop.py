@@ -12,7 +12,7 @@ if __name__ == '__main__':
     outdir = '../test_prospector/' # make sure slash at end
     ncores = 1 # this might actually be the number of fits that each core does? test.
     chaindir = 'chains_parrot_{}_{}'.format(ver, spsver) # where to put the chains
-    fast_dyn = 2 # real fits that we're using should be 0! 1 is faster fit for testing, 2 is fully debug mode
+    fast_dyn = 1 # real fits that we're using should be 0! 1 is faster fit for testing, 2 is fully debug mode
 
     ################################## step 1. sed fit ####################################
     
