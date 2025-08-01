@@ -169,7 +169,7 @@ def load_sps(**extras):
 
 badobs_ids_list = []
 print(args.idx0, args.idx1)
-for ifit in np.arange(args.idx0, args.idx1, 1):
+for _ifit in np.arange(args.idx0, args.idx1, 1):
 
     ### check the id is in fitting catalog (usephoto=1)
     _can_exist = False
