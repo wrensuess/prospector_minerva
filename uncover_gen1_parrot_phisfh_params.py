@@ -55,7 +55,7 @@ run_params.update({
 'nested_nlive_init': 1600, # number of initial live points
 'nested_weight_kwargs': {'pfrac': 1.0}, # weight posterior over evidence by 100%
 'nested_dlogz_init': 0.01,
-'nested_target_n_effective': 20000,
+'nested_target_n_effective': 10000, #20000,
 # Model info - not much of this is actually needed
 'zcontinuous': 2,
 'compute_vega_mags': False,
@@ -92,23 +92,20 @@ if not os.path.exists(run_params['outdir']):
     print("new directory created:", run_params['outdir'])
 print(run_params)
 
+# load catalog
 mdir = ut_cwd.photdir
 cat = Table.read(mdir+catalog_file)
 #fit_cat_id = np.loadtxt(mdir+fit_file)[args.idx0:args.idx1] #w/o load balancer, for v0721
 #print(fit_cat_id)
 
-if 'f_alma' in cat.colnames:
-    alma = True
-else:
-    alma = False
-if 'f_f460m' in cat.colnames:
-    mb = True
-else:
-    mb = False
-filter_dict = ut_cwd.filter_dictionary(mb=mb, alma=alma)
+# and get filter names
+all_filternames = np.array([f[2:] for f in cat.dtype.names if f.startswith('f_f')])
+print('all filters in catalog: ', all_filternames)
+# load filter dictionary
+filter_dict = ut_cwd.filter_dictionary(all_filternames)
 filts = list(filter_dict.keys())
 filternames = list(filter_dict.values())
-# print(len(filts))
+print('fitting filters: ', filternames)
 
 def load_obs(idx=None, err_floor=0.05, **extras):
     '''

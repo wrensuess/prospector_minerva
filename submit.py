@@ -23,11 +23,11 @@ def run_params(task_dir='hoge', log_dir='hoge', acc='bc', jobname='p', wtime=24,
 
     if acc == 'bc':
         txt_acc = '\n'.join(["#!/bin/bash -l",
-                             #"#SBATCH --account=blanca-casa\n",
-                             #"#SBATCH --partition=blanca\n",
-                             #"#SBATCH --qos=preemptable\n"])
-                             "#SBATCH --account=ucb-general\n",
-                             "#SBATCH --partition=amilan\n"])
+                             "#SBATCH --account=blanca-casa\n",
+                             "#SBATCH --partition=blanca\n",
+                             "#SBATCH --qos=preemptable\n"])
+                             #"#SBATCH --account=ucb-general\n",
+                             #"#SBATCH --partition=amilan\n"])
                              
         
     txt_acc += "#SBATCH --time={:d}:00:00\n".format(wtime)
@@ -45,6 +45,7 @@ def run_params(task_dir='hoge', log_dir='hoge', acc='bc', jobname='p', wtime=24,
         'echo "Running task ID: ${SLURM_ARRAY_TASK_ID}"',
         "",
         'module purge',
+        'module load slurm/blanca', ### does "purge" purge the slurm? just in case
         'module load loadbalance',
         'module load anaconda',
         "source activate {}".format(env),
@@ -78,7 +79,7 @@ if __name__ == '__main__':
     chaindir = outdir+'chains_parrot_{}_{}'.format(ver, spsver)
     logdir = outdir+'log'
     taskdir = outdir+'task_lists'
-    fast_dyn = 2
+    fast_dyn = 1
 
     acc = 'bc' ### we do not have to use this specification, but useful if we use both alpine&blanca
     env = 'prosp'

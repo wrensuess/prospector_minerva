@@ -32,20 +32,16 @@ print('will be saved to', sname)
 perc_dir = args.dir_collected
 chain_dir = args.dir_indiv
 
-mdir = ut_cwd.get_dir("phot", args.basedir) 
+# load catalog
+mdir = ut_cwd.photdir
 cat = Table.read(mdir+catalog_file)
-if 'f_alma' in cat.colnames:
-    alma = True
-else:
-    alma = False
-if 'f_f460m' in cat.colnames:
-    mb = True
-else:
-    mb = False    
-filter_dict = ut_cwd.filter_dictionary(alma=alma, mb=mb)
+all_filternames = np.array([f[2:] for f in cat.dtype.names if f.startswith('f_f')])
+print('all filters in catalog: ', all_filternames)
+# load filter dictionary
+filter_dict = ut_cwd.filter_dictionary(all_filternames)
 filts = list(filter_dict.keys())
 filternames = list(filter_dict.values())
-
+print('fitting filters: ', filternames)
 
 objid_list = []
 list_chi2_fsps = []
