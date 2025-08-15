@@ -73,13 +73,13 @@ if __name__ == '__main__':
     
     field = 'UDS'
     ver = 'n2.2_m2.0_v1.0_LW_Kf444w_SUPER'
-    spsver = 'spsn2.2_m2.0_v1.0'
+    spsver = 'spsbeta'
     outdir = '../slurm/'
     catdir = '../phot_catalog/'
     chaindir = outdir+'chains_parrot_{}_{}'.format(ver, spsver)
     logdir = outdir+'log'
     taskdir = outdir+'task_lists'
-    fast_dyn = 2
+    fast_dyn = 2 #0:std run, 1:brief run, 2:debug
 
     acc = 'bc' ### we do not have to use this specification, but useful if we use both alpine&blanca
     env = 'prosp'
@@ -96,10 +96,10 @@ if __name__ == '__main__':
     print('total number of galaxies to fit:',len(ids_fit)) #[Nfit]
 
 
-    isExist = os.path.exists(outdir+chaindir)
+    isExist = os.path.exists(chaindir)
     if not isExist:
         os.makedirs(outdir+chaindir)
-        print("new output directory created:", outdir+chaindir)
+        print("new output directory created:", chaindir)
     isExist = os.path.exists(logdir)
     if not isExist:
         os.makedirs(logdir)
