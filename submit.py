@@ -34,7 +34,7 @@ def run_params(task_dir='hoge', log_dir='hoge', acc='bc', jobname='p', wtime=24,
 
     txt_2 = '\n'.join([
         "#SBATCH --nodes=1",
-        "#SBATCH --ntasks=10",
+        "#SBATCH --ntasks=21", #it's better to use numbers which can split 200(=Nsource/Njobarray), +1 for loadbalancer
         "#SBATCH --job-name={}".format(jname),
         "#SBATCH --array=0-{}".format(int(njob-1)),
         "#SBATCH --output={}/{}_{}_%A_%a.out".format(log_dir, jname, ts),
@@ -72,20 +72,20 @@ def run_params(task_dir='hoge', log_dir='hoge', acc='bc', jobname='p', wtime=24,
 if __name__ == '__main__':
     
     field = 'UDS'
-    ver = 'v0.05_LW_Kf444w_SUPER'
-    spsver = 'spsv0.05'
-    outdir = '../test_slurm/'
-    catdir = '../test_prospector/phot_catalog/'
+    ver = 'n2.2_m2.0_v1.0_LW_Kf444w_SUPER'
+    spsver = 'spsn2.2_m2.0_v1.0'
+    outdir = '../slurm/'
+    catdir = '../phot_catalog/'
     chaindir = outdir+'chains_parrot_{}_{}'.format(ver, spsver)
     logdir = outdir+'log'
     taskdir = outdir+'task_lists'
-    fast_dyn = 1
+    fast_dyn = 2
 
     acc = 'bc' ### we do not have to use this specification, but useful if we use both alpine&blanca
     env = 'prosp'
     #ncores = len(tot)
     #ncores = 5 #840 # number of cores to request
-    njobs = 100 #number of job array, max=1000
+    njobs = 1000 #number of job array, max=1000
     wtime = int(24) #int(24*7) # time
 
     ################################## step 1. sed fit ####################################
