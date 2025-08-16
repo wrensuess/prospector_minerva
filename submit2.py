@@ -76,7 +76,8 @@ if __name__ == '__main__':
     spsver = 'spsbeta'
     outdir = '../slurm/'
     catdir = '../phot_catalog/'
-    chaindir = outdir+'chains_parrot_{}_{}'.format(ver, spsver)
+    #chaindir = outdir+'chains_parrot_{}_{}'.format(ver, spsver)
+    chaindir = '/scratch/alpine/ikmi3774/slurm/chains_parrot_{}_{}'.format(ver, spsver)
     logdir = outdir+'log2' ### for 2nd person
     taskdir = outdir+'task_lists2' ### for 2nd person
     fast_dyn = 0 #0:std run, 1:brief run, 2:debug
@@ -120,7 +121,7 @@ if __name__ == '__main__':
             os.system('rm '+taskfile)
         with open(taskfile, mode="w") as f:
             for k in range(len(ids_fit_injobarray)):
-                _cmd = 'python uncover_gen1_parrot_phisfh_params.py --catalog {} --outdir {} --dyn {} --idx0 {} --idx1 {}'.format(catalog, outdir+chaindir, fast_dyn, int(ids_fit_injobarray[k]), int(ids_fit_injobarray[k]+1))
+                _cmd = 'python uncover_gen1_parrot_phisfh_params.py --catalog {} --outdir {} --dyn {} --idx0 {} --idx1 {}'.format(catalog, chaindir, fast_dyn, int(ids_fit_injobarray[k]), int(ids_fit_injobarray[k]+1))
                 f.write(_cmd+"\n")
     run_params(jobname='bb', task_dir=taskdir, log_dir=logdir, acc=acc, wtime=wtime, env=env, njob=njobs)
     time.sleep(0.05)

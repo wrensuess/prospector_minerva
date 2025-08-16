@@ -76,7 +76,8 @@ if __name__ == '__main__':
     spsver = 'spsbeta'
     outdir = '../slurm/'
     catdir = '../phot_catalog/'
-    chaindir = outdir+'chains_parrot_{}_{}'.format(ver, spsver)
+    #chaindir = outdir+'chains_parrot_{}_{}'.format(ver, spsver)
+    chaindir = '/scratch/alpine/ikmi3774/slurm/chains_parrot_{}_{}'.format(ver, spsver)
     logdir = outdir+'log'
     taskdir = outdir+'task_lists'
     fast_dyn = 0 #0:std run, 1:brief run, 2:debug
