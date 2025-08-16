@@ -112,7 +112,7 @@ if __name__ == '__main__':
 
 
     ids_fit_split = np.array_split(ids_fit, njobs) #split [Nfit] into [njobs] jobs
-    #print(ids_fit_split[0])
+    print(ids_fit_split[0])
     for j in range(njobs):
         taskfile = taskdir+"/taskfile_{}.txt".format(int(j))
         ids_fit_injobarray = ids_fit_split[j] #each list MUST include [Nfit]/[njobs]
