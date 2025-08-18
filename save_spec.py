@@ -1,19 +1,10 @@
-'''creates *_spec_*.npz
-'''
-
-import os, sys, time
+import os
 import numpy as np
-import numpy.ma as ma
 from astropy.table import Table
-import prospect.io.read_results as reader
-
 import utils as ut_cwd
-import emulator as Emu
-
-multiemul_file = os.path.join(ut_cwd.get_dir(dirtype='pirate', outdir=ut_cwd.piratedir), 
-    "parrot_v4_obsphot_512n_5l_24s_00z24.npy")
-
 import argparse
+import h5py
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--prior', type=str, default='phisfh', help='phisfh, phisfhzfixed')
 parser.add_argument('--catalog', type=str, default="UNCOVER_v5.0.1_LW_SUPER_CATALOG.fits")
@@ -26,100 +17,84 @@ print(args)
 which_prior = args.prior
 catalog_file = args.catalog
 
-sname = os.path.join(args.dir_collected, 'chains_{}'.format(args.prior)+'.npz')
+sname = os.path.join(args.dir_collected, f'chains_{args.prior}.h5')
 print('will be saved to', sname)
 
 perc_dir = args.dir_collected
 chain_dir = args.dir_indiv
 
-# load catalog
 mdir = ut_cwd.photdir
 cat = Table.read(mdir+catalog_file)
-# and get filter names
 all_filternames = np.array([f[2:] for f in cat.dtype.names if f.startswith('f_f')])
 print('all filters in catalog: ', all_filternames)
-# load filter dictionary
 filter_dict = ut_cwd.filter_dictionary(all_filternames)
 filts = list(filter_dict.keys())
 filternames = list(filter_dict.values())
 print('fitting filters: ', filternames)
 
+all_files = sorted([f for f in os.listdir(chain_dir) if f.endswith(f'_spec_{which_prior}.npz')])
+n_obj = len(all_files)
 
-objid_list = []
-list_chi2_fsps = []
+# Check shapes from first file
+sample_file = os.path.join(chain_dir, all_files[0])
+dat = np.load(sample_file, allow_pickle=True)
+modspec_map_shape = dat['modspec_map'].shape
+modmag_map_shape = dat['modmags_map'].shape
+obs_fnu_shape = ut_cwd.get_fnu_maggies(idx=0, catalog=cat, filts=filts).shape
+obs_enu_shape = ut_cwd.get_enu_maggies(idx=0, catalog=cat, filts=filts).shape
 
-list_spec_map = []
-list_modmag_map = []
-
-list_obsmag = []
-list_obsmag_unc = []
-
-list_nbands = []
-
-print(perc_dir)
-all_files = os.listdir(chain_dir)
-cnt = 0
+objid = np.empty(n_obj, dtype=np.int32)
+chi2_fsps = np.empty(n_obj, dtype=np.float32)
+nbands = np.empty(n_obj, dtype=np.int32)
+modspec_map = np.empty((n_obj,) + modspec_map_shape, dtype=np.float32)
+modmag_map = np.empty((n_obj,) + modmag_map_shape, dtype=np.float32)
+obsmag = np.empty((n_obj,) + obs_fnu_shape, dtype=np.float32)
+obsmag_unc = np.empty((n_obj,) + obs_enu_shape, dtype=np.float32)
 
 def chi2(modmags, obsmags, obsunc):
     _obsunc = np.clip(obsunc, a_min=obsmags*0.05, a_max=None)
     return (((modmags-obsmags)/_obsunc)**2).sum()
 
+for i, this_file in enumerate(all_files):
+    mid = int(this_file.split('_')[1])
+    dat = np.load(os.path.join(chain_dir, this_file), allow_pickle=True)
+    modspec_map[i] = dat['modspec_map']
+    modmag_map[i] = dat['modmags_map']
 
-def build_model(obs=None, emulfp=multiemul_file, **extras):
+    _idx = np.where(cat['id']==mid)[0][0]
+    obs_fnu = ut_cwd.get_fnu_maggies(idx=_idx, catalog=cat, filts=filts)
+    obs_enu = ut_cwd.get_enu_maggies(idx=_idx, catalog=cat, filts=filts)
+    obsmag[i] = obs_fnu
+    obsmag_unc[i] = obs_enu
 
-    import params_prosp_parrot as pfile
-    model_params, fit_order = pfile.params_parrot_phisfh(obs=obs)
+    # chi2
+    phot_mask = (obs_enu > 0) & (np.isfinite(obs_fnu))
+    _mask = np.ones_like(obs_fnu, dtype=bool)
+    for k in range(len(obs_fnu)):
+        if obs_enu[k] > 0:
+            if obs_fnu[k] < 0 and obs_fnu[k] + 5*obs_enu[k] < 0:
+                _mask[k] = False
+    phot_mask &= _mask
+    mask = phot_mask
 
-    return Emu.EmulatorBeta(model_params, fp=emulfp, obs=obs, param_order=fit_order)
+    obsmags = obs_fnu[mask]
+    obsunc = obs_enu[mask]
+    nbands[i] = len(obsmags)
+    fsps_mags = dat['modmags_map'][mask]
+    chi2_fsps[i] = chi2(fsps_mags, obsmags, obsunc)
+    objid[i] = mid
 
-h5_foo = ut_cwd.finished_id(indir=chain_dir, prior=which_prior, dtype='mcmc', rt_fname=True, verbose=True)
-h5_foo = os.path.join(chain_dir, h5_foo[0])
-print('loaded h5 for mod_fsps():', h5_foo)
-res, obs, _ = reader.results_from(h5_foo, dangerous=False)
-model = build_model(obs=obs)
+    if (i+1) % 100 == 0:
+        print(i+1)
 
-for this_file in all_files:
-    if this_file.endswith('_spec_{}.npz'.format(which_prior)):
-        mid = int(this_file.split('_')[1])
-        dat = np.load(os.path.join(chain_dir, this_file), allow_pickle=True)
-        list_spec_map.append(dat['modspec_map'])
-        list_modmag_map.append(dat['modmags_map'])
+with h5py.File(sname, 'w') as h5f:
+    h5f.create_dataset('objid', data=objid, compression='gzip', chunks=True)
+    h5f.create_dataset('obsmag', data=obsmag, compression='gzip', chunks=(1,) + obs_fnu_shape)
+    h5f.create_dataset('obsmag_unc', data=obsmag_unc, compression='gzip', chunks=(1,) + obs_enu_shape)
+    h5f.create_dataset('modspec_map', data=modspec_map, compression='gzip', chunks=(1,) + modspec_map_shape)
+    h5f.create_dataset('modmag_map', data=modmag_map, compression='gzip', chunks=(1,) + modmag_map_shape)
+    h5f.create_dataset('chi2_fsps', data=chi2_fsps, compression='gzip', chunks=True)
+    h5f.create_dataset('nbands', data=nbands, compression='gzip', chunks=True)
 
-        _idx = np.where(cat['id']==mid)[0][0]
-
-        obs_fnu = ut_cwd.get_fnu_maggies(idx=_idx, catalog=cat, filts=filts)
-        obs_enu = ut_cwd.get_enu_maggies(idx=_idx, catalog=cat, filts=filts)
-        list_obsmag.append(obs_fnu)
-        list_obsmag_unc.append(obs_enu)
-
-        # chi2
-        phot_mask = (obs_enu > 0) & (np.isfinite(obs_fnu))
-        _mask = np.ones_like(obs_fnu, dtype=bool)
-        for k in range(len(obs_fnu)):
-            if obs_enu[k] > 0:
-                if obs_fnu[k] < 0 and obs_fnu[k] + 5*obs_enu[k] < 0:
-                    _mask[k] = False
-        phot_mask &= _mask
-        mask = phot_mask
-    
-        obsmags = obs_fnu[mask]
-        obsunc = obs_enu[mask]
-        list_nbands.append(len(obsmags))
-        fsps_mags = dat['modmags_map'][mask]
-        
-        chi2_fsps = chi2(fsps_mags, obsmags, obsunc)
-        list_chi2_fsps.append(chi2_fsps)
-
-        objid_list.append(mid)
-        cnt += 1
-
-        if cnt % 100 == 0:
-            print(cnt)
-        
-np.savez(sname, objid=objid_list, obsmag=list_obsmag, obsmag_unc=list_obsmag_unc,
-         modspec_map=list_spec_map, modmag_map=list_modmag_map, 
-         chi2_fsps=list_chi2_fsps,
-         nbands=list_nbands,
-        )
-print('length:', len(objid_list))
+print('length:', n_obj)
 print('saved to', sname)
