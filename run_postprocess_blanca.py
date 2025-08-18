@@ -28,13 +28,13 @@ ts = time.strftime("%y%b%d-%H.%M", time.localtime())
 ids = np.array([int(i.split('_')[1]) for i in  os.listdir(indir)]) 
 ids_split = np.array_split(ids, njobs)
 # save each chunk to a separate file
-os.makedirs('id_files', exist_ok=True)
+os.makedirs(outdir+'id_files', exist_ok=True)
 for i, ids_chunk in enumerate(ids_split):
-    np.savetxt(f'id_files/ids_postprocess_{i}.txt', ids_chunk, fmt='%d')
+    np.savetxt(f'{outdir}/id_files/ids_postprocess_{i}.txt', ids_chunk, fmt='%d')
 
 # now create the command to submit
 _cmd = "postprocess_parrot_wrap.py --prior {} --fit 'fid' --catalog {} --indir {} --outdir {} --narr {} --iarr {} --ids_file {} --ddir {}".format(prior, 
-    catalog, indir, outdir, narr, iarr, 'id_files/ids_postprocess_${SLURM_ARRAY_TASK_ID}', ddir)
+    catalog, indir, outdir, narr, iarr, outdir+'id_files/ids_postprocess_${SLURM_ARRAY_TASK_ID}', ddir)
 
 # and make our slurm file 
 txt_acc = '\n'.join(["#!/bin/bash -l",
