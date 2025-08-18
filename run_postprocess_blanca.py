@@ -17,7 +17,7 @@ env = '/projects/kasu8993/software/anaconda/envs/prosp'
 spsver = 'spsv0.0'
 sps = 'parrot' 
 prior = 'phisfh' # 'phisfhzfixed' if you're using zspec fits
-code_dir = '/projects/kasu8993/minerva/prospector_minerva/'
+code_dir = '/projects/kasu8993/prospector_minerva/'
 
 njobs = 20 #number of job array, max=1000
 wtime = int(12) # time
@@ -33,13 +33,13 @@ for i, ids_chunk in enumerate(ids_split):
     np.savetxt(f'{outdir}/id_files/ids_postprocess_{i}.txt', ids_chunk, fmt='%d')
 
 # now create the command to submit
-_cmd = "postprocess_parrot_wrap.py --prior {} --fit 'fid' --catalog {} --indir {} --outdir {} --narr {} --iarr {} --ids_file {} --ddir {}".format(prior, 
+_cmd = "python postprocess_parrot_wrap.py --prior {} --fit 'fid' --catalog {} --indir {} --outdir {} --narr {} --iarr {} --ids_file {} --ddir {}".format(prior, 
     catalog, indir, outdir, narr, iarr, outdir+'id_files/ids_postprocess_${SLURM_ARRAY_TASK_ID}', ddir)
 
 # and make our slurm file 
 txt_acc = '\n'.join(["#!/bin/bash -l",
                              "#SBATCH --account=blanca-casa\n",
-                             "#SBATCH --partition=blanca-casa\n",
+                             "#SBATCH --partition=blanca\n",
                              "#SBATCH --qos=preemptable\n",
                              "#SBATCH --time={:d}:00:00\n".format(wtime),
                              "#SBATCH --nodes=1",
