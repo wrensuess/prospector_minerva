@@ -39,7 +39,7 @@ _cmd = "postprocess_parrot_wrap.py --prior {} --fit 'fid' --catalog {} --indir {
 # and make our slurm file 
 txt_acc = '\n'.join(["#!/bin/bash -l",
                              "#SBATCH --account=blanca-casa\n",
-                             "#SBATCH --partition=blanca\n",
+                             "#SBATCH --partition=blanca-casa\n",
                              "#SBATCH --qos=preemptable\n",
                              "#SBATCH --time={:d}:00:00\n".format(wtime),
                              "#SBATCH --nodes=1",
@@ -65,4 +65,4 @@ txt_acc = '\n'.join(["#!/bin/bash -l",
 with open(outdir+'slurm_postprocess.sh', 'w') as f:
     f.write(txt_acc)
 
-os.system('sbatch slurm_postprocess.sh')    
+os.system('sbatch {}/slurm_postprocess.sh'.format(outdir))    
