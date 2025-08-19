@@ -13,7 +13,7 @@ outdir = '/scratch/alpine/kasu8993/test_postprocess/'
 log_dir = '/scratch/alpine/kasu8993/test_postprocess/logs/'
 ddir = '/' # we're giving absolute paths so this is just a placeholder 
 narr = 1; iarr = 0 # we're going to make our own ID lists
-env = '/projects/kasu8993/software/anaconda/envs/test_fsps'
+env = '/projects/kasu8993/software/anaconda/envs/prosp'
 spsver = 'spsv0.0'
 sps = 'parrot' 
 prior = 'phisfh' # 'phisfhzfixed' if you're using zspec fits

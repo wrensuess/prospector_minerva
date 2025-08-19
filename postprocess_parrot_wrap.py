@@ -5,7 +5,7 @@ from astropy.table import Table
 
 import prospect.io.read_results as reader
 from prospect.sources import FastStepBasis
-from prospect.models.sedmodel import SpecModel
+from prospect.models.sedmodel import PolySpecModel
 from prospect.models import priors_beta as PZ
 
 import utils as ut_cwd
@@ -68,7 +68,7 @@ def build_model(obs=None, free_gas_logu=False, **extras):
     import params_prosp_fsps as pfile
     model_params, fit_order = pfile.params_fsps_phisfh(obs=obs, free_gas_logu=free_gas_logu)
 
-    return SpecModel(model_params)
+    return PolySpecModel(model_params)
 
 def build_sps_fsps(zcontinuous=2, compute_vega_mags=False, interp_type='logarithmic', **extras):
     sps = FastStepBasis(zcontinuous=zcontinuous, compute_vega_mags=compute_vega_mags)
