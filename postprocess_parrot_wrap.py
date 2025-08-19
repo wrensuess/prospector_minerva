@@ -5,7 +5,7 @@ from astropy.table import Table
 
 import prospect.io.read_results as reader
 from prospect.sources import FastStepBasis
-from prospect.models.sedmodel import PolySpecModel
+from prospect.models.sedmodel import SpecModel
 from prospect.models import priors_beta as PZ
 
 import utils as ut_cwd
