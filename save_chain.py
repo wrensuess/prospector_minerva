@@ -37,14 +37,8 @@ def process_single_file(indexed_info, dir_indiv):
     chain_data[:, 2]  = chains['stellar_mass']
     chain_data[:, 3]  = chains['logzsol']
     chain_data[:, 4]  = chains['mwa']
-
-    chain_data[:, 5]  = chains['sfr10']
-    chain_data[:, 6]  = chains['sfr30']
-    chain_data[:, 7]  = chains['sfr100']
-    chain_data[:, 8]  = chains['ssfr10']
-    chain_data[:, 9]  = chains['ssfr30']
-    chain_data[:, 10] = chains['ssfr100']
-
+    chain_data[:, 5:8] = chains['sfr']
+    chain_data[:, 8:11] = chains['ssfr'] 
     chain_data[:, 11] = chains['dust2']
     chain_data[:, 12] = chains['dust_index']
     chain_data[:, 13] = chains['dust1_fraction']
