@@ -95,7 +95,7 @@ def main():
     n_workers = args.n_workers or min(cpu_count(), 64)
     os.makedirs(args.dir_collected, exist_ok=True)
 
-    sname = os.path.join(args.dir_collected, f'chains_{args.prior}.h5')
+    sname = os.path.join(args.dir_collected, f'spec_{args.prior}.h5')
     print(f"Output file: {sname}")
     print(f"Using {n_workers} workers with chunk size {args.chunk_size}")
 
