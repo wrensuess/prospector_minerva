@@ -41,12 +41,12 @@ def process_single_file(indexed_info, dir_indiv, catalog_ids, catalog_zspec):
         stellar_mass=perc['stellar_mass'],
         met=perc['logzsol'],
         mwa=perc['mwa'],
-        sfr10=perc['sfr'][0],
-        sfr30=perc['sfr'][1],
-        sfr100=perc['sfr'][2],
-        ssfr10=perc['ssfr'][0],
-        ssfr30=perc['ssfr'][1],
-        ssfr100=perc['ssfr'][2],
+        sfr10=perc['sfr'][0,:],
+        sfr30=perc['sfr'][1,:],
+        sfr100=perc['sfr'][2,:],
+        ssfr10=perc['ssfr'][0,:],
+        ssfr30=perc['ssfr'][1,:],
+        ssfr100=perc['ssfr'][2,:],
         dust2=perc['dust2'],
         dust_index=perc['dust_index'],
         dust1_fraction=perc['dust1_fraction'],
@@ -128,6 +128,7 @@ def main():
     with np.load(sample_file, allow_pickle=True) as dat:
         perc = dat['percentiles'][()]
         rest_shapes = {k: v.shape for k, v in perc.items() if k.startswith('rest_')}
+    n_perc = perc['zred'].shape[0]    
 
     print('perc_sfr shape:', perc['sfr'].shape)
     print('perc_ssfr shape:', perc['ssfr'].shape)
@@ -146,7 +147,7 @@ def main():
                        'gas_logz','duste_qpah','duste_umin','log_duste_gamma','zred_ml','zred_spec']
         for key in scalar_keys:
             dtype = np.int32 if key=='objid' else np.float32
-            datasets[key] = h5f.create_dataset(key, shape=(n_obj,), dtype=dtype,
+            datasets[key] = h5f.create_dataset(key, shape=(n_obj,n_perc), dtype=dtype,
                                               compression='gzip', chunks=True)
 
         for key, shape in rest_shapes.items():
