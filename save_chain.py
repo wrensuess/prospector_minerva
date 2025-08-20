@@ -81,7 +81,7 @@ def main():
     parser.add_argument('--dir_indiv', type=str, default='chains_parrot')
     parser.add_argument('--dir_collected', type=str, default='results')
     parser.add_argument('--n_workers', type=int, default=None)
-    parser.add_argument('--chunk_size', type=int, default=500, 
+    parser.add_argument('--chunk_size', type=int, default=25, 
                         help='files per chunk for parallel processing')
     parser.add_argument('--io_buffer', type=int, default=10,
                         help='number of chunks to buffer in memory')
@@ -166,7 +166,7 @@ def main():
                 chunk_idx = future_to_chunk[future]
                 
                 try:
-                    results = future.get()
+                    results = future.result()
                     
                     # Write results to HDF5
                     chunk_start = chunk_idx * args.chunk_size
