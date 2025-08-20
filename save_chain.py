@@ -24,6 +24,12 @@ keys = ['zred', 'total_mass', 'stellar_mass', 'logzsol', 'mwa',
         'logsfr_ratios_4', 'logsfr_ratios_5', 'logsfr_ratios_6'
        ]
 
+# make an output directory if it doesn't exist
+if not os.path.exists(args.dir_collected):
+    os.makedirs(args.dir_collected)
+sname = os.path.join(args.dir_collected, 'chains_{}'.format(args.prior)+'.npz')
+print('will be saved to', sname)
+
 # get list of all the files
 all_files = sorted([f for f in os.listdir(args.dir_indiv) if f.endswith(f'unw_{which_prior}.npz')])
 n_obj = len(all_files)
