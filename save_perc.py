@@ -129,6 +129,10 @@ def main():
         perc = dat['percentiles'][()]
         rest_shapes = {k: v.shape for k, v in perc.items() if k.startswith('rest_')}
 
+    print('perc_sfr shape:', perc['sfr'].shape)
+    print('perc_ssfr shape:', perc['ssfr'].shape)
+    print('zphot shape:', perc['zred'].shape)    
+
     # Build indexed info
     file_infos = [get_file_info(f) for f in all_files]
     indexed_infos = [(i, objid, fname) for i, (objid, fname) in enumerate(file_infos)]
