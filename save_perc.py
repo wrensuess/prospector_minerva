@@ -100,7 +100,7 @@ def main():
     parser.add_argument('--prior', type=str, default='phisfh')
     parser.add_argument('--dir_indiv', type=str, default='chains_parrot')
     parser.add_argument('--dir_collected', type=str, default='results')
-    parser.add_argument('--catalog', type=str, default="UNCOVER_v5.0.1_LW_SUPER_CATALOG.fits")
+    parser.add_argument('--catalog_path', type=str, default="UNCOVER_v5.0.1_LW_SUPER_CATALOG.fits")
     parser.add_argument('--n_workers', type=int, default=None)
     parser.add_argument('--chunk_size', type=int, default=25)
     parser.add_argument('--io_buffer', type=int, default=10)
@@ -113,7 +113,7 @@ def main():
     print(f"Using {n_workers} workers with chunk size {args.chunk_size}")
 
     # Load catalog
-    cat = Table.read('phot_catalog/' + args.catalog)
+    cat = Table.read(args.catalog_path)
     catalog_ids = cat['id'].data
     catalog_zspec = cat['z_spec'].data
 
