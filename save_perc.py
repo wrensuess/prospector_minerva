@@ -151,7 +151,7 @@ def main():
                                               compression='gzip', chunks=True)
 
         for key, shape in rest_shapes.items():
-            datasets[key] = h5f.create_dataset(key, shape=(n_obj,)+shape,
+            datasets[key] = h5f.create_dataset(key, shape=(n_obj,n_perc)+shape,
                                               dtype=np.float32,
                                               compression='gzip', chunks=(1,)+shape)
 
