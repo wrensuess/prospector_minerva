@@ -1,171 +1,204 @@
-'''creates *_perc_*.h5
-ALL prospector model paramters are saved
-'''
+#!/usr/bin/env python3
+"""collect percentiles from individual NPZ files into a single HDF5 file with multiprocessing"""
 import os
 import numpy as np
-from astropy.table import Table
 import argparse
 import h5py
+from multiprocessing import cpu_count
+from concurrent.futures import ProcessPoolExecutor, wait, FIRST_COMPLETED
+import time
+from astropy.table import Table
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--prior', type=str, default='phisfh')
-parser.add_argument('--catalog', type=str, default="UNCOVER_v5.0.1_LW_SUPER_CATALOG.fits")
-parser.add_argument('--indir', type=str, default='chains_parrot', help='input folder storing chains')
-parser.add_argument('--outdir', type=str, default='results', help='output folder storing unweighted chains and quantiles')
-args = parser.parse_args()
-print(args)
+# ----------------------
+# Helpers (top-level so they're pickleable)
+# ----------------------
 
-which_prior = args.prior
-catalog_file = args.catalog
+def get_file_info(file_path):
+    """Get (objid, filename) from basename without loading data."""
+    filename = os.path.basename(file_path)
+    return int(filename.split('_')[1]), file_path  # (objid, filename)
 
-foo = args.indir
-if foo.endswith('/'):
-    foo = foo[:-1]
-sname = os.path.join(args.outdir, f'quant_{args.prior}_{foo}.h5')
-print('will be saved to', sname)
+def process_single_file(indexed_info, dir_indiv, catalog_ids, catalog_zspec):
+    """
+    Worker: load one NPZ and return all percentile fields.
+    indexed_info = (idx, objid, filename)
+    """
+    idx, objid, filename = indexed_info
+    full_path = os.path.join(dir_indiv, filename)
 
-perc_dir = args.indir
-cat = Table.read('phot_catalog/' + catalog_file)
+    with np.load(full_path, allow_pickle=True) as dat:
+        perc = dat['percentiles'][()]
+        zred_ml = dat['chain_ml'][0]
 
-# Get list of files
-all_files = sorted([f for f in os.listdir(perc_dir) if f.endswith(f'perc_{which_prior}.npz')])
-n_obj = len(all_files)
+    # Lookup spec-z from catalog
+    z_spec = catalog_zspec[catalog_ids == objid][0]
 
-# Check shapes from first file
-sample_file = os.path.join(perc_dir, all_files[0])
-dat = np.load(sample_file, allow_pickle=True)
-perc = dat['percentiles'][()]
-rest_UVJugi_shape = perc['rest_UVJugi'].shape
-rest_UVJugi_map_shape = perc['rest_UVJugi_map'].shape
-rest_UVJugi_colors_shape = perc['rest_UVJugi_colors'].shape
-rest_UVJugi_colors_map_shape = perc['rest_UVJugi_colors_map'].shape
-rest_gz_shape = perc['rest_gz'].shape
-rest_gz_map_shape = perc['rest_gz_map'].shape
-rest_gz_colors_shape = perc['rest_gz_colors'].shape
-rest_gz_colors_map_shape = perc['rest_gz_colors_map'].shape
-rest_NUVrJ_shape = perc['rest_NUVrJ'].shape
-rest_NUVrJ_map_shape = perc['rest_NUVrJ_map'].shape
-rest_NUVrJ_colors_shape = perc['rest_NUVrJ_colors'].shape
-rest_NUVrJ_colors_map_shape = perc['rest_NUVrJ_colors_map'].shape
+    # Return all relevant fields
+    result = dict(
+        objid=objid,
+        zred=perc['zred'],
+        total_mass=perc['total_mass'],
+        stellar_mass=perc['stellar_mass'],
+        met=perc['logzsol'],
+        mwa=perc['mwa'],
+        sfr10=perc['sfr'][0],
+        sfr30=perc['sfr'][1],
+        sfr100=perc['sfr'][2],
+        ssfr10=perc['ssfr'][0],
+        ssfr30=perc['ssfr'][1],
+        ssfr100=perc['ssfr'][2],
+        dust2=perc['dust2'],
+        dust_index=perc['dust_index'],
+        dust1_fraction=perc['dust1_fraction'],
+        log_fagn=perc['log_fagn'],
+        log_agn_tau=perc['log_agn_tau'],
+        gas_logz=perc['gas_logz'],
+        duste_qpah=perc['duste_qpah'],
+        duste_umin=perc['duste_umin'],
+        log_duste_gamma=perc['log_duste_gamma'],
+        rest_UVJugi=perc['rest_UVJugi'],
+        rest_UVJugi_map=perc['rest_UVJugi_map'],
+        rest_UVJugi_colors=perc['rest_UVJugi_colors'],
+        rest_UVJugi_colors_map=perc['rest_UVJugi_colors_map'],
+        rest_gz=perc['rest_gz'],
+        rest_gz_map=perc['rest_gz_map'],
+        rest_gz_colors=perc['rest_gz_colors'],
+        rest_gz_colors_map=perc['rest_gz_colors_map'],
+        rest_NUVrJ=perc['rest_NUVrJ'],
+        rest_NUVrJ_map=perc['rest_NUVrJ_map'],
+        rest_NUVrJ_colors=perc['rest_NUVrJ_colors'],
+        rest_NUVrJ_colors_map=perc['rest_NUVrJ_colors_map'],
+        zred_ml=zred_ml,
+        zred_spec=z_spec
+    )
+    return idx, result
 
-# Pre-allocate arrays
-objid = np.empty(n_obj, dtype=np.int32)
-zred_spec = np.empty(n_obj, dtype=np.float32)
-zred_ml = np.empty(n_obj, dtype=np.float32)
-zred = np.empty(n_obj, dtype=np.float32)
-total_mass = np.empty(n_obj, dtype=np.float32)
-stellar_mass = np.empty(n_obj, dtype=np.float32)
-met = np.empty(n_obj, dtype=np.float32)
-dust2 = np.empty(n_obj, dtype=np.float32)
-dust_index = np.empty(n_obj, dtype=np.float32)
-dust1_fraction = np.empty(n_obj, dtype=np.float32)
-log_fagn = np.empty(n_obj, dtype=np.float32)
-log_agn_tau = np.empty(n_obj, dtype=np.float32)
-gas_logz = np.empty(n_obj, dtype=np.float32)
-duste_qpah = np.empty(n_obj, dtype=np.float32)
-duste_umin = np.empty(n_obj, dtype=np.float32)
-log_duste_gamma = np.empty(n_obj, dtype=np.float32)
-mwa = np.empty(n_obj, dtype=np.float32)
-sfr10 = np.empty(n_obj, dtype=np.float32)
-sfr30 = np.empty(n_obj, dtype=np.float32)
-sfr100 = np.empty(n_obj, dtype=np.float32)
-ssfr10 = np.empty(n_obj, dtype=np.float32)
-ssfr30 = np.empty(n_obj, dtype=np.float32)
-ssfr100 = np.empty(n_obj, dtype=np.float32)
+def process_chunk(indexed_chunk, dir_indiv, catalog_ids, catalog_zspec):
+    """Worker: process a whole chunk; returns (results, errors)."""
+    results, errors = [], []
+    for entry in indexed_chunk:
+        try:
+            results.append(process_single_file(entry, dir_indiv, catalog_ids, catalog_zspec))
+        except Exception as e:
+            idx, objid, filename = entry
+            errors.append(f"{filename}: {e}")
+    return results, errors
 
-rest_UVJugi = np.empty((n_obj,) + rest_UVJugi_shape, dtype=np.float32)
-rest_UVJugi_map = np.empty((n_obj,) + rest_UVJugi_map_shape, dtype=np.float32)
-rest_UVJugi_colors = np.empty((n_obj,) + rest_UVJugi_colors_shape, dtype=np.float32)
-rest_UVJugi_colors_map = np.empty((n_obj,) + rest_UVJugi_colors_map_shape, dtype=np.float32)
-rest_gz = np.empty((n_obj,) + rest_gz_shape, dtype=np.float32)
-rest_gz_map = np.empty((n_obj,) + rest_gz_map_shape, dtype=np.float32)
-rest_gz_colors = np.empty((n_obj,) + rest_gz_colors_shape, dtype=np.float32)
-rest_gz_colors_map = np.empty((n_obj,) + rest_gz_colors_map_shape, dtype=np.float32)
-rest_NUVrJ = np.empty((n_obj,) + rest_NUVrJ_shape, dtype=np.float32)
-rest_NUVrJ_map = np.empty((n_obj,) + rest_NUVrJ_map_shape, dtype=np.float32)
-rest_NUVrJ_colors = np.empty((n_obj,) + rest_NUVrJ_colors_shape, dtype=np.float32)
-rest_NUVrJ_colors_map = np.empty((n_obj,) + rest_NUVrJ_colors_map_shape, dtype=np.float32)
+def write_results(results, datasets):
+    """Single-writer: place each result at its final index (preserve input order)."""
+    for idx, res in results:
+        for key, ds in datasets.items():
+            ds[idx] = res[key]
+    return len(results)
 
-for i, this_file in enumerate(all_files):
-    mid = int(this_file.split('_')[1])
-    ffnpz = os.path.join(perc_dir, this_file)
-    dat = np.load(ffnpz, allow_pickle=True)
-    perc = dat['percentiles'][()]
-    objid[i] = mid
-    zred[i] = perc['zred']
-    total_mass[i] = perc['total_mass']
-    stellar_mass[i] = perc['stellar_mass']
-    met[i] = perc['logzsol']
-    mwa[i] = perc['mwa']
-    sfr10[i] = perc['sfr'][0]
-    sfr30[i] = perc['sfr'][1]
-    sfr100[i] = perc['sfr'][2]
-    ssfr10[i] = perc['ssfr'][0]
-    ssfr30[i] = perc['ssfr'][1]
-    ssfr100[i] = perc['ssfr'][2]
-    dust2[i] = perc['dust2']
-    dust_index[i] = perc['dust_index']
-    dust1_fraction[i] = perc['dust1_fraction']
-    log_fagn[i] = perc['log_fagn']
-    log_agn_tau[i] = perc['log_agn_tau']
-    gas_logz[i] = perc['gas_logz']
-    duste_qpah[i] = perc['duste_qpah']
-    duste_umin[i] = perc['duste_umin']
-    log_duste_gamma[i] = perc['log_duste_gamma']
-    rest_UVJugi[i] = perc['rest_UVJugi']
-    rest_UVJugi_map[i] = perc['rest_UVJugi_map']
-    rest_UVJugi_colors[i] = perc['rest_UVJugi_colors']
-    rest_UVJugi_colors_map[i] = perc['rest_UVJugi_colors_map']
-    rest_gz[i] = perc['rest_gz']
-    rest_gz_map[i] = perc['rest_gz_map']
-    rest_gz_colors[i] = perc['rest_gz_colors']
-    rest_gz_colors_map[i] = perc['rest_gz_colors_map']
-    rest_NUVrJ[i] = perc['rest_NUVrJ']
-    rest_NUVrJ_map[i] = perc['rest_NUVrJ_map']
-    rest_NUVrJ_colors[i] = perc['rest_NUVrJ_colors']
-    rest_NUVrJ_colors_map[i] = perc['rest_NUVrJ_colors_map']
-    zred_ml[i] = dat['chain_ml'][0]
-    idx_ftrue = np.where(cat['id'] == mid)[0][0]
-    zred_spec[i] = cat['z_spec'][idx_ftrue]
-    if (i+1) % 1000 == 0:
-        print(f'Processed {i+1} files')
+# ----------------------
+# Main
+# ----------------------
 
-with h5py.File(sname, 'w') as h5f:
-    h5f.create_dataset('objid', data=objid, compression='gzip', chunks=True)
-    h5f.create_dataset('zred_spec', data=zred_spec, compression='gzip', chunks=True)
-    h5f.create_dataset('zred', data=zred, compression='gzip', chunks=True)
-    h5f.create_dataset('zred_ml', data=zred_ml, compression='gzip', chunks=True)
-    h5f.create_dataset('total_mass', data=total_mass, compression='gzip', chunks=True)
-    h5f.create_dataset('stellar_mass', data=stellar_mass, compression='gzip', chunks=True)
-    h5f.create_dataset('met', data=met, compression='gzip', chunks=True)
-    h5f.create_dataset('dust2', data=dust2, compression='gzip', chunks=True)
-    h5f.create_dataset('dust_index', data=dust_index, compression='gzip', chunks=True)
-    h5f.create_dataset('dust1_fraction', data=dust1_fraction, compression='gzip', chunks=True)
-    h5f.create_dataset('log_fagn', data=log_fagn, compression='gzip', chunks=True)
-    h5f.create_dataset('log_agn_tau', data=log_agn_tau, compression='gzip', chunks=True)
-    h5f.create_dataset('gas_logz', data=gas_logz, compression='gzip', chunks=True)
-    h5f.create_dataset('duste_qpah', data=duste_qpah, compression='gzip', chunks=True)
-    h5f.create_dataset('duste_umin', data=duste_umin, compression='gzip', chunks=True)
-    h5f.create_dataset('log_duste_gamma', data=log_duste_gamma, compression='gzip', chunks=True)
-    h5f.create_dataset('mwa', data=mwa, compression='gzip', chunks=True)
-    h5f.create_dataset('sfr10', data=sfr10, compression='gzip', chunks=True)
-    h5f.create_dataset('sfr30', data=sfr30, compression='gzip', chunks=True)
-    h5f.create_dataset('sfr100', data=sfr100, compression='gzip', chunks=True)
-    h5f.create_dataset('ssfr10', data=ssfr10, compression='gzip', chunks=True)
-    h5f.create_dataset('ssfr30', data=ssfr30, compression='gzip', chunks=True)
-    h5f.create_dataset('ssfr100', data=ssfr100, compression='gzip', chunks=True)
-    h5f.create_dataset('rest_UVJugi', data=rest_UVJugi, compression='gzip', chunks=(1,) + rest_UVJugi_shape)
-    h5f.create_dataset('rest_UVJugi_map', data=rest_UVJugi_map, compression='gzip', chunks=(1,) + rest_UVJugi_map_shape)
-    h5f.create_dataset('rest_UVJugi_colors', data=rest_UVJugi_colors, compression='gzip', chunks=(1,) + rest_UVJugi_colors_shape)
-    h5f.create_dataset('rest_UVJugi_colors_map', data=rest_UVJugi_colors_map, compression='gzip', chunks=(1,) + rest_UVJugi_colors_map_shape)
-    h5f.create_dataset('rest_gz', data=rest_gz, compression='gzip', chunks=(1,) + rest_gz_shape)
-    h5f.create_dataset('rest_gz_map', data=rest_gz_map, compression='gzip', chunks=(1,) + rest_gz_map_shape)
-    h5f.create_dataset('rest_gz_colors', data=rest_gz_colors, compression='gzip', chunks=(1,) + rest_gz_colors_shape)
-    h5f.create_dataset('rest_gz_colors_map', data=rest_gz_colors_map, compression='gzip', chunks=(1,) + rest_gz_colors_map_shape)
-    h5f.create_dataset('rest_NUVrJ', data=rest_NUVrJ, compression='gzip', chunks=(1,) + rest_NUVrJ_shape)
-    h5f.create_dataset('rest_NUVrJ_map', data=rest_NUVrJ_map, compression='gzip', chunks=(1,) + rest_NUVrJ_map_shape)
-    h5f.create_dataset('rest_NUVrJ_colors', data=rest_NUVrJ_colors, compression='gzip', chunks=(1,) + rest_NUVrJ_colors_shape)
-    h5f.create_dataset('rest_NUVrJ_colors_map', data=rest_NUVrJ_colors_map, compression='gzip', chunks=(1,) + rest_NUVrJ_colors_map_shape)
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--prior', type=str, default='phisfh')
+    parser.add_argument('--indir', type=str, default='chains_parrot')
+    parser.add_argument('--outdir', type=str, default='results')
+    parser.add_argument('--catalog', type=str, default="UNCOVER_v5.0.1_LW_SUPER_CATALOG.fits")
+    parser.add_argument('--n_workers', type=int, default=None)
+    parser.add_argument('--chunk_size', type=int, default=25)
+    parser.add_argument('--io_buffer', type=int, default=10)
+    args = parser.parse_args()
 
-print('length:', n_obj)
-print('saved to', sname)
+    n_workers = args.n_workers or min(cpu_count(), 64)
+    os.makedirs(args.outdir, exist_ok=True)
+    sname = os.path.join(args.outdir, f'quant_{args.prior}.h5')
+    print(f"Output file: {sname}")
+    print(f"Using {n_workers} workers with chunk size {args.chunk_size}")
+
+    # Load catalog
+    cat = Table.read('phot_catalog/' + args.catalog)
+    catalog_ids = cat['id'].data
+    catalog_zspec = cat['z_spec'].data
+
+    # Discover files
+    all_files = sorted([f for f in os.listdir(args.indir) if f.endswith(f'perc_{args.prior}.npz')])
+    if not all_files:
+        raise RuntimeError(f"No files found in {args.indir} matching '*perc_{args.prior}.npz'")
+    n_obj = len(all_files)
+
+    # Inspect first file to get shapes
+    sample_file = os.path.join(args.indir, all_files[0])
+    with np.load(sample_file, allow_pickle=True) as dat:
+        perc = dat['percentiles'][()]
+        rest_shapes = {k: v.shape for k, v in perc.items() if k.startswith('rest_')}
+
+    # Build indexed info
+    file_infos = [get_file_info(f) for f in all_files]
+    indexed_infos = [(i, objid, fname) for i, (objid, fname) in enumerate(file_infos)]
+
+    # Pre-create HDF5 datasets
+    with h5py.File(sname, 'w') as h5f:
+        datasets = {}
+        scalar_keys = ['objid','zred','total_mass','stellar_mass','met','mwa',
+                       'sfr10','sfr30','sfr100','ssfr10','ssfr30','ssfr100',
+                       'dust2','dust_index','dust1_fraction','log_fagn','log_agn_tau',
+                       'gas_logz','duste_qpah','duste_umin','log_duste_gamma','zred_ml','zred_spec']
+        for key in scalar_keys:
+            dtype = np.int32 if key=='objid' else np.float32
+            datasets[key] = h5f.create_dataset(key, shape=(n_obj,), dtype=dtype,
+                                              compression='gzip', chunks=True)
+
+        for key, shape in rest_shapes.items():
+            datasets[key] = h5f.create_dataset(key, shape=(n_obj,)+shape,
+                                              dtype=np.float32,
+                                              compression='gzip', chunks=(1,)+shape)
+
+        # Chunking
+        chunks = [indexed_infos[i:i+args.chunk_size] for i in range(0, n_obj, args.chunk_size)]
+        total_chunks = len(chunks)
+
+        start_time = time.time()
+        files_processed = 0
+        processed_chunks = 0
+
+        # Multiprocessing
+        with ProcessPoolExecutor(max_workers=n_workers) as executor:
+            inflight = {}
+            chunk_iter = iter(enumerate(chunks))
+            try:
+                while len(inflight) < args.io_buffer:
+                    idx, chunk = next(chunk_iter)
+                    fut = executor.submit(process_chunk, chunk, args.indir, catalog_ids, catalog_zspec)
+                    inflight[fut] = idx
+            except StopIteration:
+                pass
+
+            while inflight:
+                done, _ = wait(inflight.keys(), return_when=FIRST_COMPLETED)
+                for fut in done:
+                    chunk_idx = inflight.pop(fut)
+                    try:
+                        results, errors = fut.result()
+                        for msg in errors:
+                            print(f"Error processing {msg}")
+                        written = write_results(results, datasets)
+                        files_processed += written
+                        processed_chunks += 1
+                        if processed_chunks % 10 == 0 or processed_chunks == total_chunks:
+                            elapsed = time.time() - start_time
+                            rate = files_processed / elapsed if elapsed>0 else 0
+                            print(f"Completed chunk {processed_chunks}/{total_chunks}: {files_processed} files ({rate:.1f} files/sec)")
+                    except Exception as e:
+                        print(f"Error consuming chunk {chunk_idx}: {e}")
+                    try:
+                        idx, chunk = next(chunk_iter)
+                        fut = executor.submit(process_chunk, chunk, args.indir, catalog_ids, catalog_zspec)
+                        inflight[fut] = idx
+                    except StopIteration:
+                        pass
+
+    total_time = time.time() - start_time
+    print("\nCompleted!")
+    print(f"Total objects: {files_processed}/{n_obj}")
+    print(f"Total time: {total_time:.2f} sec")
+    print(f"Saved to: {sname}")
+
+if __name__ == '__main__':
+    main()
