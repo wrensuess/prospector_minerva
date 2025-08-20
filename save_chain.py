@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""fast version for supercomputers using parallel reads + single-writer HDF5"""
+"""collect chains from individual NPZ files into a single HDF5 file"""
 import os
 import numpy as np
 import argparse
