@@ -165,7 +165,7 @@ def main():
             try:
                 while len(inflight) < args.io_buffer:
                     idx, chunk = next(chunk_iter)
-                    fut = executor.submit(process_chunk, chunk, args.indir, catalog_ids, catalog_zspec)
+                    fut = executor.submit(process_chunk, chunk, args.dir_indiv, catalog_ids, catalog_zspec)
                     inflight[fut] = idx
             except StopIteration:
                 pass
@@ -189,7 +189,7 @@ def main():
                         print(f"Error consuming chunk {chunk_idx}: {e}")
                     try:
                         idx, chunk = next(chunk_iter)
-                        fut = executor.submit(process_chunk, chunk, args.indir, catalog_ids, catalog_zspec)
+                        fut = executor.submit(process_chunk, chunk, args.dir_indiv, catalog_ids, catalog_zspec)
                         inflight[fut] = idx
                     except StopIteration:
                         pass
