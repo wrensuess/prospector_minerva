@@ -98,8 +98,8 @@ def write_results(results, datasets):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--prior', type=str, default='phisfh')
-    parser.add_argument('--indir', type=str, default='chains_parrot')
-    parser.add_argument('--outdir', type=str, default='results')
+    parser.add_argument('--dir_indiv', type=str, default='chains_parrot')
+    parser.add_argument('--dir_collected', type=str, default='results')
     parser.add_argument('--catalog', type=str, default="UNCOVER_v5.0.1_LW_SUPER_CATALOG.fits")
     parser.add_argument('--n_workers', type=int, default=None)
     parser.add_argument('--chunk_size', type=int, default=25)
@@ -107,8 +107,8 @@ def main():
     args = parser.parse_args()
 
     n_workers = args.n_workers or min(cpu_count(), 64)
-    os.makedirs(args.outdir, exist_ok=True)
-    sname = os.path.join(args.outdir, f'quant_{args.prior}.h5')
+    os.makedirs(args.dir_collected, exist_ok=True)
+    sname = os.path.join(args.dir_collected, f'quant_{args.prior}.h5')
     print(f"Output file: {sname}")
     print(f"Using {n_workers} workers with chunk size {args.chunk_size}")
 
@@ -118,13 +118,13 @@ def main():
     catalog_zspec = cat['z_spec'].data
 
     # Discover files
-    all_files = sorted([f for f in os.listdir(args.indir) if f.endswith(f'perc_{args.prior}.npz')])
+    all_files = sorted([f for f in os.listdir(args.dir_indiv) if f.endswith(f'perc_{args.prior}.npz')])
     if not all_files:
-        raise RuntimeError(f"No files found in {args.indir} matching '*perc_{args.prior}.npz'")
+        raise RuntimeError(f"No files found in {args.dir_indiv} matching '*perc_{args.prior}.npz'")
     n_obj = len(all_files)
 
     # Inspect first file to get shapes
-    sample_file = os.path.join(args.indir, all_files[0])
+    sample_file = os.path.join(args.dir_indiv, all_files[0])
     with np.load(sample_file, allow_pickle=True) as dat:
         perc = dat['percentiles'][()]
         rest_shapes = {k: v.shape for k, v in perc.items() if k.startswith('rest_')}
