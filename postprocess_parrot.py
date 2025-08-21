@@ -271,7 +271,6 @@ def run_all(h5_fname=None,
     res['scalar'] = theta_dict_from_run(fit, rtn_dict=False)
     unweighted_chain = resample_equal(res['chain'], res['weights']) # unweighted_chain
     res['chain'] = np.vstack([unweighted_chain, chain_ml]) # last chain is always ml
-    res['weff'] = obs['weff']
 
     percentiles, chains, sub_idx = get_all_outputs_and_chains(res)
 
