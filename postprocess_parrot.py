@@ -373,7 +373,7 @@ def run_all(h5_fname=None,
     gz_abmag = np.array(gz_abmag)
     gz_abmag_map = np.array(gz_abmag_map)
     gz_color = np.array(gz_color)
-    gz_color_map = np.array(gz_color_map)
+    gz_color_map = np.array([gz_color_map])
     
     nuv_abmag = np.array(nuv_abmag)
     nuv_abmag_map = np.array(nuv_abmag_map)
@@ -422,7 +422,7 @@ def run_all(h5_fname=None,
              modspec_map=modspec_map, modmags_map=modmags_map,
              modmags_perc=np.percentile(modmags_all, percents, axis=0).T,
              modspecs_perc=np.percentile(modspecs_all, percents, axis=0).T,
-             weff=obs['wave_effective'], wavspec=sps.wavelengths
+             weff=obs['wave_effective'], wavspec=sps.wavelengths, percentiles=np.array(percents)
             )
              # modmags_all & modspecs_all is magnified!
     print('saved model spec to', sname+'\n')
