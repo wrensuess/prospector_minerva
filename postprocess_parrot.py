@@ -271,6 +271,7 @@ def run_all(h5_fname=None,
     res['scalar'] = theta_dict_from_run(fit, rtn_dict=False)
     unweighted_chain = resample_equal(res['chain'], res['weights']) # unweighted_chain
     res['chain'] = np.vstack([unweighted_chain, chain_ml]) # last chain is always ml
+    res['weff'] = obs['weff']
 
     percentiles, chains, sub_idx = get_all_outputs_and_chains(res)
 
@@ -421,7 +422,8 @@ def run_all(h5_fname=None,
     np.savez(sname,
              modspec_map=modspec_map, modmags_map=modmags_map,
              modmags_perc=np.percentile(modmags_all, percents, axis=0).T,
-             modspecs_perc=np.percentile(modspecs_all, percents, axis=0).T
+             modspecs_perc=np.percentile(modspecs_all, percents, axis=0).T,
+             weff=obs['wave_effective'], wavspec=sps.wavelengths
             )
              # modmags_all & modspecs_all is magnified!
     print('saved model spec to', sname+'\n')

@@ -43,6 +43,7 @@ def process_single_file(indexed_info, dir_indiv, cat, filts):
     result['obsmag_unc'] = obs_enu.astype(np.float32)
     result['objid'] = objid
     result['nbands'] = np.sum((obs_enu > 0) & np.isfinite(obs_fnu))
+    result['zred'] = dat['chain_ml'][0]  # maximum likelihood redshift
     
     # Photometry mask
     phot_mask = (obs_enu > 0) & np.isfinite(obs_fnu)
@@ -122,8 +123,13 @@ def main():
     with np.load(sample_file, allow_pickle=True) as dat:
         modspec_map_shape = dat['modspec_map'].shape
         modmag_map_shape = dat['modmags_map'].shape
+        weff = dat['weff'] # photometric effective wavelengths
+        wavspec = dat['wavspec'] # wavelengths for fsps model
     obs_fnu_shape = ut_cwd.get_fnu_maggies(idx=0, catalog=cat, filts=filts).shape
     obs_enu_shape = ut_cwd.get_enu_maggies(idx=0, catalog=cat, filts=filts).shape
+
+    # we also have to load in an individual h5 file to get effective wavelengths and filter centers
+
 
     # Create HDF5 datasets
     with h5py.File(sname, 'w') as h5f:
@@ -131,6 +137,8 @@ def main():
         datasets['objid'] = h5f.create_dataset('objid', shape=(n_obj,), dtype=np.int32, compression='gzip', chunks=True)
         datasets['chi2_fsps'] = h5f.create_dataset('chi2_fsps', shape=(n_obj,), dtype=np.float32, compression='gzip', chunks=True)
         datasets['nbands'] = h5f.create_dataset('nbands', shape=(n_obj,), dtype=np.int32, compression='gzip', chunks=True)
+        datasets['zred'] = h5f.create_dataset('zred', shape=(n_obj,), dtype=np.float32, compression='gzip', chunks=True)
+
         datasets['obsmag'] = h5f.create_dataset('obsmag', shape=(n_obj,) + obs_fnu_shape, dtype=np.float32,
                                                 compression='gzip', chunks=(1,) + obs_fnu_shape)
         datasets['obsmag_unc'] = h5f.create_dataset('obsmag_unc', shape=(n_obj,) + obs_enu_shape, dtype=np.float32,
@@ -139,7 +147,9 @@ def main():
                                                      compression='gzip', chunks=(1,) + modspec_map_shape)
         datasets['modmag_map'] = h5f.create_dataset('modmag_map', shape=(n_obj,) + modmag_map_shape, dtype=np.float32,
                                                     compression='gzip', chunks=(1,) + modmag_map_shape)
-
+        datasets['weff'] = h5f.create_dataset('weff', data=weff, dtype=np.float32)
+        datasets['wavspec'] = h5f.create_dataset('wavspec', data=wavspec, dtype=np.float32)
+        
         # Chunking
         chunks = [indexed_infos[i:i + args.chunk_size] for i in range(0, n_obj, args.chunk_size)]
         total_chunks = len(chunks)

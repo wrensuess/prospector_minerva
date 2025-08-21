@@ -127,7 +127,7 @@ def main():
     sample_file = os.path.join(args.dir_indiv, all_files[0])
     with np.load(sample_file, allow_pickle=True) as dat:
         perc = dat['percentiles'][()]
-        rest_shapes = {k: v.shape for k, v in perc.items() if k.startswith('rest_')}
+        rest_shapes = {k: v.shape[0] for k, v in perc.items() if k.startswith('rest_')}
     n_perc = perc['zred'].shape[0]    
 
     print('perc_sfr shape:', perc['sfr'].shape)
@@ -146,14 +146,21 @@ def main():
                        'dust2','dust_index','dust1_fraction','log_fagn','log_agn_tau',
                        'gas_logz','duste_qpah','duste_umin','log_duste_gamma','zred_ml','zred_spec']
         for key in scalar_keys:
-            dtype = np.int32 if key=='objid' else np.float32
-            datasets[key] = h5f.create_dataset(key, shape=(n_obj,n_perc), dtype=dtype,
-                                              compression='gzip', chunks=True)
+            if key == 'objid': 
+                datasets[key] = h5f.create_dataset('objid', shape=(n_obj,), dtype=np.int64)
+            elif key == 'zred_spec':
+                datasets[key] = h5f.create_dataset('zred_spec', data=np.zeros(n_obj)-99., dtype=np.float32, 
+                                                   compression='gzip', chunks=True)    # default -99 for no spec-z
+            elif key == 'zred_ml':
+                datasets[key] = h5f.create_dataset('zred_ml', data=np.zeros(n_obj)-99., dtype=np.float32, 
+                                                   compression='gzip', chunks=True)
+            else:    
+                datasets[key] = h5f.create_dataset(key, shape=(n_obj,n_perc), dtype=np.float32,
+                                                   compression='gzip', chunks=True)
 
         for key, shape in rest_shapes.items():
-            datasets[key] = h5f.create_dataset(key, shape=(n_obj,n_perc)+shape,
-                                              dtype=np.float32,
-                                              compression='gzip', chunks=(1,n_perc)+shape)
+            datasets[key] = h5f.create_dataset(key, shape=(n_obj,shape,n_perc), dtype=np.float32,
+                                              compression='gzip', chunks=(1,shape,n_perc))
 
         # Chunking
         chunks = [indexed_infos[i:i+args.chunk_size] for i in range(0, n_obj, args.chunk_size)]
