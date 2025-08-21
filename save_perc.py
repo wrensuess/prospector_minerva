@@ -127,7 +127,9 @@ def main():
     sample_file = os.path.join(args.dir_indiv, all_files[0])
     with np.load(sample_file, allow_pickle=True) as dat:
         perc = dat['percentiles'][()]
-        rest_shapes = {k: v.shape for k, v in perc.items() if k.startswith('rest_')}
+        rest_shapes = {k: v.shape for k, v in perc.items() if k.startswith('rest_') and 
+                       not k.endswith('map')}
+        map_shapes = {k: v.shape for k, v in perc.items() if k.endswith('map')}
     n_perc = perc['zred'].shape[0]    
     print(rest_shapes)
 
@@ -162,7 +164,10 @@ def main():
         for key, shape in rest_shapes.items():
             datasets[key] = h5f.create_dataset(key, shape=(n_obj,shape[0],n_perc), dtype=np.float32,
                                               compression='gzip', chunks=(1,shape[0],n_perc))
-
+        for key, shape in map_shapes.items():
+            datasets[key] = h5f.create_dataset(key, shape=(n_obj,shape[0]), dtype=np.float32,
+                                              compression='gzip', chunks=(1,shape[0]))
+            
         # Chunking
         chunks = [indexed_infos[i:i+args.chunk_size] for i in range(0, n_obj, args.chunk_size)]
         total_chunks = len(chunks)

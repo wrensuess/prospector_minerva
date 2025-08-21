@@ -422,7 +422,8 @@ def run_all(h5_fname=None,
              modspec_map=modspec_map, modmags_map=modmags_map,
              modmags_perc=np.percentile(modmags_all, percents, axis=0).T,
              modspecs_perc=np.percentile(modspecs_all, percents, axis=0).T,
-             weff=obs['wave_effective'], wavspec=sps.wavelengths, percentiles=np.array(percents)
+             weff=obs['wave_effective'], wavspec=sps.wavelengths, percentiles=np.array(percents),
+             zred=chain_ml[0]
             )
              # modmags_all & modspecs_all is magnified!
     print('saved model spec to', sname+'\n')

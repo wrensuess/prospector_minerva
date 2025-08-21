@@ -35,6 +35,7 @@ def process_single_file(indexed_info, dir_indiv, cat, filts):
     with np.load(full_path, allow_pickle=True) as dat:
         result['modspec_map'] = dat['modspec_map'].astype(np.float32)
         result['modmag_map'] = dat['modmags_map'].astype(np.float32)
+        result['zred'] = dat['zred']  # maximum likelihood redshift
 
     _idx = np.where(cat['id'] == objid)[0][0]
     obs_fnu = ut_cwd.get_fnu_maggies(idx=_idx, catalog=cat, filts=filts)
@@ -43,7 +44,7 @@ def process_single_file(indexed_info, dir_indiv, cat, filts):
     result['obsmag_unc'] = obs_enu.astype(np.float32)
     result['objid'] = objid
     result['nbands'] = np.sum((obs_enu > 0) & np.isfinite(obs_fnu))
-    result['zred'] = dat['chain_ml'][0]  # maximum likelihood redshift
+    
     
     # Photometry mask
     phot_mask = (obs_enu > 0) & np.isfinite(obs_fnu)
@@ -149,7 +150,7 @@ def main():
                                                     compression='gzip', chunks=(1,) + modmag_map_shape)
         datasets['weff'] = h5f.create_dataset('weff', data=weff, dtype=np.float32)
         datasets['wavspec'] = h5f.create_dataset('wavspec', data=wavspec, dtype=np.float32)
-        
+
         # Chunking
         chunks = [indexed_infos[i:i + args.chunk_size] for i in range(0, n_obj, args.chunk_size)]
         total_chunks = len(chunks)
