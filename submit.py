@@ -74,10 +74,11 @@ if __name__ == '__main__':
     field = 'UDS'
     ver = 'n2.2_m2.0_v1.0_LW_Kf444w_SUPER'
     spsver = 'spsbeta'
-    outdir = '../slurm/'
+    #outdir = '../slurm/'
+    outdir = '/scratch/alpine/ikmi3774/slurm/'
     catdir = '../phot_catalog/'
-    #chaindir = outdir+'chains_parrot_{}_{}'.format(ver, spsver)
-    chaindir = '/scratch/alpine/ikmi3774/slurm/chains_parrot_{}_{}'.format(ver, spsver)
+    chaindir = outdir+'chains_parrot_{}_{}'.format(ver, spsver)
+    #chaindir = '/scratch/alpine/ikmi3774/slurm/chains_parrot_{}_{}'.format(ver, spsver)
     logdir = outdir+'log'
     taskdir = outdir+'task_lists'
     fast_dyn = 0 #0:std run, 1:brief run, 2:debug
