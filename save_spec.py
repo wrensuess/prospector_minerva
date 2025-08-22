@@ -128,9 +128,7 @@ def main():
         wavspec = dat['wavspec'] # wavelengths for fsps model
     obs_fnu_shape = ut_cwd.get_fnu_maggies(idx=0, catalog=cat, filts=filts).shape
     obs_enu_shape = ut_cwd.get_enu_maggies(idx=0, catalog=cat, filts=filts).shape
-
-    # we also have to load in an individual h5 file to get effective wavelengths and filter centers
-
+    print('loaded weff, wavspec from sample file')
 
     # Create HDF5 datasets
     with h5py.File(sname, 'w') as h5f:
