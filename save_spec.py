@@ -76,8 +76,8 @@ def process_chunk(indexed_chunk, dir_indiv, cat, filts):
 def write_results(results, datasets):
     for idx, res in results:
         for key, ds in datasets.items():
-            # if key not in ['weff', 'wavspec']:
-            ds[idx] = res[key]
+            if key not in ['weff', 'wavspec']:
+                ds[idx] = res[key]
     return len(results)
 
 # ----------------------
