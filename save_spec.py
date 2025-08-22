@@ -134,7 +134,7 @@ def main():
     # Create HDF5 datasets
     with h5py.File(sname, 'w') as h5f:
         datasets = {}
-        datasets['objid'] = h5f.create_dataset('objid', shape=(n_obj,), dtype=np.int32, compression='gzip', chunks=True)
+        datasets['objid'] = h5f.create_dataset('objid', shape=(n_obj,), dtype=np.int64, compression='gzip', chunks=True)
         datasets['chi2_fsps'] = h5f.create_dataset('chi2_fsps', shape=(n_obj,), dtype=np.float32, compression='gzip', chunks=True)
         datasets['nbands'] = h5f.create_dataset('nbands', shape=(n_obj,), dtype=np.int32, compression='gzip', chunks=True)
         datasets['zred'] = h5f.create_dataset('zred', shape=(n_obj,), dtype=np.float32, compression='gzip', chunks=True)
@@ -147,7 +147,9 @@ def main():
                                                      compression='gzip', chunks=(1,) + modspec_map_shape)
         datasets['modmag_map'] = h5f.create_dataset('modmag_map', shape=(n_obj,) + modmag_map_shape, dtype=np.float32,
                                                     compression='gzip', chunks=(1,) + modmag_map_shape)
-
+        # add wavelengths                
+        datasets['weff'] = h5f.create_dataset('weff', data=weff, dtype=np.float32)
+        datasets['wavspec'] = h5f.create_dataset('wavspec', data=wavspec, dtype=np.float32)
 
         # Chunking
         chunks = [indexed_infos[i:i + args.chunk_size] for i in range(0, n_obj, args.chunk_size)]
@@ -199,9 +201,7 @@ def main():
                     except StopIteration:
                         pass
 
-        # add wavelengths                
-        datasets['weff'] = h5f.create_dataset('weff', data=weff, dtype=np.float32)
-        datasets['wavspec'] = h5f.create_dataset('wavspec', data=wavspec, dtype=np.float32)
+
 
     total_time = time.time() - start_time
     print("\nCompleted!")
