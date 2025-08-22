@@ -115,7 +115,7 @@ def main():
             shape=(n_obj),
             dtype=np.float32,
             compression='lzf',
-            chunks=(min(args.chunk_size), n_bins),
+            chunks=True,
             shuffle=True,
             track_times=False
         )
