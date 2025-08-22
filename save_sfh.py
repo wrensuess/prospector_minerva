@@ -28,7 +28,7 @@ def process_single_file(indexed_info, dir_indiv, perc):
     with np.load(full_path, allow_pickle=True) as dat:
         chains = dat['chains'][()]
 
-    agebins_max = chains['agebins_max']  # shape (n_bins,)
+    agebins_max = chains['agebins_max']  
     sfh_q = np.quantile(chains['sfh'], perc, axis=0)  # shape (n_percentiles, n_bins)
 
     return idx, objid, agebins_max, sfh_q
@@ -112,10 +112,10 @@ def main():
         objids_ds = h5f.create_dataset('objid', shape=(n_obj,), dtype=np.int64)
         tmax_ds = h5f.create_dataset(
             'agebins_max',
-            shape=(n_obj, n_bins),
+            shape=(n_obj),
             dtype=np.float32,
             compression='lzf',
-            chunks=(min(args.chunk_size, n_obj), n_bins),
+            chunks=(min(args.chunk_size), n_bins),
             shuffle=True,
             track_times=False
         )
