@@ -8,9 +8,9 @@ from utils import get_dir
 # set up paths 
 # change these as needed!
 catalog = '/projects/kasu8993/minerva/data/MINERVA-UDS_n2.2_m2.0_v1.0_LW_Kf444w_SUPER_CATALOG.fits'
-indir = '/scratch/alpine/ikmi3774/slurm/tmp_test/chains_test/'
-outdir = '/scratch/alpine/kasu8993/test_postprocess/'
-log_dir = '/scratch/alpine/kasu8993/test_postprocess/logs/'
+indir = '/scratch/alpine/ikmi3774/slurm/chains_parrot_n2.2_m2.0_v1.0_LW_Kf444w_SUPER_spsbeta/'
+outdir = '/scratch/alpine/kasu8993/postprocess_n2.2_m1.0_v1.0/'
+log_dir = '/scratch/alpine/kasu8993/postprocess_n2.2_m1.0_v1.0/logs/'
 ddir = '/' # we're giving absolute paths so this is just a placeholder 
 narr = 1; iarr = 0 # we're going to make our own ID lists
 env = '/projects/kasu8993/software/anaconda/envs/prosp'
@@ -19,7 +19,7 @@ sps = 'parrot'
 prior = 'phisfh' # 'phisfhzfixed' if you're using zspec fits
 code_dir = '/projects/kasu8993/prospector_minerva/'
 
-njobs = 20 #number of job array, max=1000
+njobs = 200 #number of job array, max=1000
 wtime = int(12) # time
 jname = 'postproc_{}'.format(prior)
 ts = time.strftime("%y%b%d-%H.%M", time.localtime())
