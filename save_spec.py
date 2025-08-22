@@ -148,6 +148,7 @@ def main():
                                                     compression='gzip', chunks=(1,) + modmag_map_shape)
         datasets['weff'] = h5f.create_dataset('weff', data=weff, dtype=np.float32)
         datasets['wavspec'] = h5f.create_dataset('wavspec', data=wavspec, dtype=np.float32)
+        print('created datasets in HDF5')
 
         # Chunking
         chunks = [indexed_infos[i:i + args.chunk_size] for i in range(0, n_obj, args.chunk_size)]
