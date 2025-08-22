@@ -76,8 +76,8 @@ def process_chunk(indexed_chunk, dir_indiv, cat, filts):
 def write_results(results, datasets):
     for idx, res in results:
         for key, ds in datasets.items():
-            if key not in ['weff', 'wavspec']:
-                ds[idx] = res[key]
+            # if key not in ['weff', 'wavspec']:
+            ds[idx] = res[key]
     return len(results)
 
 # ----------------------
@@ -147,9 +147,7 @@ def main():
                                                      compression='gzip', chunks=(1,) + modspec_map_shape)
         datasets['modmag_map'] = h5f.create_dataset('modmag_map', shape=(n_obj,) + modmag_map_shape, dtype=np.float32,
                                                     compression='gzip', chunks=(1,) + modmag_map_shape)
-        datasets['weff'] = h5f.create_dataset('weff', data=weff, dtype=np.float32)
-        datasets['wavspec'] = h5f.create_dataset('wavspec', data=wavspec, dtype=np.float32)
-        print('created datasets in HDF5')
+
 
         # Chunking
         chunks = [indexed_infos[i:i + args.chunk_size] for i in range(0, n_obj, args.chunk_size)]
@@ -200,6 +198,10 @@ def main():
                         inflight[fut] = idx
                     except StopIteration:
                         pass
+
+        # add wavelengths                
+        datasets['weff'] = h5f.create_dataset('weff', data=weff, dtype=np.float32)
+        datasets['wavspec'] = h5f.create_dataset('wavspec', data=wavspec, dtype=np.float32)
 
     total_time = time.time() - start_time
     print("\nCompleted!")
