@@ -79,8 +79,8 @@ if __name__ == '__main__':
     catdir = '../phot_catalog/'
     chaindir = outdir+'chains_parrot_{}_{}'.format(ver, spsver)
     #chaindir = '/scratch/alpine/ikmi3774/slurm/chains_parrot_{}_{}'.format(ver, spsver)
-    logdir = outdir+'log2' ### another dir?
-    taskdir = outdir+'task_lists2' ### another dir?
+    logdir = outdir+'log2' # another dir?
+    taskdir = outdir+'task_lists2' # another dir?
     fast_dyn = 0 #0:std run, 1:brief run, 2:debug
 
     acc = 'bc' ### we do not have to use this specification, but useful if we use both alpine&blanca
