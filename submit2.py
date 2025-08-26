@@ -74,12 +74,13 @@ if __name__ == '__main__':
     field = 'UDS'
     ver = 'n2.2_m2.0_v1.0_LW_Kf444w_SUPER'
     spsver = 'spsbeta'
-    outdir = '../slurm/'
+    #outdir = '../slurm/'
+    outdir = '/scratch/alpine/ikmi3774/slurm/'
     catdir = '../phot_catalog/'
-    #chaindir = outdir+'chains_parrot_{}_{}'.format(ver, spsver)
-    chaindir = '/scratch/alpine/ikmi3774/slurm/chains_parrot_{}_{}'.format(ver, spsver)
-    logdir = outdir+'log2' ### for 2nd person
-    taskdir = outdir+'task_lists2' ### for 2nd person
+    chaindir = outdir+'chains_parrot_{}_{}'.format(ver, spsver)
+    #chaindir = '/scratch/alpine/ikmi3774/slurm/chains_parrot_{}_{}'.format(ver, spsver)
+    logdir = outdir+'log2' ### another dir?
+    taskdir = outdir+'task_lists2' ### another dir?
     fast_dyn = 0 #0:std run, 1:brief run, 2:debug
 
     acc = 'bc' ### we do not have to use this specification, but useful if we use both alpine&blanca
@@ -92,7 +93,7 @@ if __name__ == '__main__':
     ################################## step 1. sed fit ####################################
 
     catalog = 'MINERVA-{}_{}_CATALOG.fits'.format(field, ver)
-    fitcatalog = catdir+'fitid2_MINERVA-{}_{}_CATALOG.txt'.format(field, ver) ### for 2nd person
+    fitcatalog = catdir+'fitid2_MINERVA-{}_{}_CATALOG.txt'.format(field, ver) #flipped catalog, from end of catalog
     ids_fit = np.loadtxt(fitcatalog)
     print('total number of galaxies to fit:',len(ids_fit)) #[Nfit]
 
