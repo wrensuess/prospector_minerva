@@ -59,11 +59,11 @@ def run_params(task_dir='hoge', log_dir='hoge', acc='bc', jobname='p', wtime=24,
 
     txt = txt_acc + txt_2
 
-    f = open('_params.sh','w')
+    f = open('_params1.sh','w')
     f.write(txt)
     f.close()
-    os.system('sbatch _params.sh')
-    #os.system('rm _params.sh')
+    os.system('sbatch _params1.sh')
+    #os.system('rm _params1.sh')
     return None
 
 
