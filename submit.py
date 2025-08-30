@@ -93,7 +93,9 @@ if __name__ == '__main__':
     ################################## step 1. sed fit ####################################
 
     catalog = 'MINERVA-{}_{}_CATALOG.fits'.format(field, ver)
-    fitcatalog = catdir+'unfitid_MINERVA-{}_{}_CATALOG.txt'.format(field, ver) #file includes use_photo=1 sources
+    #fitcatalog = catdir+'fitid_MINERVA-{}_{}_CATALOG.txt'.format(field, ver)
+    #fitcatalog = catdir+'unfitid_MINERVA-{}_{}_CATALOG.txt'.format(field, ver)
+    fitcatalog = catdir+'unfitid2_MINERVA-{}_{}_CATALOG.txt'.format(field, ver) #file includes use_photo=1 sources
     ids_fit = np.loadtxt(fitcatalog)
     print('total number of galaxies to fit:',len(ids_fit)) #[Nfit]
 
