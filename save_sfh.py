@@ -33,14 +33,14 @@ def process_single_file(indexed_info, dir_indiv, perc):
 
     return idx, objid, agebins_max, sfh_q
 
-def process_chunk(indexed_chunk, dir_indiv, perc):
-    """Worker: process a whole chunk; returns (results, errors)."""
+def process_chunk(indexed_chunk, dir_indiv, perc, n_percentiles, n_bins):
     results, errors = [], []
     for entry in indexed_chunk:
         try:
             results.append(process_single_file(entry, dir_indiv, perc))
         except Exception as e:
             idx, objid, filename = entry
+            results.append((idx, objid, np.nan, np.full((n_percentiles, n_bins), np.nan, dtype=np.float32)))
             errors.append(f"{filename}: {e}")
     return results, errors
 
@@ -88,6 +88,7 @@ def main():
 
     # Build list of (objid, filename) and an indexed version for exact ordering
     file_infos = [get_file_info(f) for f in all_files]  # (objid, filename)
+    file_infos.sort(key=lambda x: x[0])  # Sort by objid
     indexed_infos = [(i, objid, fname) for i, (objid, fname) in enumerate(file_infos)]
     n_obj = len(indexed_infos)
 
@@ -107,15 +108,15 @@ def main():
     start_time = time.time()
 
     # Create HDF5 (single-writer, preallocated, input order rows)
-    with h5py.File(sname, 'w') as h5f:
+    with h5py.File(sname, 'w', libver='latest') as h5f:
         h5f.create_dataset('percentiles', data=perc)
         objids_ds = h5f.create_dataset('objid', shape=(n_obj,), dtype=np.int64)
         tmax_ds = h5f.create_dataset(
             'agebins_max',
             shape=(n_obj),
             dtype=np.float32,
-            compression='lzf',
-            chunks=True,
+            compression='gzip',
+            chunks=(1000,),
             shuffle=True,
             track_times=False
         )
@@ -123,8 +124,8 @@ def main():
             'sfh',
             shape=(n_obj, n_percentiles, n_bins),
             dtype=np.float32,
-            compression='lzf',
-            chunks=(1, n_percentiles, n_bins),
+            compression='gzip',
+            chunks=(1000, n_percentiles, n_bins),
             shuffle=True,
             track_times=False
         )
@@ -141,7 +142,7 @@ def main():
             try:
                 while len(inflight) < args.io_buffer:
                     idx, chunk = next(chunk_iter)
-                    fut = executor.submit(process_chunk, chunk, args.dir_indiv, perc)
+                    fut = executor.submit(process_chunk, chunk, args.dir_indiv, perc, n_percentiles, n_bins)
                     inflight[fut] = idx
             except StopIteration:
                 pass
@@ -174,7 +175,7 @@ def main():
                     # Top up inflight
                     try:
                         idx, chunk = next(chunk_iter)
-                        fut = executor.submit(process_chunk, chunk, args.dir_indiv, perc)
+                        fut = executor.submit(process_chunk, chunk, args.dir_indiv, perc, n_percentiles, n_bins)
                         inflight[fut] = idx
                     except StopIteration:
                         pass

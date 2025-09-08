@@ -57,7 +57,7 @@ def process_single_file(indexed_info, dir_indiv):
 
     return idx, objid, chain_data
 
-def process_chunk(indexed_chunk, dir_indiv):
+def process_chunk(indexed_chunk, dir_indiv, n_samples, n_params):
     """Worker: process a whole chunk; returns (results, errors)."""
     results, errors = [], []
     for entry in indexed_chunk:
@@ -65,6 +65,8 @@ def process_chunk(indexed_chunk, dir_indiv):
             results.append(process_single_file(entry, dir_indiv))
         except Exception as e:
             idx, objid, filename = entry
+            # Fill with NaN for failed files
+            results.append((idx, objid, np.full((n_samples, n_params), np.nan, dtype=np.float32)))
             errors.append(f"{filename}: {e}")
     return results, errors
 
@@ -133,18 +135,19 @@ def main():
     start_time = time.time()
 
     # Create HDF5 (single-writer, preallocated, input order rows)
-    with h5py.File(sname, 'w') as h5f:
+    with h5py.File(sname, 'w', libver='latest') as h5f:
         h5f.create_dataset('theta_labels', data=np.array(keys, dtype='S'))
         chains_ds = h5f.create_dataset(
             'chains',
             shape=(n_obj, n_samples, n_params),
             dtype=np.float32,
-            compression='lzf',
-            chunks=(min(args.chunk_size, n_obj), n_samples, n_params),
+            compression='gzip',
+            chunks=(1000, n_samples, n_params),  # or tune as needed
             shuffle=True,
             track_times=False
         )
-        objids_ds = h5f.create_dataset('objid', shape=(n_obj,), dtype=np.int64)
+        objids_ds = h5f.create_dataset('objid', shape=(n_obj,), dtype=np.int64,
+            compression='gzip', chunks=(1000,))
 
         files_processed = 0
         processed_chunks = 0
@@ -158,7 +161,7 @@ def main():
             try:
                 while len(inflight) < args.io_buffer:
                     idx, chunk = next(chunk_iter)
-                    fut = executor.submit(process_chunk, chunk, args.dir_indiv)
+                    fut = executor.submit(process_chunk, chunk, args.dir_indiv, n_samples, n_params)
                     inflight[fut] = idx
             except StopIteration:
                 pass
@@ -191,7 +194,7 @@ def main():
                     # Top up the inflight queue
                     try:
                         idx, chunk = next(chunk_iter)
-                        fut = executor.submit(process_chunk, chunk, args.dir_indiv)
+                        fut = executor.submit(process_chunk, chunk, args.dir_indiv, n_samples, n_params)
                         inflight[fut] = idx
                     except StopIteration:
                         pass
