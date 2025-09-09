@@ -116,6 +116,7 @@ def main():
 
     # Build list of (objid, filename) and an indexed version for exact ordering
     file_infos = [get_file_info(f) for f in all_files]  # (objid, filename)
+    file_infos.sort(key=lambda x: x[0])
     indexed_infos = [(i, objid, fname) for i, (objid, fname) in enumerate(file_infos)]
     n_obj = len(indexed_infos)
 
@@ -142,7 +143,7 @@ def main():
             shape=(n_obj, n_samples, n_params),
             dtype=np.float32,
             compression='gzip',
-            chunks=(1000, n_samples, n_params),  # or tune as needed
+            chunks=(100, n_samples, n_params),  # or tune as needed
             shuffle=True,
             track_times=False
         )
