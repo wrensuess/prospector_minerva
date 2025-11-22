@@ -4,7 +4,7 @@ import glob,time,os
 import numpy as np
 from datetime import datetime
 
-CHECK_INTERVAL_HOURS = 12
+CHECK_INTERVAL_HOURS = 0.1
 CHECK_INTERVAL_SEC = 3600*CHECK_INTERVAL_HOURS
 
 
@@ -75,7 +75,7 @@ field = "UDS"
 ver = "n2.3_v1.1_LW_Kf444w_SUPER"
 catdir = '../phot_catalog/'
 cathead = "fitid"
-subprocess.run(["python", "submit_loop.py", catdir+cathead, field, ver], check=True)
+subprocess.run(["python", "submit_loop.py", catdir+cathead+"_MINERVA-"+field+"_"+ver+"_LW_Kf444w_SUPER_CATALOG.txt", field, ver], check=True)
 time.sleep(CHECK_INTERVAL_SEC)
 
 k=0
@@ -88,7 +88,7 @@ while True:
         k=k+1
         cathead = "unfitid"+str(int(k))
         np.savetxt(catdir+cathead+"_MINERVA-"+field+"_"+ver+"_LW_Kf444w_SUPER_CATALOG.txt",np.array(unfit_id_array))
-        subprocess.run(["python", "submit_loop.py", catdir+cathead, field, ver], check=True)
+        subprocess.run(["python", "submit_loop.py", catdir+cathead"_MINERVA-"+field+"_"+ver+"_LW_Kf444w_SUPER_CATALOG.txt", field, ver], check=True)
         print(f"[INFO] job with "+cathead+" catalog is running...")
         time.sleep(CHECK_INTERVAL_SEC)
 
