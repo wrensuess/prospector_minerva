@@ -75,7 +75,8 @@ field = "UDS"
 ver = "n2.3_v1.1_LW_Kf444w_SUPER"
 catdir = '../phot_catalog/'
 cathead = "fitid"
-subprocess.run(["python", "submit_loop.py", catdir+cathead+"_MINERVA-"+field+"_"+ver+"_LW_Kf444w_SUPER_CATALOG.txt", field, ver], check=True)
+catpath = catdir+cathead+"_MINERVA-"+field+"_"+ver+"_LW_Kf444w_SUPER_CATALOG.txt"
+subprocess.run(["python", "submit_loop.py", catpath, field, ver], check=True)
 time.sleep(CHECK_INTERVAL_SEC)
 
 k=0
@@ -87,8 +88,9 @@ while True:
     else:
         k=k+1
         cathead = "unfitid"+str(int(k))
-        np.savetxt(catdir+cathead+"_MINERVA-"+field+"_"+ver+"_LW_Kf444w_SUPER_CATALOG.txt",np.array(unfit_id_array))
-        subprocess.run(["python", "submit_loop.py", catdir+cathead"_MINERVA-"+field+"_"+ver+"_LW_Kf444w_SUPER_CATALOG.txt", field, ver], check=True)
+        catpath = catdir+cathead+"_MINERVA-"+field+"_"+ver+"_LW_Kf444w_SUPER_CATALOG.txt"
+        np.savetxt(catpath,np.array(unfit_id_array))
+        subprocess.run(["python", "submit_loop.py", catpath, field, ver], check=True)
         print(f"[INFO] job with "+cathead+" catalog is running...")
         time.sleep(CHECK_INTERVAL_SEC)
 
