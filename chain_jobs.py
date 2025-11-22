@@ -72,7 +72,7 @@ def get_unfit_number(catdir,cathead,field,ver):
     
 
 field = "UDS"
-ver = "n2.3_v1.1_LW_Kf444w_SUPER"
+ver = "n2.3_v1.1"
 catdir = '../phot_catalog/'
 cathead = "fitid"
 catpath = catdir+cathead+"_MINERVA-"+field+"_"+ver+"_LW_Kf444w_SUPER_CATALOG.txt"
