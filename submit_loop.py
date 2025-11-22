@@ -72,7 +72,8 @@ def run_params(task_dir='hoge', log_dir='hoge', acc='bc', jobname='p', wtime=24,
 if __name__ == '__main__':
 
     # check the number of arguments
-    if len(sys.argv)!=3:
+    print(sys.argv)
+    if len(sys.argv)!=5:
         print('Error! usage: python '+sys.argv[0]+' [cathead] [field] [ver]')
         sys.exit()
     cathead = sys.argv[1]
