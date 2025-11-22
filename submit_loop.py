@@ -117,7 +117,7 @@ if __name__ == '__main__':
 
     
     
-    fitcatalog = catdir+cathead+'_MINERVA-'+field+'_'+ver+'_CATALOG.txt' #file includes use_photo=1 sources
+    fitcatalog = catdir+cathead+'_MINERVA-'+field+'_'+ver+'_LW_Kf444w_SUPER_CATALOG.txt' #file includes use_photo=1 and nmband>5 sources for now
     ids_fit = np.loadtxt(fitcatalog)
     print('[INFO] Ngalaxies to fit in '+cathead+':',len(ids_fit)) #[Nfit]
 
