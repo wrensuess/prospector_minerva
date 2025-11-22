@@ -1,0 +1,55 @@
+#!/usr/bin/env python3
+import subprocess
+import time
+
+CHECK_INTERVAL_SEC = 600
+
+def submit_job(command: str) -> str:
+    """
+    Slurm にジョブを投げて JOBID を返す。
+    例: command = "python A.py"
+    """
+    res = subprocess.run(
+        ["sbatch", "--wrap", command],
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+    # 出力例: "Submitted batch job 123456\n"
+    print(res.stdout.strip())
+    jobid = res.stdout.strip().split()[-1]
+    return jobid
+
+def wait_job_finish(jobid: str):
+    """
+    squeue -j JOBID を一定間隔で叩いて、
+    ジョブがキューから消えるまで待つ。
+    """
+    print(f"[INFO] JOBID={jobid} が終わるまで {CHECK_INTERVAL_SEC} 秒ごとにチェックします。")
+    while True:
+        res = subprocess.run(
+            ["squeue", "-j", jobid, "-h"],
+            text=True,
+            capture_output=True,
+        )
+        # -h を付けているので、ジョブがないときは stdout が空になる
+        if res.stdout.strip() == "":
+            print(f"[INFO] JOBID={jobid} は終了しました。")
+            break
+        else:
+            print(f"[INFO] JOBID={jobid} まだ実行中 or 待機中。次のチェックまで {CHECK_INTERVAL_SEC} 秒スリープ。")
+            time.sleep(CHECK_INTERVAL_SEC)
+
+def main():
+    # 1. A を投げる
+    jobid_a = submit_job("python A.py")
+
+    # 2. A が終わるまで待つ
+    wait_job_finish(jobid_a)
+
+    # 3. B を投げる
+    jobid_b = submit_job("python B.py")
+    print(f"[INFO] B のジョブ(JOBID={jobid_b}) を投げました。")
+
+if __name__ == "__main__":
+    main()
