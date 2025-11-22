@@ -79,6 +79,7 @@ if __name__ == '__main__':
     cathead = sys.argv[1]
     field = sys.argv[2] 
     ver = sys.argv[3]
+    print(dfafad)
     
     #field = 'UDS'
     #ver = 'n2.2_m2.0_v1.0_LW_Kf444w_SUPER'
