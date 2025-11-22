@@ -104,7 +104,7 @@ if __name__ == '__main__':
     ################################## step 1. sed fit ####################################
     catalog = 'MINERVA-{}_{}_CATALOG.fits'.format(field, ver)
 
-        isExist = os.path.exists(chaindir)
+    isExist = os.path.exists(chaindir)
     if not isExist:
         os.makedirs(chaindir)
         print("new output directory created:", chaindir)
