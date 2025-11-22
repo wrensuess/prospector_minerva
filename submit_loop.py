@@ -73,12 +73,13 @@ if __name__ == '__main__':
 
     # check the number of arguments
     print(sys.argv)
-    if len(sys.argv)!=5:
+    if len(sys.argv)!=4:
         print('Error! usage: python '+sys.argv[0]+' [cathead] [field] [ver]')
         sys.exit()
     cathead = sys.argv[1]
     field = sys.argv[2] 
     ver = sys.argv[3]
+    print(cathead,field,ver)
     print(dfafad)
     
     #field = 'UDS'
