@@ -82,6 +82,7 @@ time.sleep(CHECK_INTERVAL_SEC)
 k=0
 while True:
     wait_job_finish()
+    print("waited")
     Nresi, unfit_id_array = get_unfit_number(catdir,cathead,field,ver)
     if Nresi==0:
         break
