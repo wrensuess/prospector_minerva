@@ -61,7 +61,7 @@ def get_unfit_number(catdir,cathead,field,ver):
     ### check path is consistent with submit_loop.py
     outdir = '/scratch/alpine/ikmi3774/slurm/'
     spsver = 'spsbeta'
-    chaindir = outdir+'chains_parrot_{}_{}_LW_Kf444w_SUPER_{}'.format(field, ver, spsver)
+    chaindir = outdir+'chains_parrot_{}_{}_LW_Kf444w_SUPER_{}/'.format(field, ver, spsver)
     fitted = glob.glob(chaindir+"id_*.h5")
     fitted_id = [a.split("/")[-1].split("_")[1] for a in fitted]
     print(chaindir)
