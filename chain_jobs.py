@@ -58,7 +58,11 @@ def wait_job_finish():
         time.sleep(CHECK_INTERVAL_SEC)
 
 def get_unfit_number(catdir,cathead,field,ver):
-    fitted = glob.glob("/scratch/alpine/ikmi3774/slurm/chains_parrot_"+ver+"_LW_Kf444w_SUPER_spsbeta/id_*.h5")
+    ### check path is consistent with submit_loop.py
+    outdir = '/scratch/alpine/ikmi3774/slurm/'
+    spsver = 'spsbeta'
+    chaindir = outdir+'chains_parrot_{}_{}_LW_Kf444w_SUPER_{}'.format(field, ver, spsver)
+    fitted = glob.glob(chaindir+"id_*.h5")
     fitted_id = [a.split("/")[-1].split("_")[1] for a in fitted]
 
     whole_id_ = np.loadtxt(catdir+"fitid_MINERVA-"+field+"_"+ver+"_LW_Kf444w_SUPER_CATALOG.txt")
