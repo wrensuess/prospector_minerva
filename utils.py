@@ -10,8 +10,8 @@ from astropy.cosmology import WMAP9 as cosmo
 
 ''' TODO: update paths!'''
 
-piratedir='../test_prospector/'
-photdir='../test_prospector/phot_catalog/'
+piratedir='../'
+photdir='../phot_catalog/'
 
 def get_dir(dirtype='cwd', outdir=None):
     
