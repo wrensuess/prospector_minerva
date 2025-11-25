@@ -22,7 +22,7 @@ def wait_job_finish():
     while True:
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         try:
-            # squeue -u <user> を実行
+            # execute squeue -u <user>
             res = subprocess.run(
                 ["squeue", "-u", user],
                 text=True,
@@ -30,7 +30,7 @@ def wait_job_finish():
                 check=True,
             )
         except subprocess.CalledProcessError as e:
-            print(f"[{now}] squeue 実行エラー: {e}")
+            print(f"[{now}] squeue error: {e}")
             print(e.stdout)
             print(e.stderr)
             time.sleep(CEHCK_INTERVAL_SEC)
@@ -41,6 +41,9 @@ def wait_job_finish():
         # Nline = 1 :only header, no job
         if len(lines) <= 1:
             print(f"[{now}] no job. finished.")
+            # a few columns
+            for line in lines:
+                print("  ", line)
             break
         else:
             num_jobs = len(lines) - 1
@@ -82,7 +85,8 @@ time.sleep(CHECK_INTERVAL_SEC)
 k=0
 while True:
     wait_job_finish()
-    print("waited")
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"[{now}] waited")
     Nresi, unfit_id_array = get_unfit_number(catdir,cathead,field,ver)
     if Nresi==0:
         break
