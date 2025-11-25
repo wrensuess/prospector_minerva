@@ -86,7 +86,8 @@ if __name__ == '__main__':
     #outdir = '../slurm/'
     outdir = '/scratch/alpine/ikmi3774/slurm/'
     catdir = '../phot_catalog/'
-    chaindir = outdir+'chains_parrot_{}_{}'.format(ver, spsver)
+    #chaindir = outdir+'chains_parrot_{}_{}'.format(ver, spsver)
+    chaindir = outdir+'chains_parrot_{}_{}_LW_Kf444w_SUPER'.format(ver, spsver)
     #chaindir = '/scratch/alpine/ikmi3774/slurm/chains_parrot_{}_{}'.format(ver, spsver)
     logdir = outdir+'log_'+field
     taskdir = outdir+'task_lists_'+field
