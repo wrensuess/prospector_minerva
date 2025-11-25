@@ -64,6 +64,8 @@ def get_unfit_number(catdir,cathead,field,ver):
     chaindir = outdir+'chains_parrot_{}_{}_LW_Kf444w_SUPER_{}'.format(field, ver, spsver)
     fitted = glob.glob(chaindir+"id_*.h5")
     fitted_id = [a.split("/")[-1].split("_")[1] for a in fitted]
+    print(chaindir)
+    print(fitted_id)
 
     whole_id_ = np.loadtxt(catdir+"fitid_MINERVA-"+field+"_"+ver+"_LW_Kf444w_SUPER_CATALOG.txt")
     whole_id = [str(int(a)) for a in list(whole_id_)]
