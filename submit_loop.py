@@ -100,7 +100,7 @@ if __name__ == '__main__':
     wtime = int(24) #int(24*7) # time
 
     ################################## step 1. sed fit ####################################
-    catalog = 'MINERVA-{}_{}_CATALOG.fits'.format(field, ver)
+    catalog = 'MINERVA-{}_{}_LW_Kf444w_SUPER_CATALOG.fits'.format(field, ver)
 
     isExist = os.path.exists(chaindir)
     if not isExist:

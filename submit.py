@@ -72,16 +72,17 @@ def run_params(task_dir='hoge', log_dir='hoge', acc='bc', jobname='p', wtime=24,
 if __name__ == '__main__':
     
     field = 'UDS'
-    ver = 'n2.2_m2.0_v1.0_LW_Kf444w_SUPER'
+    #ver = 'n2.2_m2.0_v1.0_LW_Kf444w_SUPER'
+    ver = 'n2.3_v1.1_LW_Kf444w_SUPER'
     spsver = 'spsbeta'
     #outdir = '../slurm/'
     outdir = '/scratch/alpine/ikmi3774/slurm/'
     catdir = '../phot_catalog/'
     chaindir = outdir+'chains_parrot_{}_{}'.format(ver, spsver)
     #chaindir = '/scratch/alpine/ikmi3774/slurm/chains_parrot_{}_{}'.format(ver, spsver)
-    logdir = outdir+'log3'
-    taskdir = outdir+'task_lists3'
-    fast_dyn = 0 #0:std run, 1:brief run, 2:debug
+    logdir = outdir+'log4'
+    taskdir = outdir+'task_lists4'
+    fast_dyn = 2 #0:std run, 1:brief run, 2:debug
 
     acc = 'bc' ### we do not have to use this specification, but useful if we use both alpine&blanca
     env = 'prosp'
@@ -96,7 +97,8 @@ if __name__ == '__main__':
     #fitcatalog = catdir+'fitid_MINERVA-{}_{}_CATALOG.txt'.format(field, ver)
     #fitcatalog = catdir+'unfitid_MINERVA-{}_{}_CATALOG.txt'.format(field, ver)
     #fitcatalog = catdir+'unfitid2_MINERVA-{}_{}_CATALOG.txt'.format(field, ver)
-    fitcatalog = catdir+'unfitid3_MINERVA-{}_{}_CATALOG.txt'.format(field, ver) #file includes use_photo=1 sources
+    #fitcatalog = catdir+'unfitid3_MINERVA-{}_{}_CATALOG.txt'.format(field, ver) #file includes use_photo=1 sources
+    fitcatalog = catdir+'fitid_MINERVA-{}_{}_CATALOG.txt'.format(field, ver)
     ids_fit = np.loadtxt(fitcatalog)
     print('total number of galaxies to fit:',len(ids_fit)) #[Nfit]
 
