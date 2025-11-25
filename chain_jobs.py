@@ -4,7 +4,7 @@ import glob,time,os
 import numpy as np
 from datetime import datetime
 
-CHECK_INTERVAL_HOURS = 0.1
+CHECK_INTERVAL_HOURS = 6
 CHECK_INTERVAL_SEC = 3600*CHECK_INTERVAL_HOURS
 
 
