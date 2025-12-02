@@ -77,7 +77,7 @@ def get_unfit_number(catdir,cathead,field,ver):
     return int(len(not_fitted)), np.array(not_fitted_out)
 
     
-
+'''
 field = "UDS"
 ver = "n2.3_v1.1"
 catdir = '../phot_catalog/'
@@ -104,3 +104,11 @@ while True:
         time.sleep(CHECK_INTERVAL_SEC)
 
 print(f"[INFO] all fitting is completed")
+'''
+
+field = "UDS"
+ver = "n2.3_v1.1"
+catdir = '../phot_catalog/'
+cathead = "fitid"
+Nresi, unfit_id_array = get_unfit_number(catdir,cathead,field,ver)
+print(Nresi)
