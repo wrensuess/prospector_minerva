@@ -4,7 +4,7 @@ import glob,time,os
 import numpy as np
 from datetime import datetime
 
-CHECK_INTERVAL_HOURS = 6
+CHECK_INTERVAL_HOURS = 0.1
 CHECK_INTERVAL_SEC = 3600*CHECK_INTERVAL_HOURS
 
 
@@ -99,10 +99,9 @@ while True:
         cathead = "unfitid"+str(int(k))
         catpath = catdir+cathead+"_MINERVA-"+field+"_"+ver+"_LW_Kf444w_SUPER_CATALOG.txt"
         np.savetxt(catpath,np.array(unfit_id_array))
-        #subprocess.run(["python", "submit_loop.py", cathead, field, ver], check=True)
-        #print(f"[INFO] job with "+cathead+" catalog is running...")
-        #time.sleep(CHECK_INTERVAL_SEC)
-        print(dfafa)
+        subprocess.run(["python", "submit_loop.py", cathead, field, ver], check=True)
+        print(f"[INFO] job with "+cathead+" catalog is running...")
+        time.sleep(CHECK_INTERVAL_SEC)
 
 print(f"[INFO] all fitting is completed")
 
