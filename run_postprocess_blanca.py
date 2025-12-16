@@ -12,7 +12,7 @@ from utils import get_dir
 #outdir = '/scratch/alpine/kasu8993/postprocess_n2.2_m1.0_v1.0/'
 #log_dir = '/scratch/alpine/kasu8993/postprocess_n2.2_m1.0_v1.0/logs/'
 
-catalog = '/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/phot_catalog/MINERVA-UDS_n2.2_m2.0_v1.0_LW_Kf444w_SUPER_CATALOG.fits'
+catalog = '/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/phot_catalog/MINERVA-UDS_n2.3_v1.1_LW_Kf444w_SUPER_CATALOG.fits'
 indir = '/scratch/alpine/ikmi3774/slurm/chains_parrot_UDS_n2.3_v1.1_LW_Kf444w_SUPER_spsbeta/'
 outdir = '/scratch/alpine/ikmi3774/slurm/postprocess_UDS_n2.3_v1.1/'
 log_dir = '/scratch/alpine/ikmi3774/slurm/postprocess_UDS_n2.3_v1.1/logs/'
@@ -33,7 +33,8 @@ jname = 'postproc_{}'.format(prior)
 ts = time.strftime("%y%b%d-%H.%M", time.localtime())
 
 # first let's split up the finished IDs into njobs parts
-ids = np.array([int(i.split('_')[1]) for i in  os.listdir(indir)]) 
+ids = np.array([int(i.split('_')[1]) for i in  os.listdir(indir)])
+print(len(ids))
 ids_split = np.array_split(ids, njobs)
 # save each chunk to a separate file
 os.makedirs(outdir+'id_files', exist_ok=True)
