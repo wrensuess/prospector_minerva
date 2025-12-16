@@ -38,8 +38,9 @@ print(len(ids))
 ids_split = np.array_split(ids, njobs)
 # save each chunk to a separate file
 os.makedirs(outdir+'id_files', exist_ok=True)
+Nsum = 0
 for i, ids_chunk in enumerate(ids_split):
-    print(i)
+    Nsum=Nsum+len(ids_chunk)
     np.savetxt(f'{outdir}/id_files/ids_postprocess_{i}.txt', ids_chunk, fmt='%d')
 '''
 # now create the command to submit
