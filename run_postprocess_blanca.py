@@ -39,8 +39,9 @@ ids_split = np.array_split(ids, njobs)
 # save each chunk to a separate file
 os.makedirs(outdir+'id_files', exist_ok=True)
 for i, ids_chunk in enumerate(ids_split):
+    print(i)
     np.savetxt(f'{outdir}/id_files/ids_postprocess_{i}.txt', ids_chunk, fmt='%d')
-
+'''
 # now create the command to submit
 _cmd = "python -u postprocess_parrot_wrap.py --prior {} --fit 'fid' --catalog {} --indir {} --outdir {} --narr {} --iarr {} --ids_file {} --ddir {}".format(prior, 
     catalog, indir, outdir+'npz/', narr, iarr, outdir+'id_files/ids_postprocess_${SLURM_ARRAY_TASK_ID}.txt', ddir)
@@ -75,3 +76,4 @@ with open(outdir+'slurm_postprocess.sh', 'w') as f:
     f.write(txt_acc)
 
 os.system('sbatch {}/slurm_postprocess.sh'.format(outdir))    
+'''
