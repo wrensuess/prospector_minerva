@@ -42,6 +42,7 @@ Nsum = 0
 for i, ids_chunk in enumerate(ids_split):
     Nsum=Nsum+len(ids_chunk)
     np.savetxt(f'{outdir}/id_files/ids_postprocess_{i}.txt', ids_chunk, fmt='%d')
+print(Nsum)
 '''
 # now create the command to submit
 _cmd = "python -u postprocess_parrot_wrap.py --prior {} --fit 'fid' --catalog {} --indir {} --outdir {} --narr {} --iarr {} --ids_file {} --ddir {}".format(prior, 
