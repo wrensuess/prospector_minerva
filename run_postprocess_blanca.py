@@ -1,6 +1,6 @@
 # postprocess on blanca
 
-import os, sys, time
+import os, sys, time, glob
 import numpy as np
 from astropy.table import Table
 from utils import get_dir 
@@ -35,14 +35,18 @@ ts = time.strftime("%y%b%d-%H.%M", time.localtime())
 # first let's split up the finished IDs into njobs parts
 ids = np.array([int(i.split('_')[1]) for i in  os.listdir(indir)])
 print(len(ids))
+
+ids_comp_ = glob.glob(outdir+"npz/*_spec_phisfh.npz")
+ids_comp = [float(a.split("/")[-1].split("_")[1]) for a in ids_comp_]
+ids_fit = ids[np.where(np.isin(ids, ids_comp)==False)[0]]
+print(len(ids_fit))
+
 ids_split = np.array_split(ids, njobs)
 # save each chunk to a separate file
 os.makedirs(outdir+'id_files', exist_ok=True)
-Nsum = 0
 for i, ids_chunk in enumerate(ids_split):
-    Nsum=Nsum+len(ids_chunk)
     np.savetxt(f'{outdir}/id_files/ids_postprocess_{i}.txt', ids_chunk, fmt='%d')
-print(Nsum)
+
 '''
 # now create the command to submit
 _cmd = "python -u postprocess_parrot_wrap.py --prior {} --fit 'fid' --catalog {} --indir {} --outdir {} --narr {} --iarr {} --ids_file {} --ddir {}".format(prior, 
