@@ -34,12 +34,15 @@ ts = time.strftime("%y%b%d-%H.%M", time.localtime())
 
 # first let's split up the finished IDs into njobs parts
 ids = np.array([int(i.split('_')[1]) for i in  os.listdir(indir)])
-print(len(ids))
 
-ids_comp_ = glob.glob(outdir+"npz/*_spec_phisfh.npz")
-ids_comp = [float(a.split("/")[-1].split("_")[1]) for a in ids_comp_]
-ids_fit = ids[np.where(np.isin(ids, ids_comp)==False)[0]]
-print(len(ids_fit))
+last = 0
+if last==0:
+    # this is added to adjust ids, for the last ~a few % of the sources
+    ids_comp_ = glob.glob(outdir+"npz/*_spec_phisfh.npz")
+    ids_comp = [float(a.split("/")[-1].split("_")[1]) for a in ids_comp_]
+    ids_fit = ids[np.where(np.isin(ids, ids_comp)==False)[0]]
+    ids = ids_fit
+print(len(ids))
 
 ids_split = np.array_split(ids, njobs)
 # save each chunk to a separate file
