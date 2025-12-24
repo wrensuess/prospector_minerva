@@ -43,6 +43,7 @@ if last==0:
     ids_fit = ids[np.where(np.isin(ids, ids_comp)==False)[0]]
     ids = ids_fit
 print(len(ids))
+print(ids)
 
 ids_split = np.array_split(ids, njobs)
 # save each chunk to a separate file
