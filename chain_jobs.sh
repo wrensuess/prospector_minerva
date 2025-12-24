@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=run_chan_job
-#SBATCH --partition=blanca-ics
+#SBATCH --partition=blanca-casa
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
