@@ -4,7 +4,7 @@ import glob,time,os
 import numpy as np
 from datetime import datetime
 
-CHECK_INTERVAL_HOURS = 0.1
+CHECK_INTERVAL_HOURS = 6 #6 for first run, 1-2 for second run, 0.5 for later?
 CHECK_INTERVAL_SEC = 3600*CHECK_INTERVAL_HOURS
 
 
@@ -33,7 +33,7 @@ def wait_job_finish():
             print(f"[{now}] squeue error: {e}")
             print(e.stdout)
             print(e.stderr)
-            time.sleep(CEHCK_INTERVAL_SEC)
+            time.sleep(CHECK_INTERVAL_SEC)
             continue
 
         lines = res.stdout.strip().splitlines()
@@ -57,7 +57,7 @@ def wait_job_finish():
         print(f"[INFO] next check will be {CHECK_INTERVAL_HOURS} hours later\n")
         time.sleep(CHECK_INTERVAL_SEC)
 
-def get_unfit_number(catdir,cathead,field,ver):
+def get_unfit_number(catdir,cathead_ori,field,ver):
     ### check path is consistent with submit_loop.py
     outdir = '/scratch/alpine/ikmi3774/slurm/'
     spsver = 'spsbeta'
@@ -65,7 +65,7 @@ def get_unfit_number(catdir,cathead,field,ver):
     fitted = glob.glob(chaindir+"id_*.h5")
     fitted_id = [a.split("/")[-1].split("_")[1] for a in fitted]
 
-    whole_id_ = np.loadtxt(catdir+"fitid_MINERVA-"+field+"_"+ver+"_LW_Kf444w_SUPER_CATALOG.txt")
+    whole_id_ = np.loadtxt(catdir+cathead_ori+"_MINERVA-"+field+"_"+ver+"_LW_Kf444w_SUPER_CATALOG.txt")
     whole_id = [str(int(a)) for a in list(whole_id_)]
 
     not_fitted =  list(set(fitted_id)^set(whole_id))
@@ -81,22 +81,23 @@ def get_unfit_number(catdir,cathead,field,ver):
 field = "UDS"
 ver = "n2.3_v1.1"
 catdir = '../phot_catalog/'
-cathead = "fitid"
+cathead = "fitidBB"
+cathead_ori = "fitidBB"
 catpath = catdir+cathead+"_MINERVA-"+field+"_"+ver+"_LW_Kf444w_SUPER_CATALOG.txt"
-#subprocess.run(["python", "submit_loop.py", cathead, field, ver], check=True)
-#time.sleep(CHECK_INTERVAL_SEC)
+subprocess.run(["python", "submit_loop.py", cathead, field, ver], check=True)
+time.sleep(CHECK_INTERVAL_SEC)
 
-k=4#0
+k=0
 while True:
     wait_job_finish()
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print(f"[{now}] waited")
-    Nresi, unfit_id_array = get_unfit_number(catdir,cathead,field,ver)
+    Nresi, unfit_id_array = get_unfit_number(catdir,cathead_ori,field,ver)
     if Nresi==0:
         break
     else:
         k=k+1
-        cathead = "unfitid"+str(int(k))
+        cathead = "unfitidBB"+str(int(k))
         catpath = catdir+cathead+"_MINERVA-"+field+"_"+ver+"_LW_Kf444w_SUPER_CATALOG.txt"
         np.savetxt(catpath,np.array(unfit_id_array))
         subprocess.run(["python", "submit_loop.py", cathead, field, ver], check=True)
