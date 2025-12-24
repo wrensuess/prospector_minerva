@@ -49,6 +49,7 @@ ids_split = np.array_split(ids, njobs)
 os.makedirs(outdir+'id_files', exist_ok=True)
 for i, ids_chunk in enumerate(ids_split):
     np.savetxt(f'{outdir}/id_files/ids_postprocess_{i}.txt', ids_chunk, fmt='%d')
+    print(i)
 
 '''
 # now create the command to submit
@@ -64,7 +65,7 @@ txt_acc = '\n'.join(["#!/bin/bash -l",
                              "#SBATCH --nodes=1",
                              "#SBATCH --ntasks=1",
                              "#SBATCH --job-name={}".format(jname),
-                             "#SBATCH --array=0-{}".format(int(njobs)),
+                             "#SBATCH --array=0-{}".format(int(njobs-1)),
                              "#SBATCH --output={}/{}_{}_%A_%a.out".format(log_dir, jname, ts),
                              "#SBATCH --error={}/{}_{}_%A_%a.err".format(log_dir, jname, ts),
                              "",
