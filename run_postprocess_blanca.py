@@ -13,7 +13,7 @@ from utils import get_dir
 #log_dir = '/scratch/alpine/kasu8993/postprocess_n2.2_m1.0_v1.0/logs/'
 
 catalog = '/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/phot_catalog/MINERVA-UDS_n2.3_v1.1_LW_Kf444w_SUPER_CATALOG.fits'
-indir = '/scratch/alpine/ikmi3774/slurm/chains_parrot_UDS_n2.3_v1.1_LW_Kf444w_SUPER_spsbeta_wBB/'
+indir = '/scratch/alpine/ikmi3774/slurm/chains_parrot_UDS_n2.3_v1.1_LW_Kf444w_SUPER_spsbeta_wMB/'
 outdir = '/scratch/alpine/ikmi3774/slurm/postprocess_UDS_n2.3_v1.1/'
 log_dir = '/scratch/alpine/ikmi3774/slurm/postprocess_UDS_n2.3_v1.1/logs/'
 
