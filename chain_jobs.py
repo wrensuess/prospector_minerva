@@ -81,8 +81,8 @@ def get_unfit_number(catdir,cathead_ori,field,ver):
 field = "UDS"
 ver = "n2.3_v1.1"
 catdir = '../phot_catalog/'
-cathead = "fitidBB"
-cathead_ori = "fitidBB"
+cathead = "refitid" #name of catalog for the first attempt
+cathead_ori = "fitid" #name of reference catalog to check fitting is completed
 catpath = catdir+cathead+"_MINERVA-"+field+"_"+ver+"_LW_Kf444w_SUPER_CATALOG.txt"
 subprocess.run(["python", "submit_loop.py", cathead, field, ver], check=True)
 time.sleep(CHECK_INTERVAL_SEC)
@@ -97,7 +97,7 @@ while True:
         break
     else:
         k=k+1
-        cathead = "unfitidBB"+str(int(k))
+        cathead = "unrefitid"+str(int(k)) #name of catalog for k-th attempt
         catpath = catdir+cathead+"_MINERVA-"+field+"_"+ver+"_LW_Kf444w_SUPER_CATALOG.txt"
         np.savetxt(catpath,np.array(unfit_id_array))
         subprocess.run(["python", "submit_loop.py", cathead, field, ver], check=True)

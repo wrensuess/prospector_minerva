@@ -34,7 +34,7 @@ def run_params(task_dir='hoge', log_dir='hoge', acc='bc', jobname='p', wtime=24,
 
     txt_2 = '\n'.join([
         "#SBATCH --nodes=1",
-        "#SBATCH --ntasks=21", #it's better to use numbers which can split 200(=Nsource/Njobarray), +1 for loadbalancer
+        "#SBATCH --ntasks=2", #21? it's better to use numbers which can split 200(=Nsource/Njobarray), +1 for loadbalancer
         "#SBATCH --job-name={}".format(jname),
         "#SBATCH --array=0-{}".format(int(njob-1)),
         "#SBATCH --output={}/{}_{}_%A_%a.out".format(log_dir, jname, ts),
@@ -97,7 +97,7 @@ if __name__ == '__main__':
     env = 'prosp'
     #ncores = len(tot)
     #ncores = 5 #840 # number of cores to request
-    njobs = 1000 #number of job array, max=1000
+    njobs = 2#1000 #number of job array, max=1000
     wtime = int(24) #int(24*7) # time
 
     ################################## step 1. sed fit ####################################
