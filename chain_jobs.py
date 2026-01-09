@@ -80,6 +80,7 @@ def get_unfit_number(catdir,cathead_ori,field,ver):
 
 field = "UDS"
 ver = "n2.3_v1.1"
+spsver = 'spsbeta'
 catdir = '../phot_catalog/'
 cathead = "refitid" #name of catalog for the first attempt
 cathead_ori = "fitid" #name of reference catalog to check fitting is completed
