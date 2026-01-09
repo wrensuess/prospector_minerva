@@ -81,6 +81,7 @@ def get_unfit_number(catdir,cathead_ori,field,ver):
 field = "UDS"
 ver = "n2.3_v1.1"
 spsver = 'spsbeta'
+outdir = '/scratch/alpine/ikmi3774/slurm/'
 catdir = '../phot_catalog/'
 cathead = "refitid" #name of catalog for the first attempt
 cathead_ori = "fitid" #name of reference catalog to check fitting is completed
@@ -91,8 +92,8 @@ if cathead=="refitid":
     refitids = np.loadtxt(catpath)
     print(refitids)
     for j in range(0,len(refitids)):
-        print("rm "+chaindir+"id_"+str(int(refitids[j]))+"_mcmc_phisfh.h5")
-        os.system("rm "+chaindir+"id_"+str(int(refitids[j]))+"_mcmc_phisfh.h5")
+        print("rm "+outdir+"id_"+str(int(refitids[j]))+"_mcmc_phisfh.h5")
+        os.system("rm "+outdir+"id_"+str(int(refitids[j]))+"_mcmc_phisfh.h5")
 
 subprocess.run(["python", "submit_loop.py", cathead, field, ver], check=True)
 time.sleep(CHECK_INTERVAL_SEC)
