@@ -88,6 +88,7 @@ chaindir = outdir+'chains_parrot_{}_{}_LW_Kf444w_SUPER_{}/'.format(field, ver, s
 
 if cathead=="refitid":
     refitids = np.loadtxt(catpath)
+    print(refitids)
     for j in range(0,len(refitids)):
         os.system("rm "+chaindir+"id_"+str(int(refitids[j]))+"_mcmc_phisfh.h5")
 
