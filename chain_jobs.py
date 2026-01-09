@@ -86,14 +86,14 @@ catdir = '../phot_catalog/'
 cathead = "refitid" #name of catalog for the first attempt
 cathead_ori = "fitid" #name of reference catalog to check fitting is completed
 catpath = catdir+cathead+"_MINERVA-"+field+"_"+ver+"_LW_Kf444w_SUPER_CATALOG.txt"
-chaindir = catdir+'chains_parrot_{}_{}_LW_Kf444w_SUPER_{}/'.format(field, ver, spsver)
+chaindir = outdir+'chains_parrot_{}_{}_LW_Kf444w_SUPER_{}/'.format(field, ver, spsver)
 
 if cathead=="refitid":
     refitids = np.loadtxt(catpath)
     print(refitids)
     for j in range(0,len(refitids)):
-        print("rm "+outdir+"id_"+str(int(refitids[j]))+"_mcmc_phisfh.h5")
-        os.system("rm "+outdir+"id_"+str(int(refitids[j]))+"_mcmc_phisfh.h5")
+        print("rm "+chaindir+"id_"+str(int(refitids[j]))+"_mcmc_phisfh.h5")
+        os.system("rm "+chaindir+"id_"+str(int(refitids[j]))+"_mcmc_phisfh.h5")
 
 subprocess.run(["python", "submit_loop.py", cathead, field, ver], check=True)
 time.sleep(CHECK_INTERVAL_SEC)
