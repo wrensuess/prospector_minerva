@@ -91,6 +91,7 @@ if cathead=="refitid":
     refitids = np.loadtxt(catpath)
     print(refitids)
     for j in range(0,len(refitids)):
+        print("rm "+chaindir+"id_"+str(int(refitids[j]))+"_mcmc_phisfh.h5")
         os.system("rm "+chaindir+"id_"+str(int(refitids[j]))+"_mcmc_phisfh.h5")
 
 subprocess.run(["python", "submit_loop.py", cathead, field, ver], check=True)
