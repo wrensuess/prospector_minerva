@@ -1,4 +1,7 @@
 import os, sys
+import logging
+logging.basicConfig(level=logging.INFO,format="%(asctime)s [%(levelname)s] %(message)s")
+logger = logging.getLogger(__name__)
 import numpy as np
 from astropy.cosmology import WMAP9 as cosmo
 from astropy.table import Table
@@ -90,7 +93,31 @@ sps = build_sps_fsps(**run_params)
 
 for mid in groups[i_split_arr]:
     if mid not in flist_finished:
-        print('passed to pp.run_all: '+args.ddir+args.outdir)
-        pp.run_all(objid=mid, fit=args.fit, prior=args.prior,
-                   mod_fsps=mod_fsps, mod_for_prior=mod_for_prior, sps=sps,
-                   input_folder=args.ddir+args.indir, output_folder=args.ddir+args.outdir, catalog_file=catalog_file)
+        try:
+            print('passed to pp.run_all: '+args.ddir+args.outdir)
+            pp.run_all(objid=mid, fit=args.fit, prior=args.prior,
+                       mod_fsps=mod_fsps, mod_for_prior=mod_for_prior, sps=sps,
+                       input_folder=args.ddir+args.indir, output_folder=args.ddir+args.outdir, catalog_file=catalog_file)
+            print('finshed pp.run_all')
+        except OSError as e:
+            msg = str(e)
+
+            # in case of broken .h5 file: continue
+            if "bad object header version number" in msg:
+                logger.warning(
+                    "Corrupted HDF5 file detected. Skipping.\n"
+                    "  file : %s\n"
+                    "  error: %s",
+                    fname, msg
+                )
+                continue
+
+            # other OSError: stop
+            logger.error(
+                "Unexpected OSError while reading HDF5 file.\n"
+                "  file : %s\n"
+                "  error: %s",
+                fname, msg
+            )
+            raise
+            
