@@ -108,7 +108,7 @@ for mid in groups[i_split_arr]:
                     "Corrupted HDF5 file detected. Skipping.\n"
                     "  file : %s\n"
                     "  error: %s",
-                    fname, msg
+                    mid, msg
                 )
                 continue
 
@@ -117,7 +117,7 @@ for mid in groups[i_split_arr]:
                 "Unexpected OSError while reading HDF5 file.\n"
                 "  file : %s\n"
                 "  error: %s",
-                fname, msg
+                mid, msg
             )
             raise
             
