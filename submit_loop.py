@@ -89,8 +89,8 @@ if __name__ == '__main__':
     #chaindir = outdir+'chains_parrot_{}_{}'.format(ver, spsver)
     chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}'.format(field, ver, spsver)
     #chaindir = '/scratch/alpine/ikmi3774/slurm/chains_parrot_{}_{}'.format(ver, spsver)
-    logdir = outdir+'log_'+field
-    taskdir = outdir+'task_lists_'+field
+    logdir = outdir+'log_'+field+"_"+ver
+    taskdir = outdir+'task_lists_'+field+"_"+ver
     fast_dyn = 0 #0:std run, 1:brief run, 2:debug
 
     acc = 'bc' ### we do not have to use this specification, but useful if we use both alpine&blanca
