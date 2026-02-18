@@ -87,7 +87,7 @@ if __name__ == '__main__':
     outdir = '/scratch/alpine/ikmi3774/slurm/'
     catdir = '../phot_catalog/'
     #chaindir = outdir+'chains_parrot_{}_{}'.format(ver, spsver)
-    chaindir = outdir+'chains_parrot_{}_{}_LW_Kf444w_SUPER_{}'.format(field, ver, spsver)
+    chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}'.format(field, ver, spsver)
     #chaindir = '/scratch/alpine/ikmi3774/slurm/chains_parrot_{}_{}'.format(ver, spsver)
     logdir = outdir+'log_'+field
     taskdir = outdir+'task_lists_'+field
@@ -97,11 +97,11 @@ if __name__ == '__main__':
     env = 'prosp'
     #ncores = len(tot)
     #ncores = 5 #840 # number of cores to request
-    njobs = 2#1000 #number of job array, max=1000
+    njobs = 1000 #number of job array, max=1000
     wtime = int(24) #int(24*7) # time
 
     ################################## step 1. sed fit ####################################
-    catalog = 'MINERVA-{}_{}_LW_Kf444w_SUPER_CATALOG.fits'.format(field, ver)
+    catalog = 'MINERVA-{}_{}_ACS+WEBB_Kf444w_SUPER_CATALOG.fits'.format(field, ver)
 
     isExist = os.path.exists(chaindir)
     if not isExist:
@@ -115,10 +115,9 @@ if __name__ == '__main__':
     if not isExist:
         os.makedirs(taskdir)
         print("new task directory created:", taskdir)
-
     
     
-    fitcatalog = catdir+cathead+'_MINERVA-'+field+'_'+ver+'_LW_Kf444w_SUPER_CATALOG.txt' #file includes use_photo=1 and nmband>5 sources for now
+    fitcatalog = catdir+cathead+'_MINERVA-'+field+'_'+ver+'_ACS+WEBB_Kf444w_SUPER_CATALOG.txt' #file includes use_photo=1 and nmband>5 sources for now
     ids_fit = np.loadtxt(fitcatalog)
     print('[INFO] Ngalaxies to fit in '+cathead+':',len(ids_fit)) #[Nfit]
 
