@@ -34,7 +34,7 @@ def run_params(task_dir='hoge', log_dir='hoge', acc='bc', jobname='p', wtime=24,
 
     txt_2 = '\n'.join([
         "#SBATCH --nodes=1",
-        "#SBATCH --ntasks=2", #21? it's better to use numbers which can split 200(=Nsource/Njobarray), +1 for loadbalancer
+        "#SBATCH --ntasks=21", #21? it's better to use numbers which can split 200(=Nsource/Njobarray), +1 for loadbalancer
         "#SBATCH --job-name={}".format(jname),
         "#SBATCH --array=0-{}".format(int(njob-1)),
         "#SBATCH --output={}/{}_{}_%A_%a.out".format(log_dir, jname, ts),
