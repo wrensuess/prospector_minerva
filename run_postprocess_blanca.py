@@ -12,10 +12,10 @@ from utils import get_dir
 #outdir = '/scratch/alpine/kasu8993/postprocess_n2.2_m1.0_v1.0/'
 #log_dir = '/scratch/alpine/kasu8993/postprocess_n2.2_m1.0_v1.0/logs/'
 
-catalog = '/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/phot_catalog/MINERVA-UDS_n2.3_v1.1_LW_Kf444w_SUPER_CATALOG.fits'
-indir = '/scratch/alpine/ikmi3774/slurm/chains_parrot_UDS_n2.3_v1.1_LW_Kf444w_SUPER_spsbeta/'
-outdir = '/scratch/alpine/ikmi3774/slurm/postprocess_UDS_n2.3_v1.1/'
-log_dir = '/scratch/alpine/ikmi3774/slurm/postprocess_UDS_n2.3_v1.1/logs/'
+catalog = '/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/phot_catalog/MINERVA-UDS_n3.0_v1.2_ACS+WEBB_Kf444w_SUPER_CATALOG.fits'
+indir = '/scratch/alpine/ikmi3774/slurm/chains_parrot_UDS_n3.0_v1.2_ACS+WEBB_Kf444w_SUPER_spsbeta/'
+outdir = '/scratch/alpine/ikmi3774/slurm/postprocess_UDS_n3.0_v1.2/'
+log_dir = '/scratch/alpine/ikmi3774/slurm/postprocess_UDS_n3.0_v1.2/logs/'
 
 ddir = '/' # we're giving absolute paths so this is just a placeholder 
 narr = 1; iarr = 0 # we're going to make our own ID lists
@@ -27,7 +27,7 @@ prior = 'phisfh' # 'phisfhzfixed' if you're using zspec fits
 #code_dir = '/projects/kasu8993/prospector_minerva/'
 code_dir= '/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/prospector_minerva/'
 
-njobs = 3 #number of job array, max=1000
+njobs = 1000 #number of job array, max=1000
 wtime = int(12) # time
 jname = 'postproc_{}'.format(prior)
 ts = time.strftime("%y%b%d-%H.%M", time.localtime())
@@ -35,7 +35,7 @@ ts = time.strftime("%y%b%d-%H.%M", time.localtime())
 # first let's split up the finished IDs into njobs parts
 ids = np.array([int(i.split('_')[1]) for i in  os.listdir(indir)])
 
-last = 0
+last = 1#0
 
 if last!=0:
     ids_split = np.array_split(ids, njobs)
