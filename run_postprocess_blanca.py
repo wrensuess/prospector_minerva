@@ -36,8 +36,6 @@ ts = time.strftime("%y%b%d-%H.%M", time.localtime())
 
 # first let's split up the finished IDs into njobs parts
 ids = np.array([int(i.split('_')[1]) for i in  os.listdir(indir)])
-print(ids)
-print(fadffa)
 
 last = 1#0
 
@@ -45,8 +43,8 @@ if last!=0:
     ids_split = np.array_split(ids, njobs)
     # save each chunk to a separate file
     os.makedirs(outdir+'id_files', exist_ok=True)
-    #for i, ids_chunk in enumerate(ids_split):
-    #    np.savetxt(f'{outdir}/id_files/ids_postprocess_{i}.txt', ids_chunk, fmt='%d')
+    for i, ids_chunk in enumerate(ids_split):
+        np.savetxt(f'{outdir}/id_files/ids_postprocess_{i}.txt', ids_chunk, fmt='%d')
 
     # now create the command to submit
     _cmd = "python -u postprocess_parrot_wrap.py --prior {} --fit 'fid' --catalog {} --indir {} --outdir {} --narr {} --iarr {} --ids_file {} --ddir {}".format(prior, 
@@ -86,7 +84,7 @@ if last==0:
     ids_fit = ids[np.where(np.isin(ids, ids_comp)==False)[0]]
     ids = ids_fit
     print(len(ids))
-    #np.savetxt(f'{outdir}/id_files/ids_postprocess_0.txt', ids, fmt='%d')
+    np.savetxt(f'{outdir}/id_files/ids_postprocess_0.txt', ids, fmt='%d')
     
     _cmd = "python -u postprocess_parrot_wrap.py --prior {} --fit 'fid' --catalog {} --indir {} --outdir {} --narr {} --iarr {} --ids_file {} --ddir {}".format(prior, 
         catalog, indir, outdir+'npz/', narr, iarr, outdir+'id_files/ids_postprocess_0.txt', ddir)
