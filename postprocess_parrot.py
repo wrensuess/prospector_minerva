@@ -19,6 +19,33 @@ import utils_unit as ut_u
 percents = [0.1,2.3,15.9,50,84.1,97.7,99.9]
 nsamp = 1000
 
+### use h5py?
+import h5py
+import numpy as np
+
+def save_dict_to_h5(group, data):
+    for key, value in data.items():
+        key = str(key)
+
+        if isinstance(value, dict):
+            subgrp = group.create_group(key)
+            save_dict_to_h5(subgrp, value)
+
+        elif value is None:
+            group.attrs[key] = "__NONE__"
+
+        else:
+            arr = np.asarray(value)
+
+            if arr.dtype.kind in {"U", "S"}:
+                dt = h5py.string_dtype(encoding="utf-8")
+                group.create_dataset(key, data=arr.astype(dt), compression="gzip")
+            elif arr.dtype == object:
+                group.create_dataset(key, data=np.array(str(value), dtype=h5py.string_dtype()))
+            else:
+                group.create_dataset(key, data=arr, compression="gzip", shuffle=True)
+###
+
 def theta_dict_from_run(fit, rtn_dict=True):
     '''
     `theta` _has_ to match the model.free_params
@@ -401,6 +428,7 @@ def run_all(h5_fname=None,
     percentiles['rest_NUVrJ_colors'] = np.percentile(nuv_color, percents, axis=0).T
     percentiles['rest_NUVrJ_colors_map'] = nuv_color_map
 
+    '''
     perc_fname = _h5_fname.replace('mcmc', 'perc')
     perc_fname = perc_fname.replace('.h5', '.npz')
     sname = os.path.join(_out_dir, perc_fname)
@@ -418,17 +446,44 @@ def run_all(h5_fname=None,
     spec_fname = _h5_fname.replace('mcmc', 'spec')
     spec_fname = spec_fname.replace('.h5', '.npz')
     sname = os.path.join(_out_dir, spec_fname)
-    '''
     np.savez(sname,
-             modspec_map=modspec_map, modmags_map=modmags_map,
-             modmags_perc=np.percentile(modmags_all, percents, axis=0).T,
-             modspecs_perc=np.percentile(modspecs_all, percents, axis=0).T
-            )
-    '''
-    np.savez_compressed(sname,
              modspec_map=modspec_map, modmags_map=modmags_map,
              modmags_perc=np.percentile(modmags_all, percents, axis=0).T,
              modspecs_perc=np.percentile(modspecs_all, percents, axis=0).T
             )
              # modmags_all & modspecs_all is magnified!
     print('saved model spec to', sname+'\n')
+    '''
+
+    perc_fname = _h5_fname.replace('mcmc', 'perc').replace('.h5', '.h5')
+    sname = os.path.join(_out_dir, perc_fname)
+    with h5py.File(sname, "w") as f:
+        grp = f.create_group("percentiles")
+        save_dict_to_h5(grp, percentiles)
+        f.create_dataset("chain_ml", data=np.asarray(chain_ml), compression="gzip", shuffle=True)
+        theta_grp = f.create_group("theta_lbs")
+        for k, v in res['theta_index'].items():
+            theta_grp.attrs[k] = int(v)
+    print('saved percentiles to', sname)
+    
+    unw_fname = _h5_fname.replace('mcmc', 'unw').replace('.h5', '.h5')
+    chains['stellar_mass'] = stellarmass
+    chains['ssfr'] = ssfr
+    sname = os.path.join(_out_dir, unw_fname)
+    with h5py.File(sname, "w") as f:
+        grp = f.create_group("chains")
+        save_dict_to_h5(grp, chains)
+        f.create_dataset("chain_ml", data=np.asarray(chain_ml), compression="gzip", shuffle=True)
+        f.create_dataset("sub_idx", data=np.asarray(sub_idx), compression="gzip", shuffle=True)
+    print('saved chains to', sname)
+
+    spec_fname = _h5_fname.replace('mcmc', 'spec').replace('.h5', '.h5')
+    sname = os.path.join(_out_dir, spec_fname)
+    with h5py.File(sname, "w") as f:
+        f.create_dataset("modspec_map", data=np.asarray(modspec_map), compression="gzip", shuffle=True)
+        f.create_dataset("modmags_map", data=np.asarray(modmags_map), compression="gzip", shuffle=True)
+        f.create_dataset("modmags_perc", data=np.percentile(modmags_all, percents, axis=0).T,
+                         compression="gzip", shuffle=True)
+        f.create_dataset("modspecs_perc", data=np.percentile(modspecs_all, percents, axis=0).T,
+                         compression="gzip", shuffle=True)
+    print('saved model spec to', sname)
