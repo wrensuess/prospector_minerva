@@ -16,8 +16,8 @@ catalog = '/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/phot_catalo
 indir = '/scratch/alpine/ikmi3774/slurm/chains_parrot_UDS_n3.0_v1.2_ACS+WEBB_Kf444w_SUPER_spsbeta/'
 outdir = '/scratch/alpine/ikmi3774/slurm/postprocess_UDS_n3.0_v1.2/'
 log_dir = '/scratch/alpine/ikmi3774/slurm/postprocess_UDS_n3.0_v1.2/logs/'
-outdir = '/scratch/alpine1/kasu8993/postprocess_UDS_n3.0_v1.2/'
-log_dir = '/scratch/alpine1/kasu8993/postprocess_UDS_n3.0_v1.2/logs/'
+#outdir = '/scratch/alpine1/kasu8993/postprocess_UDS_n3.0_v1.2/'
+#log_dir = '/scratch/alpine1/kasu8993/postprocess_UDS_n3.0_v1.2/logs/'
 
 ddir = '/' # we're giving absolute paths so this is just a placeholder 
 narr = 1; iarr = 0 # we're going to make our own ID lists
