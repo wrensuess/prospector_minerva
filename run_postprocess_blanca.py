@@ -29,13 +29,15 @@ prior = 'phisfh' # 'phisfhzfixed' if you're using zspec fits
 #code_dir = '/projects/kasu8993/prospector_minerva/'
 code_dir= '/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/prospector_minerva/'
 
-njobs = 1000 #number of job array, max=1000
+njobs = 100 #number of job array, max=1000
 wtime = int(12) # time
 jname = 'postproc_{}'.format(prior)
 ts = time.strftime("%y%b%d-%H.%M", time.localtime())
 
 # first let's split up the finished IDs into njobs parts
-ids = np.array([int(i.split('_')[1]) for i in  os.listdir(indir)])
+ids = np.array([int(i.split('_')[1]) for i in os.listdir(indir)])
+print(len(ids))
+print(dfafa)
 
 last = 1#0
 

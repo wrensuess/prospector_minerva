@@ -418,7 +418,14 @@ def run_all(h5_fname=None,
     spec_fname = _h5_fname.replace('mcmc', 'spec')
     spec_fname = spec_fname.replace('.h5', '.npz')
     sname = os.path.join(_out_dir, spec_fname)
+    '''
     np.savez(sname,
+             modspec_map=modspec_map, modmags_map=modmags_map,
+             modmags_perc=np.percentile(modmags_all, percents, axis=0).T,
+             modspecs_perc=np.percentile(modspecs_all, percents, axis=0).T
+            )
+    '''
+    np.savez_compressed(sname,
              modspec_map=modspec_map, modmags_map=modmags_map,
              modmags_perc=np.percentile(modmags_all, percents, axis=0).T,
              modspecs_perc=np.percentile(modspecs_all, percents, axis=0).T
