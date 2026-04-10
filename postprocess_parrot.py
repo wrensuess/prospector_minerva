@@ -43,7 +43,10 @@ def save_dict_to_h5(group, data):
             elif arr.dtype == object:
                 group.create_dataset(key, data=np.array(str(value), dtype=h5py.string_dtype()))
             else:
-                group.create_dataset(key, data=arr, compression="gzip", shuffle=True)
+                if arr.shape == ():
+                    group.create_dataset(key, data=arr)
+                else:
+                    group.create_dataset(key, data=arr, compression="gzip", shuffle=True)
 ######
 
 def theta_dict_from_run(fit, rtn_dict=True):
