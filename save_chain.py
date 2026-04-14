@@ -200,6 +200,9 @@ def main():
             shuffle=True,
             track_times=False
         )
+        
+        objid_chunk = max(1, min(1000, n_obj))
+        
         objids_ds = h5f.create_dataset('objid', shape=(n_obj,), dtype=np.int64,
             compression='gzip', chunks=(1000,))
 
