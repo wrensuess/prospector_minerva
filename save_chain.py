@@ -169,10 +169,15 @@ def main():
     n_obj = len(indexed_infos)
 
     # Inspect shape from the first file
+    '''
     sample_file = os.path.join(args.dir_indiv, all_files[0])
     with np.load(sample_file, allow_pickle=True) as sample_data:
         sample_chain = sample_data['chains'][()]
         n_samples = sample_chain['zred'].shape[0]
+    '''
+    sample_file = os.path.join(args.dir_indiv, all_files[0])
+    with h5py.File(sample_file, "r") as f:
+        n_samples = f["chains"]["zred"].shape[0]
     n_params = 26
     print(f"Processing {n_obj} files: {n_samples} samples × {n_params} parameters each")
 
