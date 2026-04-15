@@ -145,6 +145,7 @@ def main():
     with h5py.File(sname, 'w', libver='latest') as h5f:
         h5f.create_dataset('percentiles', data=perc)
         objids_ds = h5f.create_dataset('objid', shape=(n_obj,), dtype=np.int64)
+        '''
         tmax_ds = h5f.create_dataset(
             'agebins_max',
             shape=(n_obj),
@@ -154,6 +155,18 @@ def main():
             shuffle=True,
             track_times=False
         )
+        '''
+        objid_chunk = max(1, min(1000, n_obj))
+        tmax_ds = h5f.create_dataset(
+            'agebins_max',
+            shape=(n_obj),
+            dtype=np.float32,
+            compression='gzip',
+            chunks=(objid_chunk,),
+            shuffle=True,
+            track_times=False
+        )
+        
         sfh_ds = h5f.create_dataset(
             'sfh',
             shape=(n_obj, n_percentiles, n_bins),
