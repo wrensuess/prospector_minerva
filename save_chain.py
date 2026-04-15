@@ -28,72 +28,72 @@ def process_single_file(indexed_info, dir_indiv):
     with np.load(full_path, allow_pickle=True) as dat:
         chains = dat['chains'][()]  # dict-like
 
-    n_samples = chains['zred'].shape[0]
-    chain_data = np.empty((n_samples, 26), dtype=np.float32)
+        n_samples = chains['zred'].shape[0]
+        chain_data = np.empty((n_samples, 26), dtype=np.float32)
 
-    # Fill columns 
-    chain_data[:, 0]  = chains['zred']
-    chain_data[:, 1]  = chains['total_mass']
-    chain_data[:, 2]  = chains['stellar_mass']
-    chain_data[:, 3]  = chains['logzsol']
-    chain_data[:, 4]  = chains['mwa']
-    chain_data[:, 5:8] = chains['sfr']
-    chain_data[:, 8:11] = chains['ssfr'] 
-    chain_data[:, 11] = chains['dust2']
-    chain_data[:, 12] = chains['dust_index']
-    chain_data[:, 13] = chains['dust1_fraction']
-    chain_data[:, 14] = chains['log_fagn']
-    chain_data[:, 15] = chains['log_agn_tau']
-    chain_data[:, 16] = chains['gas_logz']
-    chain_data[:, 17] = chains['duste_qpah']
-    chain_data[:, 18] = chains['duste_umin']
-    chain_data[:, 19] = chains['log_duste_gamma']
-    chain_data[:, 20] = chains['logsfr_ratios_1']
-    chain_data[:, 21] = chains['logsfr_ratios_2']
-    chain_data[:, 22] = chains['logsfr_ratios_3']
-    chain_data[:, 23] = chains['logsfr_ratios_4']
-    chain_data[:, 24] = chains['logsfr_ratios_5']
-    chain_data[:, 25] = chains['logsfr_ratios_6']
+        # Fill columns 
+        chain_data[:, 0]  = chains['zred']
+        chain_data[:, 1]  = chains['total_mass']
+        chain_data[:, 2]  = chains['stellar_mass']
+        chain_data[:, 3]  = chains['logzsol']
+        chain_data[:, 4]  = chains['mwa']
+        chain_data[:, 5:8] = chains['sfr']
+        chain_data[:, 8:11] = chains['ssfr'] 
+        chain_data[:, 11] = chains['dust2']
+        chain_data[:, 12] = chains['dust_index']
+        chain_data[:, 13] = chains['dust1_fraction']
+        chain_data[:, 14] = chains['log_fagn']
+        chain_data[:, 15] = chains['log_agn_tau']
+        chain_data[:, 16] = chains['gas_logz']
+        chain_data[:, 17] = chains['duste_qpah']
+        chain_data[:, 18] = chains['duste_umin']
+        chain_data[:, 19] = chains['log_duste_gamma']
+        chain_data[:, 20] = chains['logsfr_ratios_1']
+        chain_data[:, 21] = chains['logsfr_ratios_2']
+        chain_data[:, 22] = chains['logsfr_ratios_3']
+        chain_data[:, 23] = chains['logsfr_ratios_4']
+        chain_data[:, 24] = chains['logsfr_ratios_5']
+        chain_data[:, 25] = chains['logsfr_ratios_6']
 
-    return idx, objid, chain_data
+        return idx, objid, chain_data
 
-def process_single_file_h5(indexed_info, dir_indiv):
-    """
-    Worker: load one HDF5 and return (index, objid, chain_data[nsamp,26]).
-    indexed_info = (idx, objid, filename)
-    """
-    idx, objid, filename = indexed_info
-    full_path = os.path.join(dir_indiv, filename)
+    def process_single_file_h5(indexed_info, dir_indiv):
+        """
+        Worker: load one HDF5 and return (index, objid, chain_data[nsamp,26]).
+        indexed_info = (idx, objid, filename)
+        """
+        idx, objid, filename = indexed_info
+        full_path = os.path.join(dir_indiv, filename)
 
-    with h5py.File(full_path, "r") as f:
-        chains = f["chains"]
+        with h5py.File(full_path, "r") as f:
+            chains = f["chains"]
 
-    n_samples = chains["zred"].shape[0]
-    chain_data = np.empty((n_samples, 26), dtype=np.float32)
+        n_samples = chains["zred"].shape[0]
+        chain_data = np.empty((n_samples, 26), dtype=np.float32)
 
-    # Fill columns
-    chain_data[:, 0]  = chains["zred"][:]
-    chain_data[:, 1]  = chains["total_mass"][:]
-    chain_data[:, 2]  = chains["stellar_mass"][:]
-    chain_data[:, 3]  = chains["logzsol"][:]
-    chain_data[:, 4]  = chains["mwa"][:]
-    chain_data[:, 5:8] = chains["sfr"][:]
-    chain_data[:, 8:11] = chains["ssfr"][:]
-    chain_data[:, 11] = chains["dust2"][:]
-    chain_data[:, 12] = chains["dust_index"][:]
-    chain_data[:, 13] = chains["dust1_fraction"][:]
-    chain_data[:, 14] = chains["log_fagn"][:]
-    chain_data[:, 15] = chains["log_agn_tau"][:]
-    chain_data[:, 16] = chains["gas_logz"][:]
-    chain_data[:, 17] = chains["duste_qpah"][:]
-    chain_data[:, 18] = chains["duste_umin"][:]
-    chain_data[:, 19] = chains["log_duste_gamma"][:]
-    chain_data[:, 20] = chains["logsfr_ratios_1"][:]
-    chain_data[:, 21] = chains["logsfr_ratios_2"][:]
-    chain_data[:, 22] = chains["logsfr_ratios_3"][:]
-    chain_data[:, 23] = chains["logsfr_ratios_4"][:]
-    chain_data[:, 24] = chains["logsfr_ratios_5"][:]
-    chain_data[:, 25] = chains["logsfr_ratios_6"][:]
+        # Fill columns
+        chain_data[:, 0]  = chains["zred"][:]
+        chain_data[:, 1]  = chains["total_mass"][:]
+        chain_data[:, 2]  = chains["stellar_mass"][:]
+        chain_data[:, 3]  = chains["logzsol"][:]
+        chain_data[:, 4]  = chains["mwa"][:]
+        chain_data[:, 5:8] = chains["sfr"][:]
+        chain_data[:, 8:11] = chains["ssfr"][:]
+        chain_data[:, 11] = chains["dust2"][:]
+        chain_data[:, 12] = chains["dust_index"][:]
+        chain_data[:, 13] = chains["dust1_fraction"][:]
+        chain_data[:, 14] = chains["log_fagn"][:]
+        chain_data[:, 15] = chains["log_agn_tau"][:]
+        chain_data[:, 16] = chains["gas_logz"][:]
+        chain_data[:, 17] = chains["duste_qpah"][:]
+        chain_data[:, 18] = chains["duste_umin"][:]
+        chain_data[:, 19] = chains["log_duste_gamma"][:]
+        chain_data[:, 20] = chains["logsfr_ratios_1"][:]
+        chain_data[:, 21] = chains["logsfr_ratios_2"][:]
+        chain_data[:, 22] = chains["logsfr_ratios_3"][:]
+        chain_data[:, 23] = chains["logsfr_ratios_4"][:]
+        chain_data[:, 24] = chains["logsfr_ratios_5"][:]
+        chain_data[:, 25] = chains["logsfr_ratios_6"][:]
 
     return idx, objid, chain_data
 
