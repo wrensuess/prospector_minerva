@@ -74,70 +74,66 @@ def process_single_file(indexed_info, dir_indiv, catalog_ids, catalog_zspec):
     return idx, result
 
 def process_single_file_h5(indexed_info, dir_indiv, catalog_ids, catalog_zspec):
-    """
-    Worker: load one HDF5 and return all percentile fields.
-    indexed_info = (idx, objid, filename)
-    """
     idx, objid, filename = indexed_info
     full_path = os.path.join(dir_indiv, filename)
 
     with h5py.File(full_path, "r") as f:
         perc = f["percentiles"]
 
+        def read_any(name):
+            ds = perc[name]
+            return ds[()] if ds.shape == () else ds[:]
+
         # chain_ml
         zred_ml = f["chain_ml"][0]
 
-        # Lookup spec-z
-        z_spec = catalog_zspec[catalog_ids == objid][0]
+        match = (catalog_ids == objid)
+        z_spec = catalog_zspec[match][0] if np.any(match) else -99.0
 
-        # Helper
-        def read(name):
-            return perc[name][()]
-
-        def read_arr(name):
-            return perc[name][:]
+        sfr = read_any('sfr')
+        ssfr = read_any('ssfr')
 
         result = dict(
             objid=objid,
 
-            zred=read_arr('zred'),
-            total_mass=read_arr('total_mass'),
-            stellar_mass=read_arr('stellar_mass'),
-            met=read_arr('logzsol'),
-            mwa=read_arr('mwa'),
+            zred=read_any('zred'),
+            total_mass=read_any('total_mass'),
+            stellar_mass=read_any('stellar_mass'),
+            met=read_any('logzsol'),
+            mwa=read_any('mwa'),
 
-            sfr10=read_arr('sfr')[0, :],
-            sfr30=read_arr('sfr')[1, :],
-            sfr100=read_arr('sfr')[2, :],
+            sfr10=sfr[0, :],
+            sfr30=sfr[1, :],
+            sfr100=sfr[2, :],
 
-            ssfr10=read_arr('ssfr')[0, :],
-            ssfr30=read_arr('ssfr')[1, :],
-            ssfr100=read_arr('ssfr')[2, :],
+            ssfr10=ssfr[0, :],
+            ssfr30=ssfr[1, :],
+            ssfr100=ssfr[2, :],
 
-            dust2=read_arr('dust2'),
-            dust_index=read_arr('dust_index'),
-            dust1_fraction=read_arr('dust1_fraction'),
-            log_fagn=read_arr('log_fagn'),
-            log_agn_tau=read_arr('log_agn_tau'),
-            gas_logz=read_arr('gas_logz'),
-            duste_qpah=read_arr('duste_qpah'),
-            duste_umin=read_arr('duste_umin'),
-            log_duste_gamma=read_arr('log_duste_gamma'),
+            dust2=read_any('dust2'),
+            dust_index=read_any('dust_index'),
+            dust1_fraction=read_any('dust1_fraction'),
+            log_fagn=read_any('log_fagn'),
+            log_agn_tau=read_any('log_agn_tau'),
+            gas_logz=read_any('gas_logz'),
+            duste_qpah=read_any('duste_qpah'),
+            duste_umin=read_any('duste_umin'),
+            log_duste_gamma=read_any('log_duste_gamma'),
 
-            rest_UVJugi=read_arr('rest_UVJugi'),
-            rest_UVJugi_map=read_arr('rest_UVJugi_map'),
-            rest_UVJugi_colors=read_arr('rest_UVJugi_colors'),
-            rest_UVJugi_colors_map=read_arr('rest_UVJugi_colors_map'),
+            rest_UVJugi=read_any('rest_UVJugi'),
+            rest_UVJugi_map=read_any('rest_UVJugi_map'),
+            rest_UVJugi_colors=read_any('rest_UVJugi_colors'),
+            rest_UVJugi_colors_map=read_any('rest_UVJugi_colors_map'),
 
-            rest_gz=read_arr('rest_gz'),
-            rest_gz_map=read_arr('rest_gz_map'),
-            rest_gz_colors=read_arr('rest_gz_colors'),
-            rest_gz_colors_map=read_arr('rest_gz_colors_map'),
+            rest_gz=read_any('rest_gz'),
+            rest_gz_map=read_any('rest_gz_map'),
+            rest_gz_colors=read_any('rest_gz_colors'),
+            rest_gz_colors_map=read_any('rest_gz_colors_map'),
 
-            rest_NUVrJ=read_arr('rest_NUVrJ'),
-            rest_NUVrJ_map=read_arr('rest_NUVrJ_map'),
-            rest_NUVrJ_colors=read_arr('rest_NUVrJ_colors'),
-            rest_NUVrJ_colors_map=read_arr('rest_NUVrJ_colors_map'),
+            rest_NUVrJ=read_any('rest_NUVrJ'),
+            rest_NUVrJ_map=read_any('rest_NUVrJ_map'),
+            rest_NUVrJ_colors=read_any('rest_NUVrJ_colors'),
+            rest_NUVrJ_colors_map=read_any('rest_NUVrJ_colors_map'),
 
             zred_ml=zred_ml,
             zred_spec=z_spec
@@ -254,18 +250,20 @@ def main():
             else:    
                 datasets[key] = h5f.create_dataset(key, shape=(n_obj,n_perc), dtype=np.float32,
                                                    compression='gzip', chunks=True)
-
-        print("map_shapes:")
-        for key, shape in map_shapes.items():
-            print(key, shape)
-        print(fdafafa)
         
         for key, shape in rest_shapes.items():
             datasets[key] = h5f.create_dataset(key, shape=(n_obj,shape[0],n_perc), dtype=np.float32,
                                               compression='gzip', chunks=(1,shape[0],n_perc))
+        '''
         for key, shape in map_shapes.items():
             datasets[key] = h5f.create_dataset(key, shape=(n_obj,shape[0]), dtype=np.float32,
                                               compression='gzip', chunks=(1,shape[0]))
+        '''
+        for key, shape in map_shapes.items():
+            if len(shape) == 0:   # scalar
+                datasets[key] = h5f.create_dataset(key, shape=(n_obj,), dtype=np.float32, compression='gzip', chunks=True)
+            else:
+                datasets[key] = h5f.create_dataset(key, shape=(n_obj, *shape), dtype=np.float32, compression='gzip', chunks=(1, *shape))
             
         # Chunking
         chunks = [indexed_infos[i:i+args.chunk_size] for i in range(0, n_obj, args.chunk_size)]
