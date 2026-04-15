@@ -36,7 +36,7 @@ ts = time.strftime("%y%b%d-%H.%M", time.localtime())
 
 # first let's split up the finished IDs into njobs parts
 ids = np.array([int(i.split('_')[1]) for i in os.listdir(indir)])
-ids = ids[:200]
+#ids = ids[:200]
 
 last = 1#0
 
