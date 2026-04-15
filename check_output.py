@@ -241,7 +241,7 @@ fsfh = h5py.File(ffsfh, "r")
 fchain = h5py.File(ffchain, "r")
 
 
-print(z_phot[np.where(id_mega_photo==1235366)])
-print(z_phot[np.where(id_mega_photo==1235367)])
+#print(z_phot[np.where(id_mega==1235366)])
+#print(z_phot[np.where(id_mega==1235367)])
 
 plot_all(1235366,sdir="./")
