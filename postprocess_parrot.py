@@ -452,12 +452,15 @@ def run_all(h5_fname=None,
     np.savez(sname,
              modspec_map=modspec_map, modmags_map=modmags_map,
              modmags_perc=np.percentile(modmags_all, percents, axis=0).T,
-             modspecs_perc=np.percentile(modspecs_all, percents, axis=0).T
+             modspecs_perc=np.percentile(modspecs_all, percents, axis=0).T,
+             weff=obs['wave_effective'], wavspec=sps.wavelengths, percentiles=np.array(percents),
+             zred=chain_ml[0]
             )
              # modmags_all & modspecs_all is magnified!
     print('saved model spec to', sname+'\n')
     '''
 
+    '''
     perc_fname = _h5_fname.replace('mcmc', 'perc').replace('.h5', '.h5')
     sname = os.path.join(_out_dir, perc_fname)
     with h5py.File(sname, "w") as f:
@@ -479,7 +482,8 @@ def run_all(h5_fname=None,
         f.create_dataset("chain_ml", data=np.asarray(chain_ml), compression="gzip", shuffle=True)
         f.create_dataset("sub_idx", data=np.asarray(sub_idx), compression="gzip", shuffle=True)
     print('saved chains to', sname)
-
+    '''
+    
     spec_fname = _h5_fname.replace('mcmc', 'spec').replace('.h5', '.h5')
     sname = os.path.join(_out_dir, spec_fname)
     with h5py.File(sname, "w") as f:
@@ -489,4 +493,8 @@ def run_all(h5_fname=None,
                          compression="gzip", shuffle=True)
         f.create_dataset("modspecs_perc", data=np.percentile(modspecs_all, percents, axis=0).T,
                          compression="gzip", shuffle=True)
+        f.create_dataset("weff", data=np.asarray(obs['wave_effective']), compression="gzip", shuffle=True)
+        f.create_dataset("wavspec", data=np.asarray(sps.wavelengths), compression="gzip", shuffle=True)
+        f.create_dataset("percentiles", data=np.asarray(percents), compression="gzip", shuffle=True)
+        f.create_dataset("zred", data=np.asarray(chain_ml[0]))
     print('saved model spec to', sname)
