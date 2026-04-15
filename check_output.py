@@ -194,7 +194,6 @@ photozcat_data = photozcat[1].data
 photozcat_header = photozcat[1].header
 
 id_mega_photo = photozcat_data['id']
-msaid_mega = photozcat_data['id_msa'][flag_usephot]
 nbands_mega = photozcat_data['nbands'][flag_usephot]
 zspec_mega = photozcat_data['z_spec'][flag_usephot]
 zbest_phot = photozcat_data['z_ml'][flag_usephot]
