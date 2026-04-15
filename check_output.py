@@ -167,51 +167,6 @@ def plot_all(objid, plt_jy=True, sdir=None, imhead=None, show=None, add_text=Non
 
         del _chain, _chain_for_z
 
-    # --------------------
-    # image
-    # --------------------
-    if objid not in id_mega:
-        print(f'no image for obj {objid}!')
-    else:
-        crossid_here = np.where(id_mega == float(objid))[0][0]
-        ra_here = ra_mega[crossid_here]
-        dec_here = dec_mega[crossid_here]
-
-        if sfh[i50, 0] < 0.5 * np.nanmax(sfh[min(i50 + 2, sfh.shape[0] - 1), :]) * 1.1:
-            thumb = fig.add_axes([0.62, 0.5, 0.12, 0.3])
-        else:
-            thumb = fig.add_axes([0.62, 0.15, 0.12, 0.3])
-
-        y_pix, x_pix = wcs_jwst.wcs_world2pix(ra_here, dec_here, 0)
-        data_around = data[
-            int(x_pix - 10 / pixscale):int(x_pix + 10 / pixscale),
-            int(y_pix - 10 / pixscale):int(y_pix + 10 / pixscale)
-        ]
-        data_show = data[
-            int(x_pix - 2 / pixscale):int(x_pix + 2 / pixscale),
-            int(y_pix - 2 / pixscale):int(y_pix + 2 / pixscale)
-        ]
-        imsize = np.shape(data_show)[0]
-        mean_pix, median_pix, stddev_pix = sigma_clipped_stats(data_around)
-
-        if np.isnan(stddev_pix):
-            for _ in range(10):
-                std = np.nanstd(data_around)
-                data[np.where(data > 3 * std)] = np.nan
-            stddev_pix = std
-
-        thumb.set_xticks([])
-        thumb.set_yticks([])
-        thumb.imshow(data_show, vmin=-2 * stddev_pix, vmax=10 * stddev_pix, cmap="viridis")
-
-        clip = imsize / 2 - 0.5
-        color1 = 'red'
-        thumb.plot([clip, clip], [clip * 0.7, clip * 0.2], color=color1, lw=0.5)
-        thumb.plot([clip, clip], [clip * 1.3, clip * 1.8], color=color1, lw=0.5)
-        thumb.plot([clip * 0.7, clip * 0.2], [clip, clip], color=color1, lw=0.5)
-        thumb.plot([clip * 1.3, clip * 1.8], [clip, clip], color=color1, lw=0.5)
-
-        del data_around, data_show
 
     if sdir is not None:
         plt.savefig(sdir + f'full_{objid}_{imhead}.png', bbox_inches='tight')
