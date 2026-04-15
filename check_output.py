@@ -194,12 +194,12 @@ photozcat_data = photozcat[1].data
 photozcat_header = photozcat[1].header
 
 id_mega_photo = photozcat_data['id']
-nbands_mega = photozcat_data['nbands'][flag_usephot]
-zspec_mega = photozcat_data['z_spec'][flag_usephot]
-zbest_phot = photozcat_data['z_ml'][flag_usephot]
-z_phot = photozcat_data['z_50'][flag_usephot]
-el_z_phot = z_phot-photozcat_data['z_16'][flag_usephot]
-eh_z_phot = photozcat_data['z_84'][flag_usephot]-z_phot
+nbands_mega = photozcat_data['nbands']
+zspec_mega = photozcat_data['z_spec']
+zbest_phot = photozcat_data['z_ml']
+z_phot = photozcat_data['z_50']
+el_z_phot = z_phot-photozcat_data['z_16']
+eh_z_phot = photozcat_data['z_84']-z_phot
 
 ffsed = cat_dir+'ancillaries/spec_phisfh.h5'.format(fver)
 ffsfh = cat_dir+'ancillaries/sfhs_phisfh.h5'.format(fver)
