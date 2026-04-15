@@ -33,6 +33,29 @@ def process_single_file(indexed_info, dir_indiv, perc):
 
     return idx, objid, agebins_max, sfh_q
 
+def process_single_file_h5(indexed_info, dir_indiv, perc):
+    """
+    Worker: load one HDF5 and return (index, objid, agebins_max, sfh_q).
+    indexed_info = (idx, objid, filename)
+    """
+    idx, objid, filename = indexed_info
+    full_path = os.path.join(dir_indiv, filename)
+
+    with h5py.File(full_path, "r") as f:
+        chains = f["chains"]
+
+        # scalar/array
+        def read_any(name):
+            ds = chains[name]
+            return ds[()] if ds.shape == () else ds[:]
+
+        agebins_max = read_any("agebins_max")
+
+        sfh = read_any("sfh")   # shape (nsamp, nbins)
+        sfh_q = np.quantile(sfh, perc, axis=0)
+
+    return idx, objid, agebins_max, sfh_q
+
 def process_chunk(indexed_chunk, dir_indiv, perc, n_percentiles, n_bins):
     results, errors = [], []
     for entry in indexed_chunk:
@@ -81,10 +104,16 @@ def main():
     print(f"Using {n_workers} workers with chunk size {args.chunk_size}")
 
     # Discover files
+    '''
     all_files = sorted([f for f in os.listdir(args.dir_indiv)
                         if f.endswith(f'unw_{args.prior}.npz')])
     if not all_files:
         raise RuntimeError(f"No files found in {args.dir_indiv} matching '*unw_{args.prior}.npz'")
+    '''
+    all_files = sorted([f for f in os.listdir(args.dir_indiv)
+                        if f.endswith(f'unw_{args.prior}.h5')])
+    if not all_files:
+        raise RuntimeError(f"No files found in {args.dir_indiv} matching '*unw_{args.prior}.h5'")
 
     # Build list of (objid, filename) and an indexed version for exact ordering
     file_infos = [get_file_info(f) for f in all_files]  # (objid, filename)
@@ -93,10 +122,14 @@ def main():
     n_obj = len(indexed_infos)
 
     # Inspect shape from the first file
+    '''
     sample_file = os.path.join(args.dir_indiv, all_files[0])
     with np.load(sample_file, allow_pickle=True) as sample_data:
         sample_chain = sample_data['chains'][()]
         n_bins = sample_chain['sfh'].shape[1]
+    '''
+    with h5py.File(sample_file, "r") as f:
+        n_bins = f["chains"]["sfh"].shape[1]
 
     print(f"Processing {n_obj} files with {n_bins} SFH bins, {n_percentiles} percentiles")
 
