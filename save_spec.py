@@ -63,11 +63,62 @@ def process_single_file(indexed_info, dir_indiv, cat, filts):
 
     return idx, result
 
+def process_single_file_h5(indexed_info, dir_indiv, cat, filts):
+    """
+    Load one HDF5 and return all relevant arrays for this object.
+    indexed_info = (idx, objid, filename)
+    """
+    idx, objid, filename = indexed_info
+    full_path = os.path.join(dir_indiv, filename)
+    result = {}
+
+    with h5py.File(full_path, "r") as f:
+
+        def read_any(name):
+            ds = f[name]
+            return ds[()] if ds.shape == () else ds[:]
+
+        result['modspec_map'] = read_any('modspec_map').astype(np.float32)
+        result['modmag_map'] = read_any('modmags_map').astype(np.float32)
+        result['zred'] = read_any('zred')
+
+    _idx = np.where(cat['id'] == objid)[0][0]
+
+    obs_fnu = ut_cwd.get_fnu_maggies(idx=_idx, catalog=cat, filts=filts)
+    obs_enu = ut_cwd.get_enu_maggies(idx=_idx, catalog=cat, filts=filts)
+
+    result['obsmag'] = obs_fnu.astype(np.float32)
+    result['obsmag_unc'] = obs_enu.astype(np.float32)
+    result['objid'] = objid
+
+    result['nbands'] = np.sum((obs_enu > 0) & np.isfinite(obs_fnu))
+
+    # Photometry mask
+    phot_mask = (obs_enu > 0) & np.isfinite(obs_fnu)
+    _mask = np.ones_like(obs_fnu, dtype=bool)
+
+    for k in range(len(obs_fnu)):
+        if obs_enu[k] > 0:
+            if obs_fnu[k] < 0 and obs_fnu[k] + 5*obs_enu[k] < 0:
+                _mask[k] = False
+
+    phot_mask &= _mask
+    mask = phot_mask
+
+    obsmags_masked = obs_fnu[mask]
+    obsunc_masked = obs_enu[mask]
+    fsps_mags_masked = result['modmag_map'][mask]
+
+    result['chi2_fsps'] = chi2(fsps_mags_masked, obsmags_masked, obsunc_masked)
+
+    return idx, result
+
 def process_chunk(indexed_chunk, dir_indiv, cat, filts):
     results, errors = [], []
     for entry in indexed_chunk:
         try:
-            results.append(process_single_file(entry, dir_indiv, cat, filts))
+            #results.append(process_single_file(entry, dir_indiv, cat, filts))
+            results.append(process_single_file_h5(entry, dir_indiv, cat, filts))
         except Exception as e:
             idx, objid, filename = entry
             errors.append(f"{filename}: {e}")
@@ -111,9 +162,14 @@ def main():
     print("Fitting filters:", filts)
 
     # Discover files
+    '''
     all_files = sorted([f for f in os.listdir(args.dir_indiv) if f.endswith(f'_spec_{args.prior}.npz')])
     if not all_files:
         raise RuntimeError(f"No files found in {args.dir_indiv} matching '*_spec_{args.prior}.npz'")
+    '''
+    all_files = sorted([f for f in os.listdir(args.dir_indiv) if f.endswith(f'_spec_{args.prior}.h5')])
+    if not all_files:
+        raise RuntimeError(f"No files found in {args.dir_indiv} matching '*_spec_{args.prior}.h5'")
     n_obj = len(all_files)
 
     # Build indexed info
@@ -121,12 +177,26 @@ def main():
     indexed_infos = [(i, objid, fname) for i, (objid, fname) in enumerate(file_infos)]
 
     # Inspect first file for shapes
+    '''
     sample_file = os.path.join(args.dir_indiv, all_files[0])
     with np.load(sample_file, allow_pickle=True) as dat:
         modspec_map_shape = dat['modspec_map'].shape
         modmag_map_shape = dat['modmags_map'].shape
         weff = dat['weff'] # photometric effective wavelengths
         wavspec = dat['wavspec'] # wavelengths for fsps model
+    obs_fnu_shape = ut_cwd.get_fnu_maggies(idx=0, catalog=cat, filts=filts).shape
+    obs_enu_shape = ut_cwd.get_enu_maggies(idx=0, catalog=cat, filts=filts).shape
+    '''
+    sample_file = os.path.join(args.dir_indiv, all_files[0])
+    with h5py.File(sample_file, "r") as f:
+        modspec_map_shape = f["modspec_map"].shape
+        modmag_map_shape = f["modmags_map"].shape
+        # scalar / array 
+        def read_any(name):
+            ds = f[name]
+            return ds[()] if ds.shape == () else ds[:]
+        weff = read_any("weff")       # photometric effective wavelengths
+        wavspec = read_any("wavspec") # wavelengths for fsps model
     obs_fnu_shape = ut_cwd.get_fnu_maggies(idx=0, catalog=cat, filts=filts).shape
     obs_enu_shape = ut_cwd.get_enu_maggies(idx=0, catalog=cat, filts=filts).shape
     print('loaded weff, wavspec from sample file')
