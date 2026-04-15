@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
+from matplotlib.ticker import FormatStrFormatter
 import glob, os, time, random, sys
 import astropy.io.fits as fits
 import h5py
