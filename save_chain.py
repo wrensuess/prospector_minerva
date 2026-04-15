@@ -191,6 +191,7 @@ def main():
     # Create HDF5 (single-writer, preallocated, input order rows)
     with h5py.File(sname, 'w', libver='latest') as h5f:
         h5f.create_dataset('theta_labels', data=np.array(keys, dtype='S'))
+        '''
         chains_ds = h5f.create_dataset(
             'chains',
             shape=(n_obj, n_samples, n_params),
@@ -200,13 +201,20 @@ def main():
             shuffle=True,
             track_times=False
         )
-        
-        '''
         objids_ds = h5f.create_dataset('objid', shape=(n_obj,), dtype=np.int64,
             compression='gzip', chunks=(1000,))
         '''
         
         objid_chunk = max(1, min(1000, n_obj))
+        chains_ds = h5f.create_dataset(
+            'chains',
+            shape=(n_obj, n_samples, n_params),
+            dtype=np.float32,
+            compression='gzip',
+            chunks=(objid_chunk, n_samples, n_params),  # or tune as needed
+            shuffle=True,
+            track_times=False
+        )
         objids_ds = h5f.create_dataset('objid', shape=(n_obj,), dtype=np.int64,
             compression='gzip', chunks=(objid_chunk,))
 

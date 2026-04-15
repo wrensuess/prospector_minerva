@@ -155,6 +155,15 @@ def main():
             shuffle=True,
             track_times=False
         )
+        sfh_ds = h5f.create_dataset(
+            'sfh',
+            shape=(n_obj, n_percentiles, n_bins),
+            dtype=np.float32,
+            compression='gzip',
+            chunks=(1000, n_percentiles, n_bins),
+            shuffle=True,
+            track_times=False
+        )
         '''
         objid_chunk = max(1, min(1000, n_obj))
         tmax_ds = h5f.create_dataset(
@@ -166,13 +175,12 @@ def main():
             shuffle=True,
             track_times=False
         )
-        
         sfh_ds = h5f.create_dataset(
             'sfh',
             shape=(n_obj, n_percentiles, n_bins),
             dtype=np.float32,
             compression='gzip',
-            chunks=(1000, n_percentiles, n_bins),
+            chunks=(objid_chunk, n_percentiles, n_bins),
             shuffle=True,
             track_times=False
         )
