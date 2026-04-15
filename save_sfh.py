@@ -128,6 +128,7 @@ def main():
         sample_chain = sample_data['chains'][()]
         n_bins = sample_chain['sfh'].shape[1]
     '''
+    sample_file = os.path.join(args.dir_indiv, all_files[0])
     with h5py.File(sample_file, "r") as f:
         n_bins = f["chains"]["sfh"].shape[1]
 
