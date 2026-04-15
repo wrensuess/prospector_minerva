@@ -208,5 +208,5 @@ fsed = np.load(ffsed, allow_pickle=True)
 fsfh = np.load(ffsfh, allow_pickle=True)
 fchain = np.load(ffchain, allow_pickle=True)
 '''
-print(z_phot[np.where(id_mega_photo==1109763)])
-print(z_phot[np.where(id_mega_photo==1109764)])
+print(z_phot[np.where(id_mega_photo==1235366)])
+print(z_phot[np.where(id_mega_photo==1235367)])
