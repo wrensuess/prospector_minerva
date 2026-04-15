@@ -225,7 +225,7 @@ photozcat = fits.open(cat_dir+"sps_catalog/MINERVA-UDS_n3.0_v1.2_ACS+WEBB_Kf444w
 photozcat_data = photozcat[1].data
 photozcat_header = photozcat[1].header
 
-id_mega_photo = photozcat_data['id']
+id_mega = photozcat_data['id']
 nbands_mega = photozcat_data['nbands']
 zspec_mega = photozcat_data['z_spec']
 zbest_phot = photozcat_data['z_ml']
