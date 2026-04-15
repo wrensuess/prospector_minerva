@@ -232,7 +232,7 @@ el_z_phot = z_phot-photozcat_data['z_16']
 eh_z_phot = photozcat_data['z_84']-z_phot
 
 ffsed = cat_dir+'spec_phisfh.h5'
-ffsfh = cat_dir+'sfhs_phisfh.h5'
+ffsfh = cat_dir+'sfh_phisfh.h5'
 ffchain = cat_dir+'chains_phisfh.h5'
 fsed = h5py.File(ffsed, "r")
 fsfh = h5py.File(ffsfh, "r")
