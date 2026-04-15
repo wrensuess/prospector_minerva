@@ -60,7 +60,8 @@ def process_chunk(indexed_chunk, dir_indiv, perc, n_percentiles, n_bins):
     results, errors = [], []
     for entry in indexed_chunk:
         try:
-            results.append(process_single_file(entry, dir_indiv, perc))
+            #results.append(process_single_file(entry, dir_indiv, perc))
+            results.append(process_single_file_h5(entry, dir_indiv, perc))
         except Exception as e:
             idx, objid, filename = entry
             results.append((idx, objid, np.nan, np.full((n_percentiles, n_bins), np.nan, dtype=np.float32)))
