@@ -201,9 +201,9 @@ z_phot = photozcat_data['z_50']
 el_z_phot = z_phot-photozcat_data['z_16']
 eh_z_phot = photozcat_data['z_84']-z_phot
 
-ffsed = cat_dir+'ancillaries/spec_phisfh.h5'.format(fver)
-ffsfh = cat_dir+'ancillaries/sfhs_phisfh.h5'.format(fver)
-ffchain = cat_dir+'ancillaries/chains_phisfh.h5'.format(fver)
+ffsed = cat_dir+'ancillaries/spec_phisfh.h5'
+ffsfh = cat_dir+'ancillaries/sfhs_phisfh.h5'
+ffchain = cat_dir+'ancillaries/chains_phisfh.h5'
 fsed = np.load(ffsed, allow_pickle=True)
 fsfh = np.load(ffsfh, allow_pickle=True)
 fchain = np.load(ffchain, allow_pickle=True)
