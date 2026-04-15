@@ -208,4 +208,4 @@ fsed = np.load(ffsed, allow_pickle=True)
 fsfh = np.load(ffsfh, allow_pickle=True)
 fchain = np.load(ffchain, allow_pickle=True)
 '''
-print(id_mega_photo)
+print(len(id_mega_photo))
