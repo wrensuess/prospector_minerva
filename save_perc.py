@@ -73,12 +73,85 @@ def process_single_file(indexed_info, dir_indiv, catalog_ids, catalog_zspec):
     )
     return idx, result
 
+def process_single_file_h5(indexed_info, dir_indiv, catalog_ids, catalog_zspec):
+    """
+    Worker: load one HDF5 and return all percentile fields.
+    indexed_info = (idx, objid, filename)
+    """
+    idx, objid, filename = indexed_info
+    full_path = os.path.join(dir_indiv, filename)
+
+    with h5py.File(full_path, "r") as f:
+        perc = f["percentiles"]
+
+        # chain_ml
+        zred_ml = f["chain_ml"][0]
+
+        # Lookup spec-z
+        z_spec = catalog_zspec[catalog_ids == objid][0]
+
+        # Helper
+        def read(name):
+            return perc[name][()]
+
+        def read_arr(name):
+            return perc[name][:]
+
+        result = dict(
+            objid=objid,
+
+            zred=read_arr('zred'),
+            total_mass=read_arr('total_mass'),
+            stellar_mass=read_arr('stellar_mass'),
+            met=read_arr('logzsol'),
+            mwa=read_arr('mwa'),
+
+            sfr10=read_arr('sfr')[0, :],
+            sfr30=read_arr('sfr')[1, :],
+            sfr100=read_arr('sfr')[2, :],
+
+            ssfr10=read_arr('ssfr')[0, :],
+            ssfr30=read_arr('ssfr')[1, :],
+            ssfr100=read_arr('ssfr')[2, :],
+
+            dust2=read_arr('dust2'),
+            dust_index=read_arr('dust_index'),
+            dust1_fraction=read_arr('dust1_fraction'),
+            log_fagn=read_arr('log_fagn'),
+            log_agn_tau=read_arr('log_agn_tau'),
+            gas_logz=read_arr('gas_logz'),
+            duste_qpah=read_arr('duste_qpah'),
+            duste_umin=read_arr('duste_umin'),
+            log_duste_gamma=read_arr('log_duste_gamma'),
+
+            rest_UVJugi=read_arr('rest_UVJugi'),
+            rest_UVJugi_map=read_arr('rest_UVJugi_map'),
+            rest_UVJugi_colors=read_arr('rest_UVJugi_colors'),
+            rest_UVJugi_colors_map=read_arr('rest_UVJugi_colors_map'),
+
+            rest_gz=read_arr('rest_gz'),
+            rest_gz_map=read_arr('rest_gz_map'),
+            rest_gz_colors=read_arr('rest_gz_colors'),
+            rest_gz_colors_map=read_arr('rest_gz_colors_map'),
+
+            rest_NUVrJ=read_arr('rest_NUVrJ'),
+            rest_NUVrJ_map=read_arr('rest_NUVrJ_map'),
+            rest_NUVrJ_colors=read_arr('rest_NUVrJ_colors'),
+            rest_NUVrJ_colors_map=read_arr('rest_NUVrJ_colors_map'),
+
+            zred_ml=zred_ml,
+            zred_spec=z_spec
+        )
+
+    return idx, result
+
 def process_chunk(indexed_chunk, dir_indiv, catalog_ids, catalog_zspec):
     """Worker: process a whole chunk; returns (results, errors)."""
     results, errors = [], []
     for entry in indexed_chunk:
         try:
-            results.append(process_single_file(entry, dir_indiv, catalog_ids, catalog_zspec))
+            #results.append(process_single_file(entry, dir_indiv, catalog_ids, catalog_zspec))
+            results.append(process_single_file_h5(entry, dir_indiv, catalog_ids, catalog_zspec))
         except Exception as e:
             idx, objid, filename = entry
             errors.append(f"{filename}: {e}")
@@ -118,19 +191,40 @@ def main():
     catalog_zspec = cat['z_spec'].data
 
     # Discover files
+    '''
     all_files = sorted([f for f in os.listdir(args.dir_indiv) if f.endswith(f'perc_{args.prior}.npz')])
     if not all_files:
         raise RuntimeError(f"No files found in {args.dir_indiv} matching '*perc_{args.prior}.npz'")
+    '''
+    all_files = sorted([f for f in os.listdir(args.dir_indiv) if f.endswith(f'perc_{args.prior}.h5')])
+    if not all_files:
+        raise RuntimeError(f"No files found in {args.dir_indiv} matching '*perc_{args.prior}.h5'")
+    
     n_obj = len(all_files)
 
     # Inspect first file to get shapes
+    '''
     sample_file = os.path.join(args.dir_indiv, all_files[0])
     with np.load(sample_file, allow_pickle=True) as dat:
         perc = dat['percentiles'][()]
         rest_shapes = {k: v.shape for k, v in perc.items() if k.startswith('rest_') and 
                        not k.endswith('map')}
         map_shapes = {k: v.shape for k, v in perc.items() if k.endswith('map')}
-    n_perc = perc['zred'].shape[0]    
+    n_perc = perc['zred'].shape[0]
+    '''
+    sample_file = os.path.join(args.dir_indiv, all_files[0])
+    with h5py.File(sample_file, "r") as f:
+        perc = f["percentiles"]
+
+        def shape_of(name):
+            ds = perc[name]
+            return ds.shape
+
+        n_perc = perc["zred"].shape[0]
+
+        rest_shapes = {k: shape_of(k) for k in perc.keys() if k.startswith("rest_") and not k.endswith("map")}
+        map_shapes = {k: shape_of(k) for k in perc.keys() if k.endswith("map")}
+    
     print(rest_shapes)
 
     # print('perc_sfr shape:', perc['sfr'].shape)
