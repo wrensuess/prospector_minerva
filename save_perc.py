@@ -255,6 +255,11 @@ def main():
                 datasets[key] = h5f.create_dataset(key, shape=(n_obj,n_perc), dtype=np.float32,
                                                    compression='gzip', chunks=True)
 
+        print("map_shapes:")
+        for key, shape in map_shapes.items():
+            print(key, shape)
+        print(fdafafa)
+        
         for key, shape in rest_shapes.items():
             datasets[key] = h5f.create_dataset(key, shape=(n_obj,shape[0],n_perc), dtype=np.float32,
                                               compression='gzip', chunks=(1,shape[0],n_perc))
