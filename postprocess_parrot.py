@@ -460,7 +460,7 @@ def run_all(h5_fname=None,
     print('saved model spec to', sname+'\n')
     '''
 
-    '''
+
     perc_fname = _h5_fname.replace('mcmc', 'perc').replace('.h5', '.h5')
     sname = os.path.join(_out_dir, perc_fname)
     with h5py.File(sname, "w") as f:
@@ -482,7 +482,7 @@ def run_all(h5_fname=None,
         f.create_dataset("chain_ml", data=np.asarray(chain_ml), compression="gzip", shuffle=True)
         f.create_dataset("sub_idx", data=np.asarray(sub_idx), compression="gzip", shuffle=True)
     print('saved chains to', sname)
-    '''
+
     
     spec_fname = _h5_fname.replace('mcmc', 'spec').replace('.h5', '.h5')
     sname = os.path.join(_out_dir, spec_fname)
