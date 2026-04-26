@@ -112,7 +112,16 @@ for mid in groups[i_split_arr]:
                 )
                 continue
 
-            # other OSError: stop
+            elif "Unable to synchronously open file" in msg:
+                logger.warning(
+                    "unaccepted HDF5 file detected. Skipping.\n"
+                    "  file : %s\n"
+                    "  error: %s",
+                    mid, msg
+                )
+                continue
+
+            # other OSError: OSError, stop
             logger.error(
                 "Unexpected OSError while reading HDF5 file.\n"
                 "  file : %s\n"
