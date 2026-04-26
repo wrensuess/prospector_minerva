@@ -85,7 +85,6 @@ if last==0:
     ids_fit = ids[np.where(np.isin(ids, ids_comp)==False)[0]]
     ids = ids_fit
     print(len(ids))
-    print(dfafa)
     np.savetxt(f'{outdir}/id_files/ids_postprocess_0.txt', ids, fmt='%d')
     
     _cmd = "python -u postprocess_parrot_wrap.py --prior {} --fit 'fid' --catalog {} --indir {} --outdir {} --narr {} --iarr {} --ids_file {} --ddir {}".format(prior, 
