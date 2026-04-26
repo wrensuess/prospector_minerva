@@ -29,7 +29,7 @@ prior = 'phisfh' # 'phisfhzfixed' if you're using zspec fits
 #code_dir = '/projects/kasu8993/prospector_minerva/'
 code_dir= '/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/prospector_minerva/'
 
-njobs = 1000 #number of job array, max=1000
+njobs = 1#1000 #number of job array, max=1000
 wtime = int(24) # time
 jname = 'postproc_{}'.format(prior)
 ts = time.strftime("%y%b%d-%H.%M", time.localtime())
@@ -38,7 +38,7 @@ ts = time.strftime("%y%b%d-%H.%M", time.localtime())
 ids = np.array([int(i.split('_')[1]) for i in os.listdir(indir)])
 #ids = ids[:200]
 
-last = 1#0
+last = 0#0
 
 if last!=0:
     ids_split = np.array_split(ids, njobs)
@@ -80,11 +80,12 @@ if last!=0:
 
 if last==0: 
     # this is added to adjust ids, for the last ~a few % of the sources
-    ids_comp_ = glob.glob(outdir+"npz/*_spec_phisfh.npz")
+    ids_comp_ = glob.glob(outdir+"npz/*_spec_phisfh.h5")
     ids_comp = [float(a.split("/")[-1].split("_")[1]) for a in ids_comp_]
     ids_fit = ids[np.where(np.isin(ids, ids_comp)==False)[0]]
     ids = ids_fit
     print(len(ids))
+    print(dfafa)
     np.savetxt(f'{outdir}/id_files/ids_postprocess_0.txt', ids, fmt='%d')
     
     _cmd = "python -u postprocess_parrot_wrap.py --prior {} --fit 'fid' --catalog {} --indir {} --outdir {} --narr {} --iarr {} --ids_file {} --ddir {}".format(prior, 

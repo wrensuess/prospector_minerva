@@ -108,7 +108,10 @@ while True:
         break
     else:
         k=k+1
-        cathead = "unrefitid"+str(int(k)) #name of catalog for k-th attempt
+        if "refitid" in cathead:
+            cathead = "unrefitid"+str(int(k)) #name of catalog for k-th attempt
+        else:
+            cathead = "unfitid"+str(int(k)) #name of catalog for k-th attempt
         catpath = catdir+cathead+"_MINERVA-"+field+"_"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt"
         np.savetxt(catpath,np.array(unfit_id_array))
         subprocess.run(["python", "submit_loop.py", cathead, field, ver], check=True)
