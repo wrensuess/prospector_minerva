@@ -48,7 +48,7 @@ if last!=0:
         np.savetxt(f'{outdir}/id_files/ids_postprocess_{i}.txt', ids_chunk, fmt='%d')
 
     # now create the command to submit
-    _cmd = "python -u postprocess_parrot_wrap.py --prior {} --fit 'fid' --catalog {} --indir {} --outdir {} --narr {} --iarr {} --ids_file {} --ddir {}".format(prior, catalog, indir, outdir+'npz/', narr, iarr, outdir+'id_files/ids_postprocess_${SLURM_ARRAY_TASK_ID}.txt', ddir, outdir+'fail/')
+    _cmd = "python -u postprocess_parrot_wrap.py --prior {} --fit 'fid' --catalog {} --indir {} --outdir {} --narr {} --iarr {} --ids_file {} --ddir {} --faildir {}".format(prior, catalog, indir, outdir+'npz/', narr, iarr, outdir+'id_files/ids_postprocess_${SLURM_ARRAY_TASK_ID}.txt', ddir, outdir+'fail/')
 
     # and make our slurm file 
     txt_acc = '\n'.join(["#!/bin/bash -l",
@@ -86,7 +86,7 @@ if last==0:
     print(len(ids))
     np.savetxt(f'{outdir}/id_files/ids_postprocess_9999.txt', ids, fmt='%d')
     
-    _cmd = "python -u postprocess_parrot_wrap.py --prior {} --fit 'fid' --catalog {} --indir {} --outdir {} --narr {} --iarr {} --ids_file {} --ddir {}".format(prior, catalog, indir, outdir+'npz/', narr, iarr, outdir+'id_files/ids_postprocess_9999.txt', ddir, outdir+'fail/')
+    _cmd = "python -u postprocess_parrot_wrap.py --prior {} --fit 'fid' --catalog {} --indir {} --outdir {} --narr {} --iarr {} --ids_file {} --ddir {} --faildir {}".format(prior, catalog, indir, outdir+'npz/', narr, iarr, outdir+'id_files/ids_postprocess_9999.txt', ddir, outdir+'fail/')
 
     # and make our slurm file 
     txt_acc = '\n'.join(["#!/bin/bash -l",
