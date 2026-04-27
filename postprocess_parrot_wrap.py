@@ -26,6 +26,7 @@ parser.add_argument('--iarr', type=int, default=0, help='run on the ith sub-arra
 parser.add_argument('--ids_file', type=str, default='None', help='None: get ids from indir; else: read in from the file')
 parser.add_argument('--free_gas_logu', type=int, default=0, help='0: False; 1: True')
 parser.add_argument('--ddir', type=str, default='../test/', help='main working folder')
+parser.add_argument('--faildir', type=str, default='../test/', help='main working folder')
 args = parser.parse_args()
 print(args)
 
@@ -34,6 +35,7 @@ import postprocess_parrot as pp
 n_split_arr = args.narr
 i_split_arr = args.iarr
 catalog_file = args.catalog
+failed_file = args.faildir
 
 run_params = {
 'free_gas_logu':bool(args.free_gas_logu),
@@ -110,6 +112,7 @@ for mid in groups[i_split_arr]:
                     "  error: %s",
                     mid, msg
                 )
+                np.savetxt(failed_file+"id_"+str(mid)+"_failed.txt",np.array([0]))
                 continue
 
             elif "Unable to synchronously open file" in msg:
@@ -128,5 +131,6 @@ for mid in groups[i_split_arr]:
                 "  error: %s",
                 mid, msg
             )
+            np.savetxt(failed_file+"id_"+str(mid)+"_failed.txt",np.array([1]))
             raise
             
