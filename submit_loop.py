@@ -97,7 +97,7 @@ if __name__ == '__main__':
     env = 'prosp'
     #ncores = len(tot)
     #ncores = 5 #840 # number of cores to request
-    njobs = 1000 #number of job array, max=1000
+    njobs = 3#1000 #number of job array, max=1000
     wtime = int(24) #int(24*7) # time
 
     ################################## step 1. sed fit ####################################

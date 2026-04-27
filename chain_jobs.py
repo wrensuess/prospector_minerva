@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import subprocess
-import glob,time,os
+import glob,time,os,pdb
 import numpy as np
 from datetime import datetime
 
@@ -83,7 +83,7 @@ ver = "n3.0_v1.2"
 spsver = 'spsbeta'
 outdir = '/scratch/alpine/ikmi3774/slurm/'
 catdir = '../phot_catalog/'
-cathead = "fitid" #fitid or refitid #name of catalog for the first attempt
+cathead = "refitid" #fitid or refitid #name of catalog for the first attempt
 cathead_ori = "fitid" #name of reference catalog to check fitting is completed
 catpath = catdir+cathead+"_MINERVA-"+field+"_"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt"
 chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}/'.format(field, ver, spsver)
@@ -91,6 +91,7 @@ chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}/'.format(field, 
 if cathead=="refitid":
     refitids = np.loadtxt(catpath)
     print(refitids)
+    pbd.set_trace()
     for j in range(0,len(refitids)):
         print("rm "+chaindir+"id_"+str(int(refitids[j]))+"_mcmc_phisfh.h5")
         os.system("rm "+chaindir+"id_"+str(int(refitids[j]))+"_mcmc_phisfh.h5")
