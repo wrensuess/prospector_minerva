@@ -91,7 +91,7 @@ chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}/'.format(field, 
 if cathead=="refitid":
     refitids = np.loadtxt(catpath)
     print(refitids)
-    pbd.set_trace()
+    #pdb.set_trace()
     for j in range(0,len(refitids)):
         print("rm "+chaindir+"id_"+str(int(refitids[j]))+"_mcmc_phisfh.h5")
         os.system("rm "+chaindir+"id_"+str(int(refitids[j]))+"_mcmc_phisfh.h5")
