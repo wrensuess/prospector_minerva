@@ -46,6 +46,12 @@ print("only spec", sorted(set(obj_spec) - set(obj_perc))[:20])
 
 print(np.where(dspec['objid'][:] == 0))
 
+bad = np.where(dspec['objid'][:] == 0)[0]
+
+all_files = sorted([f for f in os.listdir(dir_indiv) if f.endswith(f'_spec_{prior}.h5')])
+for i in bad:
+    print(i, all_files[i])
+
 assert np.array_equal(dperc['objid'][:], dspec['objid'][:]) # update the [:,0] once i fix the save_perc.py file
 
 # make a new table to hold the final catalog
