@@ -38,13 +38,15 @@ ts = time.strftime("%y%b%d-%H.%M", time.localtime())
 ids = np.array([int(i.split('_')[1]) for i in os.listdir(indir)])
 #ids = ids[:200]
 
-# need to re-run for broken file
+# need to re-run for broken file, process=2
+# code is implemented to *DELETE* these ids' postprocess files once, because default postprocess code skip the existing ids
 ids = np.loadtxt(outdir+"ids_broken_spec.txt")
 print(ids)
 
 process = 2#0
 
 if process==0:
+    njobs = 1000
     ids_split = np.array_split(ids, njobs)
     # save each chunk to a separate file
     os.makedirs(outdir+'id_files', exist_ok=True)
@@ -123,6 +125,9 @@ if process==2:
     # this is added to re-run several sources, which is broken in either spec or perc. typically ~a few % of the sources
     ids = ids
     print(len(ids))
+    for j in range(0,len(ids)):
+        print("rm "+outdir+"npz/"+str(int(ids[j]))+"_*_phisfh.h5")
+        os.system("rm "+chaindir+"id_"+str(int(ids[j]))+"_*_phisfh.h5")
     np.savetxt(f'{outdir}/id_files/ids_postprocess_9999.txt', ids, fmt='%d')
     
     _cmd = "python -u postprocess_parrot_wrap.py --prior {} --fit 'fid' --catalog {} --indir {} --outdir {} --narr {} --iarr {} --ids_file {} --ddir {} --faildir {}".format(prior, catalog, indir, outdir+'npz/', narr, iarr, outdir+'id_files/ids_postprocess_9999.txt', ddir, outdir+'fail/')
