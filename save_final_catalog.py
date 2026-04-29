@@ -49,7 +49,7 @@ print(np.where(dspec['objid'][:] == 0))
 
 bad = np.where(dspec['objid'][:] == 0)[0]
 
-all_files = sorted([f for f in os.listdir(args.dir_collected) if f.endswith(f'_spec_{args.prior}.h5')])
+all_files = sorted([f for f in os.listdir(args.dir_indiv) if f.endswith(f'_spec_{args.prior}.h5')])
 print(all_files)
 for i in bad[:20]:
     print(i, all_files[i])
