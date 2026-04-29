@@ -31,7 +31,20 @@ cat = Table.read(args.catalog_path)
 # should probably update to have a version number in the filename....
 dperc = h5py.File('{}/quant_{}.h5'.format(args.dir_collected, args.prior), 'r')
 dspec = h5py.File('{}/spec_{}.h5'.format(args.dir_collected, args.prior), 'r')
-assert np.array_equal(dperc['objid'][:,0], dspec['objid'][:,0]) # update the [:,0] once i fix the save_perc.py file
+
+obj_perc = dperc['objid'][:]
+obj_spec = dspec['objid'][:]
+
+print(obj_perc.shape, obj_spec.shape)
+print(obj_perc[:10])
+print(obj_spec[:10])
+
+print("same set?", set(obj_perc) == set(obj_spec))
+print("n common", len(set(obj_perc) & set(obj_spec)))
+print("only perc", sorted(set(obj_perc) - set(obj_spec))[:20])
+print("only spec", sorted(set(obj_spec) - set(obj_perc))[:20])
+
+assert np.array_equal(dperc['objid'][:], dspec['objid'][:]) # update the [:,0] once i fix the save_perc.py file
 
 # make a new table to hold the final catalog
 keep_colnames = np.array(['id', 'ra', 'dec', 
