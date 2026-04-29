@@ -20,6 +20,7 @@ from collections import OrderedDict
 parser = argparse.ArgumentParser()
 parser.add_argument('--prior', type=str, default='phisfh', help='phisfh, phisfhzfixed')
 parser.add_argument('--catalog_path', type=str, default="UNCOVER_v5.0.1_LW_SUPER_CATALOG.fits")
+parser.add_argument('--dir_indiv', type=str, default='chains_parrot')
 parser.add_argument('--dir_collected', type=str, default='results')
 parser.add_argument('--sps_version', type=str, default='spsv1.0', help='SPS version used for the catalog')
 args = parser.parse_args()
