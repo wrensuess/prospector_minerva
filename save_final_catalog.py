@@ -49,7 +49,7 @@ print(np.where(dspec['objid'][:] == 0))
 bad = np.where(dspec['objid'][:] == 0)[0]
 
 all_files = sorted([f for f in os.listdir(args.dir_collected) if f.endswith(f'_spec_{args.prior}.h5')])
-for i in bad:
+for i in bad[:20]:
     print(i, all_files[i])
 
 assert np.array_equal(dperc['objid'][:], dspec['objid'][:]) # update the [:,0] once i fix the save_perc.py file
