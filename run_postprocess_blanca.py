@@ -127,7 +127,7 @@ if process==2:
     print(len(ids))
     for j in range(0,len(ids)):
         print("rm "+outdir+"npz/"+str(int(ids[j]))+"_*_phisfh.h5")
-        os.system("rm "+chaindir+"id_"+str(int(ids[j]))+"_*_phisfh.h5")
+        os.system("rm "+outdir+"npz/"+str(int(ids[j]))+"_*_phisfh.h5")
     np.savetxt(f'{outdir}/id_files/ids_postprocess_9999.txt', ids, fmt='%d')
     
     _cmd = "python -u postprocess_parrot_wrap.py --prior {} --fit 'fid' --catalog {} --indir {} --outdir {} --narr {} --iarr {} --ids_file {} --ddir {} --faildir {}".format(prior, catalog, indir, outdir+'npz/', narr, iarr, outdir+'id_files/ids_postprocess_9999.txt', ddir, outdir+'fail/')
