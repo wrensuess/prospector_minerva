@@ -40,6 +40,7 @@ ids = np.array([int(i.split('_')[1]) for i in os.listdir(indir)])
 
 # need to re-run for broken file
 ids = np.loadtxt(outdir+"ids_broken_spec.txt")
+print(ids)
 
 last = 0#0
 
