@@ -44,7 +44,7 @@ print("n common", len(set(obj_perc) & set(obj_spec)))
 print("only perc", sorted(set(obj_perc) - set(obj_spec))[:20])
 print("only spec", sorted(set(obj_spec) - set(obj_perc))[:20])
 
-np.where(dspec['objid'][:] == 0)
+print(np.where(dspec['objid'][:] == 0))
 
 assert np.array_equal(dperc['objid'][:], dspec['objid'][:]) # update the [:,0] once i fix the save_perc.py file
 
