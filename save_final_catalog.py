@@ -36,6 +36,7 @@ dspec = h5py.File('{}/spec_{}.h5'.format(args.dir_collected, args.prior), 'r')
 obj_perc = dperc['objid'][:]
 obj_spec = dspec['objid'][:]
 
+### check correspondance of the IDs between perc files and spec files
 print(obj_perc.shape, obj_spec.shape)
 print(obj_perc[:10])
 print(obj_spec[:10])
@@ -51,15 +52,11 @@ bad = np.where(dspec['objid'][:] == 0)[0]
 
 all_files = sorted([f for f in os.listdir(args.dir_indiv) if f.endswith(f'_spec_{args.prior}.h5')])
 for i in bad:
-    print(i, all_files[i])
+    print("bad file", i, all_files[i])
 
-fname = "id_1003032_spec_phisfh.h5"
-path = os.path.join(args.dir_indiv, fname)
-
-with h5py.File(path, "r") as f:
-    print(list(f.keys()))
-    for k in f.keys():
-        print(k, f[k].shape, f[k].dtype)
+print("copy-paste the following and re-run post process")
+for i in bad:
+    print(all_files[i].split("_")[1])
 
 assert np.array_equal(dperc['objid'][:], dspec['objid'][:]) # update the [:,0] once i fix the save_perc.py file
 

@@ -38,6 +38,9 @@ ts = time.strftime("%y%b%d-%H.%M", time.localtime())
 ids = np.array([int(i.split('_')[1]) for i in os.listdir(indir)])
 #ids = ids[:200]
 
+# need to re-run for broken file
+ids = np.loadtxt(outdir+"ids_broken_spec.txt")
+
 last = 0#0
 
 if last!=0:
