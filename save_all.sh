@@ -1,12 +1,11 @@
 #!/bin/bash
 #SBATCH --job-name=run_chan_job
-#SBATCH --partition=blanca-casa
-#SBATCH --qos=blanca-casa
+#SBATCH --partition=amilan
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=20
-#SBATCH --time=7-00:00:00
-#SBATCH --mem=80G
+#SBATCH --cpus-per-task=10
+#SBATCH --time=24:00:00
+#SBATCH --mem=40G
 #SBATCH --output=./../log_chain/%x_%j.out
 #SBATCH --error=./../log_chain/%x_%j.err
 
