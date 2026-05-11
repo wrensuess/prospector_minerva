@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=run_chan_job
-#SBATCH --partition=blanca-casa
-#SBATCH --qos=blanca-casa
+#SBATCH --partition=amilan
+#SBATCH --qos=normal
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=20
