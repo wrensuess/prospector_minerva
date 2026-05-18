@@ -133,6 +133,9 @@ def main():
                         help='files per chunk for parallel processing')
     parser.add_argument('--io_buffer', type=int, default=10,
                         help='number of chunks to keep in-flight')
+    parser.add_argument('--start', type=int, default=0)
+    parser.add_argument('--end', type=int, default=None)
+    parser.add_argument('--split_id', type=str, default=None)
     args = parser.parse_args()
 
     n_workers = args.n_workers or min(cpu_count(), 64)
@@ -145,7 +148,13 @@ def main():
             'logsfr_ratios_4', 'logsfr_ratios_5', 'logsfr_ratios_6']
 
     os.makedirs(args.dir_collected, exist_ok=True)
-    sname = os.path.join(args.dir_collected, f'chains_{args.prior}.h5')
+    #sname = os.path.join(args.dir_collected, f'chains_{args.prior}.h5')
+
+    if args.split_id is None:
+        tag = f"{args.start}_{end}"
+    else:
+        tag = args.split_id
+    sname = os.path.join(args.dir_collected, f'chains_{args.prior}_{tag}.h5')
 
     print(f"Output file: {sname}")
     print(f"Using {n_workers} workers with chunk size {args.chunk_size}")
@@ -166,7 +175,13 @@ def main():
     file_infos = [get_file_info(f) for f in all_files]  # (objid, filename)
     file_infos.sort(key=lambda x: x[0])
     indexed_infos = [(i, objid, fname) for i, (objid, fname) in enumerate(file_infos)]
+    #n_obj = len(indexed_infos)
+    
+    n_total = len(indexed_infos)
+    end = args.end if args.end is not None else n_total
+    indexed_infos = indexed_infos[args.start:end]
     n_obj = len(indexed_infos)
+    print(f"Using files {args.start}:{end} out of {n_total}")
 
     # Inspect shape from the first file
     '''
