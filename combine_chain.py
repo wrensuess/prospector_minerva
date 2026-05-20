@@ -6,6 +6,7 @@ import argparse
 import numpy as np
 import h5py
 
+#python combine_chain.py --dir_split /scratch/alpine/ikmi3774/slurm/postprocess_UDS_n3.0_v1.2/chain_split --output /scratch/alpine/ikmi3774/slurm/postprocess_UDS_n3.0_v1.2/chains_phisfh.h5
 
 def get_start_end(fname):
     """
