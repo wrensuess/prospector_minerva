@@ -30,13 +30,13 @@ def run_params(task_dir='hoge', log_dir='hoge', acc='priority', jobname='p', wti
         txt_acc = '\n'.join(["#!/bin/bash -l",
                              "#SBATCH --account=blanca-casa\n",
                              "#SBATCH --partition=blanca-casa\n",
-                             "#SBATCH --qos=blanca-casa\n"])
+                             "#SBATCH --qos=blanca-casa\n"])                             
         
     txt_acc += "#SBATCH --time={:d}:00:00\n".format(wtime)
 
     txt_2 = '\n'.join([
         "#SBATCH --nodes=1",
-        "#SBATCH --ntasks=2", #1 for main job, +1 for loadbalancer
+        "#SBATCH --ntasks=2", #1 for main job +1 for loadbalancer
         "#SBATCH --job-name={}".format(jname),
         "#SBATCH --array=0-{}".format(int(njob-1)),
         "#SBATCH --output={}/{}_{}_%A_%a.out".format(log_dir, jname, ts),
@@ -65,7 +65,7 @@ def run_params(task_dir='hoge', log_dir='hoge', acc='priority', jobname='p', wti
     f.write(txt)
     f.close()
     os.system('sbatch _params_miri.sh')
-    time.sleep(0.05)
+    time.sleep(0.5)
     os.system('rm _params_miri.sh')
     return None
 
@@ -75,10 +75,11 @@ def run_params(task_dir='hoge', log_dir='hoge', acc='priority', jobname='p', wti
 if __name__ == '__main__':
 
     ### variables
-    calhead = 'miritest'
+    cathead = 'miritest'
     field = 'UDS'
     ver = 'n3.0_v1.2'
     spsver = 'spsbeta'
+    
     outdir = '/scratch/alpine/ikmi3774/slurm/'
     catdir = '../phot_catalog/'
     chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}'.format(field, ver, spsver)
@@ -88,7 +89,7 @@ if __name__ == '__main__':
 
     acc = 'priority' ### 'priority' or 'preempt'
     env = 'prosp'
-    njobs = 20 #number of job array, max=1000, I guess 20 is sufficient for ~20-40 objects
+    njobs = 20 #number of job array, max=1000
     wtime = int(24) #int(24*7) # time
 
     ################################## step 1. sed fit ####################################
@@ -108,7 +109,7 @@ if __name__ == '__main__':
         print("new task directory created:", taskdir)
     
     
-    fitcatalog = catdir+cathead+'_MINERVA-'+field+'_'+ver+'_ACS+WEBB_Kf444w_SUPER_CATALOG.txt' #file includes use_photo=1 for now
+    fitcatalog = catdir+cathead+'_MINERVA-'+field+'_'+ver+'_ACS+WEBB_Kf444w_SUPER_CATALOG.txt' #file includes your objects
     ids_fit = np.loadtxt(fitcatalog)
     print('[INFO] Ngalaxies to fit in '+cathead+':',len(ids_fit)) #[Nfit]
 
@@ -125,6 +126,6 @@ if __name__ == '__main__':
             for k in range(len(ids_fit_injobarray)):
                 _cmd = 'python uncover_gen1_parrot_phisfh_params.py --catalog {} --outdir {} --dyn {} --idx0 {} --idx1 {}'.format(catalog, chaindir, fast_dyn, int(ids_fit_injobarray[k]), int(ids_fit_injobarray[k]+1))
                 f.write(_cmd+"\n")
-    run_params(jobname='bb', task_dir=taskdir, log_dir=logdir, acc=acc, wtime=wtime, env=env, njob=njobs)
+    run_params(jobname='miritest', task_dir=taskdir, log_dir=logdir, acc=acc, wtime=wtime, env=env, njob=njobs)
     time.sleep(0.05)
 
