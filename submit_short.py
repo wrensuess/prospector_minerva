@@ -80,7 +80,7 @@ if __name__ == '__main__':
     ver = 'n3.0_v1.2'
     spsver = 'spsbeta'
     
-    outdir = '/scratch/alpine/ikmi3774/slurm/'
+    outdir = '/scratch/alpine/nataliaikmi3774/slurm/'
     catdir = '../phot_catalog/'
     chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}'.format(field, ver, spsver)
     logdir = outdir+'log_'+field+"_"+ver
