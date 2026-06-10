@@ -9,7 +9,7 @@ import prospect
 from prospect.fitting import fit_model
 from prospect.sources import FastStepBasis
 from prospect.models.sedmodel import PolySpecModel
-from prospect.likelihood import lnprobfn
+#from prospect.likelihood import lnprobfn
 
 import dynesty
 
