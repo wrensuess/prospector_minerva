@@ -1,3 +1,4 @@
+# edited 26/06/10, but not tested. There is no column 'id_msa', 'z_spec16', and 'z_spec84' in cataolog, so using fixzred seems better.
 import time, sys, os
 import numpy as np
 import numpy.ma as ma
@@ -19,14 +20,17 @@ import utils as ut_cwd
 
 import emulator as Emu
 
-pdir = ut_cwd.data_dir(data='pirate')
-multiemul_file = os.path.join(pdir, "parrot_v4_obsphot_512n_5l_24s_00z24.npy")
+#Epdir = ut_cwd.data_dir(data='pirate')
+#multiemul_file = os.path.join(pdir, "parrot_v4_obsphot_512n_5l_24s_00z24.npy")
+
+pdir = ut_cwd.piratedir
+multiemul_file = os.path.join(ut_cwd.get_dir(dirtype='pirate', outdir=pdir), "parrot_v4_obsphot_512n_5l_24s_00z24.npy")
 
 '''TODO: update parser for good MINERVA defaults; make sure we match general phisfh_params '''
 # - Parser with default arguments -
 parser = prospect.prospect_args.get_parser()
 parser.add_argument('--catalog', type=str, default="UNCOVER_v5.2.0_LW_SUPER_CATALOG.fits")
-parser.add_argument('--catalog_zspec', type=str, default="uncover-msa-default_drz-DR4-zspec.fits")
+#parser.add_argument('--catalog_zspec', type=str, default="uncover-msa-default_drz-DR4-zspec.fits") #we can use catalog?
 parser.add_argument('--idx0', type=int, default=0,
                     help="Range of galaxies to fit, from idx0 to idx1-1; zero-index row number of the catalog.")
 parser.add_argument('--idx1', type=int, default=1,
@@ -35,12 +39,14 @@ parser.add_argument('--outdir', type=str, default='chains_parrot_zspec/', help="
 parser.add_argument('--dyn', type=int, default=0, 
                     help="If 0, std run; if 1, quick dynesty run; if 2, debug, max=1100")
 args = parser.parse_args()
+catalog_file = args.catalog
 
 run_params = vars(args)
 run_params.update({
 'free_gas_logu': False, # parrot is trained with fixed gas_logu
 'verbose': True,
 'dyn': args.dyn,
+'outdir': args.outdir,
 'nofork': True,
 # dynesty params
 'dynesty': True,
@@ -55,7 +61,7 @@ run_params.update({
 'nested_nlive_init': 1600, # number of initial live points
 'nested_weight_kwargs': {'pfrac': 1.0}, # weight posterior over evidence by 100%
 'nested_dlogz_init': 0.01,
-'nested_target_n_effective': 20000, #20000,
+'nested_target_n_effective': 10000, #20000,
 # Model info - not much of this is actually needed
 'zcontinuous': 2,
 'compute_vega_mags': False,
@@ -92,22 +98,23 @@ if not os.path.exists(run_params['outdir']):
     print("new directory created:", run_params['outdir'])
 print(run_params)
 
-mdir = ut_cwd.data_dir('gen1') + 'phot_catalog/'
-cat = Table.read(mdir+args.catalog)
-mdir = ut_cwd.data_dir('gen1') + 'spec_catalog/'
-cat_zspec = Table.read(mdir+args.catalog_zspec)
+#mdir = ut_cwd.data_dir('gen1') + 'phot_catalog/'
+#cat = Table.read(mdir+args.catalog)
+#mdir = ut_cwd.data_dir('gen1') + 'spec_catalog/'
+#cat_zspec = Table.read(mdir+args.catalog_zspec)
 
-if 'f_alma' in cat.colnames:
-    alma = True
-else:
-    alma = False
-if 'f_f460m' in cat.colnames:
-    mb = True
-else:
-    mb = False
-filter_dict = ut_cwd.filter_dictionary(mb=mb, alma=alma)
+# load catalog
+mdir = ut_cwd.photdir
+cat = Table.read(mdir+catalog_file)
+
+# and get filter names
+all_filternames = np.array([f[2:] for f in cat.dtype.names if f.startswith('f_f')])
+print('all filters in catalog: ', all_filternames)
+# load filter dictionary
+filter_dict = ut_cwd.filter_dictionary(all_filternames)
 filts = list(filter_dict.keys())
 filternames = list(filter_dict.values())
+print('fitting filters: ', filternames)
 
 def load_obs(idx=None, err_floor=0.05, **extras):
     '''
@@ -145,6 +152,7 @@ def load_obs(idx=None, err_floor=0.05, **extras):
     # other useful info
     obs['id_msa'] = cat['id_msa'][idx]
     obs['objid'] = cat['id'][idx]
+    obs['catalog'] = catalog_file
     
     obs = fix_obs(obs)
 
@@ -175,49 +183,69 @@ def load_sps(**extras):
 
 # ---------------- fit !
 badobs_ids_list = []
+print(args.idx0, args.idx1)
 for ifit in np.arange(args.idx0, args.idx1, 1):
 
-    # run on the full zspec catalog
-    objid = cat_zspec['id_msa'][ifit]
-    print("\nFitting {}".format(objid))
-    print("------------------\n")
-    run_params['idx'] = np.where(cat['id_msa']==objid)[0][0] # galaxy in the phot catlog
-    _can_fit = False
-    try:
-        obs = load_obs(**run_params)
-        _can_fit = True
-    except(AssertionError):
-        # all NaNs, etc.
+    ### check the id is in fitting catalog (usephoto=1 and specz exist)
+    _can_exist = False
+    try: 
+        ifit = np.where(cat['id']==_ifit)[0][0]
+        objid = cat['id_msa'][ifit]
+        print("\nFitting {}".format(objid))
+        print("------------------\n")
+        run_params['idx'] = np.where(cat['id_msa']==objid)[0][0] # galaxy in the phot catlog
         _can_fit = False
+    except(AssertionError):
+        _can_exist = False
         badobs_ids_list.append(objid)
-        print('no phot')
+        print('no corresponding id')
+
+    ### check fitting of the id is completed or not
+    hfile = os.path.join(run_params['outdir'], "id_{0}_mcmc_phisfh.h5".format(objid))
+    _notyet_fit = False
+    if _can_exist:
+        if os.path.exists(hfile):
+            _notyet_fit = False
+            print(hfile,'has already fitted')
+        else:
+            _notyet_fit = True
+            
+    ### check photometry exists or not
+    _can_fit = False
+    if _notyet_fit:
+        try:
+            obs = load_obs(**run_params)
+            _can_fit = True
+        except(AssertionError):
+            # all NaNs, etc.
+            _can_fit = False
+            badobs_ids_list.append(objid)
+            print('no phot')
         
     obs['zspec'] = np.nan
     if _can_fit:
         obs['x_pixel'] = 0; obs['y_pixel'] = 0
-        obs['ra'] = cat_zspec[ifit]['ra']; obs['dec'] = cat_zspec[ifit]['dec']
-        print(obs['ra'], obs['dec'])
-        print(cat[run_params['idx']]['ra'], cat[run_params['idx']]['dec'])
+        obs['ra'] = cat[ifit]['ra']; obs['dec'] = cat[ifit]['dec']
         ra = obs['ra']*u.deg
         dec = obs['dec']*u.deg
 
-        obs['zspec'] = cat_zspec[ifit]['z_spec']
-        obs['zspec_16'] = cat_zspec[ifit]['z_spec16']
-        obs['zspec_84'] = cat_zspec[ifit]['z_spec84']
+        obs['zspec'] = cat[ifit]['z_spec']
+        obs['zspec_16'] = cat[ifit]['z_spec16']
+        obs['zspec_84'] = cat[ifit]['z_spec84']
         obs['zspec_16_clip'] = np.min( [obs['zspec_16'], obs['zspec']-0.05] )
         obs['zspec_84_clip'] = np.max( [obs['zspec_84'], obs['zspec']+0.05] )
-    
+
+        
     if _can_fit and np.isfinite(obs['zspec']):
         
-        assert cat_zspec[ifit]['id_msa'] == cat[run_params['idx']]['id_msa']
+        assert cat[ifit]['id_msa'] == cat[run_params['idx']]['id_msa']
         model = build_model(obs=obs, **run_params)
         sps = load_sps(**run_params)
-        
         print(obs)
         print(model)
 
         ts = time.strftime("%y%b%d-%H.%M", time.localtime())
-        hfile = os.path.join(run_params['outdir'], "id_{0}_mcmc_phisfhzspec.h5".format(objid))
+        #hfile = os.path.join(run_params['outdir'], "id_{0}_mcmc_phisfhzspec.h5".format(objid))
 
         output = fit_model(obs, model, sps, **run_params)
         print('done in {0}s'.format(output["sampling"][1]))

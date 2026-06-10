@@ -17,8 +17,11 @@ import utils as ut_cwd
 
 import emulator as Emu
 
-pdir = ut_cwd.data_dir(data='pirate')
-multiemul_file = os.path.join(pdir, "parrot_v4_obsphot_512n_5l_24s_00z24.npy")
+#pdir = ut_cwd.data_dir(data='pirate')
+#multiemul_file = os.path.join(pdir, "parrot_v4_obsphot_512n_5l_24s_00z24.npy")
+
+pdir = ut_cwd.piratedir
+multiemul_file = os.path.join(ut_cwd.get_dir(dirtype='pirate', outdir=pdir), "parrot_v4_obsphot_512n_5l_24s_00z24.npy")
 
 '''TODO: update parser for good MINERVA defaults; make sure we match general phisfh_params '''
 # - Parser with default arguments -
@@ -54,7 +57,7 @@ run_params.update({
 'nested_nlive_init': 1600, # number of initial live points
 'nested_weight_kwargs': {'pfrac': 1.0}, # weight posterior over evidence by 100%
 'nested_dlogz_init': 0.01,
-'nested_target_n_effective': 20000,
+'nested_target_n_effective': 10000, #20000
 # Model info - not much of this is actually needed
 'zcontinuous': 2,
 'compute_vega_mags': False,
@@ -91,20 +94,20 @@ if not os.path.exists(run_params['outdir']):
     print("new directory created:", run_params['outdir'])
 print(run_params)
 
-mdir = ut_cwd.data_dir('gen1') + 'phot_catalog/'
+#mdir = ut_cwd.data_dir('gen1') + 'phot_catalog/'
+#cat = Table.read(mdir+catalog_file)
+# load catalog
+mdir = ut_cwd.photdir
 cat = Table.read(mdir+catalog_file)
 
-if 'f_alma' in cat.colnames:
-    alma = True
-else:
-    alma = False
-if 'f_f460m' in cat.colnames:
-    mb = True
-else:
-    mb = False
-filter_dict = ut_cwd.filter_dictionary(mb=mb, alma=alma)
+# and get filter names
+all_filternames = np.array([f[2:] for f in cat.dtype.names if f.startswith('f_f')])
+print('all filters in catalog: ', all_filternames)
+# load filter dictionary
+filter_dict = ut_cwd.filter_dictionary(all_filternames)
 filts = list(filter_dict.keys())
 filternames = list(filter_dict.values())
+print('fitting filters: ', filternames)
 
 def load_obs(idx=None, err_floor=0.05, **extras):
     '''
@@ -162,22 +165,44 @@ def load_sps(**extras):
 
 # ---------------- fit !
 badobs_ids_list = []
-for ifit in np.arange(args.idx0, args.idx1, 1):
+print(args.idx0, args.idx1)
+for _ifit in np.arange(args.idx0, args.idx1, 1):
 
-    # run on the full catalog
-    objid = cat['id'][ifit]
-    print("\nFitting {}".format(objid))
-    print("------------------\n")
-    run_params['idx'] = ifit # choose a galaxy
-    _can_fit = False
-    try:
-        obs = load_obs(**run_params)
-        _can_fit = True
+    ### check the id is in fitting catalog (usephoto=1)
+    _can_exist = False
+    try: 
+        ifit = np.where(cat['id']==_ifit)[0][0]
+        objid = cat['id'][ifit]
+        print("\nFitting {}".format(objid))
+        print("------------------\n")
+        run_params['idx'] = ifit # choose a galaxy
+        _can_exist = True
     except(AssertionError):
-        # all NaNs, etc.
-        _can_fit = False
+        _can_exist = False
         badobs_ids_list.append(objid)
-        print('no phot')
+        print('no corresponding id')
+
+    ### check fitting of the id is completed or not
+    hfile = os.path.join(run_params['outdir'], "id_{0}_mcmc_phisfh.h5".format(objid))
+    _notyet_fit = False
+    if _can_exist:
+        if os.path.exists(hfile):
+            _notyet_fit = False
+            print(hfile,'has already fitted')
+        else:
+            _notyet_fit = True
+            
+    ### check photometry exists or not
+    _can_fit = False
+    if _notyet_fit:
+        try:
+            obs = load_obs(**run_params)
+            _can_fit = True
+        except(AssertionError):
+            # all NaNs, etc.
+            _can_fit = False
+            badobs_ids_list.append(objid)
+            print('no phot')
 
     if _can_fit:
         obs['x_pixel'] = 0; obs['y_pixel'] = 0
@@ -189,12 +214,11 @@ for ifit in np.arange(args.idx0, args.idx1, 1):
 
         model = build_model(obs=obs, **run_params)
         sps = load_sps(**run_params)
-        
         print(obs)
         print(model)
 
         ts = time.strftime("%y%b%d-%H.%M", time.localtime())
-        hfile = os.path.join(run_params['outdir'], "id_{0}_mcmc_phisfhzfixed.h5".format(objid))
+        #hfile = os.path.join(run_params['outdir'], "id_{0}_mcmc_phisfhzfixed.h5".format(objid))
 
         output = fit_model(obs, model, sps, **run_params)
         print('done in {0}s'.format(output["sampling"][1]))
