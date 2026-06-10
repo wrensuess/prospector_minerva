@@ -42,7 +42,7 @@ run_params.update({
 'free_gas_logu': False, # parrot is trained with fixed gas_logu
 'verbose': True,
 'dyn': args.dyn,
-'outdir': ut_cwd.data_dir('cwd')+args.outdir,
+'outdir': args.outdir,
 'nofork': True,
 # dynesty params
 'dynesty': True,
