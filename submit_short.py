@@ -85,7 +85,7 @@ if __name__ == '__main__':
     chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}_fixzred'.format(field, ver, spsver)
     logdir = outdir+'log_'+field+"_"+ver+"_fixzred"
     taskdir = outdir+'task_lists_'+field+"_"+ver+"_fixzred"
-    fast_dyn = 2 #0:std run, 1:brief run, 2:debug
+    fast_dyn = 0 #0:std run, 1:brief run, 2:debug
 
     acc = 'preempt' ### 'priority' or 'preempt'
     env = 'prosp'
