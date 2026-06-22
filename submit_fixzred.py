@@ -75,6 +75,7 @@ def run_params(task_dir='hoge', log_dir='hoge', acc='priority', jobname='p', wti
 if __name__ == '__main__':
 
     ### variables
+    cujobname = 'fixzred'
     cathead = 'speczid'
     field = 'UDS'
     ver = 'n3.0_v1.2'
@@ -89,7 +90,7 @@ if __name__ == '__main__':
 
     acc = 'preempt' ### 'priority' or 'preempt'
     env = 'prosp'
-    njobs = 1000 #number of job array, max=1000
+    njobs = 5 #number of job array, max=1000
     wtime = int(24) #int(24*7) # time
 
     ################################## step 1. sed fit ####################################
@@ -126,6 +127,6 @@ if __name__ == '__main__':
             for k in range(len(ids_fit_injobarray)):
                 _cmd = 'python uncover_gen1_parrot_phisfhfixzred_params.py --catalog {} --outdir {} --dyn {} --idx0 {} --idx1 {}'.format(catalog, chaindir, fast_dyn, int(ids_fit_injobarray[k]), int(ids_fit_injobarray[k]+1))
                 f.write(_cmd+"\n")
-    run_params(jobname='fixzred', task_dir=taskdir, log_dir=logdir, acc=acc, wtime=wtime, env=env, njob=njobs)
+    run_params(jobname=cujobname, task_dir=taskdir, log_dir=logdir, acc=acc, wtime=wtime, env=env, njob=njobs)
     time.sleep(0.05)
 
