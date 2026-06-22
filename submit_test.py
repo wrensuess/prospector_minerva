@@ -77,15 +77,16 @@ if __name__ == '__main__':
     ### variables
     outdir = '/scratch/alpine/ikmi3774/slurm/'
     catdir = '../phot_catalog/'
-    chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}_massive20000'.format(field, ver, spsver)
-    logdir = outdir+'log_'+field+"_"+ver+"_massive20000"
-    taskdir = outdir+'task_lists_'+field+"_"+ver+"_massive20000"
-    cujobname = 'massive20000'
-    cathead = 'massiveid'
     field = 'UDS'
     ver = 'n3.0_v1.2'
     spsver = 'spsbeta'
     fast_dyn = 0 #0:std run, 1:brief run, 2:debug
+
+    cujobname = 'massive20000'
+    cathead = 'massiveid'
+    chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}_massive20000'.format(field, ver, spsver)
+    logdir = outdir+'log_'+field+"_"+ver+"_massive20000"
+    taskdir = outdir+'task_lists_'+field+"_"+ver+"_massive20000"
 
     acc = 'priority' ### 'priority' or 'preempt'
     env = 'prosp'
