@@ -52,6 +52,12 @@ def run_params(task_dir='hoge', log_dir='hoge', acc='priority', jobname='p', wti
         'module load anaconda',
         "source activate {}".format(env),
         "",
+        "export OMP_NUM_THREADS=1",
+        "export OPENBLAS_NUM_THREADS=1",
+        "export MKL_NUM_THREADS=1",
+        "export NUMEXPR_NUM_THREADS=1",
+        'export XLA_FLAGS="--xla_cpu_multi_thread_eigen=false intra_op_parallelism_threads=1"',
+        "",
         "cd /projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/prospector_minerva",
         "mpirun lb {}/taskfile_${{SLURM_ARRAY_TASK_ID}}.txt".format(task_dir),
         "",
@@ -82,15 +88,15 @@ if __name__ == '__main__':
     spsver = 'spsbeta'
     fast_dyn = 0 #0:std run, 1:brief run, 2:debug
 
-    cujobname = 'massive20000'
+    cujobname = 'massive20000_threading'
     cathead = 'massiveid'
-    chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}_massive20000'.format(field, ver, spsver)
-    logdir = outdir+'log_'+field+"_"+ver+"_massive20000"
-    taskdir = outdir+'task_lists_'+field+"_"+ver+"_massive20000"
+    chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}_massive20000_threading'.format(field, ver, spsver)
+    logdir = outdir+'log_'+field+"_"+ver+"_massive20000_threading"
+    taskdir = outdir+'task_lists_'+field+"_"+ver+"_massive20000_threading"
 
     acc = 'priority' ### 'priority' or 'preempt'
     env = 'prosp'
-    njobs = 100 #number of job array, max=1000
+    njobs = 10 #number of job array, max=1000
     wtime = int(24) #int(24*7) # time
 
     ################################## step 1. sed fit ####################################
@@ -112,6 +118,7 @@ if __name__ == '__main__':
     
     fitcatalog = catdir+cathead+'_MINERVA-'+field+'_'+ver+'_ACS+WEBB_Kf444w_SUPER_CATALOG.txt' #file includes your objects
     ids_fit = np.loadtxt(fitcatalog)
+    ids_fit = ids_fit[:20]
     print('[INFO] Ngalaxies to fit in '+cathead+':',len(ids_fit)) #[Nfit]
 
 
