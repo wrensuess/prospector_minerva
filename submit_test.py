@@ -52,12 +52,12 @@ def run_params(task_dir='hoge', log_dir='hoge', acc='priority', jobname='p', wti
         'module load anaconda',
         "source activate {}".format(env),
         "",
-        "export OMP_NUM_THREADS=1",
-        "export OPENBLAS_NUM_THREADS=1",
-        "export MKL_NUM_THREADS=1",
-        "export NUMEXPR_NUM_THREADS=1",
-        'export XLA_FLAGS="--xla_cpu_multi_thread_eigen=false intra_op_parallelism_threads=1"',
-        "",
+#        "export OMP_NUM_THREADS=1",
+#        "export OPENBLAS_NUM_THREADS=1",
+#        "export MKL_NUM_THREADS=1",
+#        "export NUMEXPR_NUM_THREADS=1",
+#        'export XLA_FLAGS="--xla_cpu_multi_thread_eigen=false intra_op_parallelism_threads=1"',
+#        "",
         "cd /projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/prospector_minerva",
         "mpirun lb {}/taskfile_${{SLURM_ARRAY_TASK_ID}}.txt".format(task_dir),
         "",
@@ -95,7 +95,8 @@ if __name__ == '__main__':
     taskdir = outdir+'task_lists_'+field+"_"+ver+"_massive20000_threading"
 
     acc = 'priority' ### 'priority' or 'preempt'
-    env = 'prosp'
+    #env = 'prosp'
+    env = '/projects/kasu8993/software/anaconda/envs/prosp_oldjax'
     njobs = 10 #number of job array, max=1000
     wtime = int(24) #int(24*7) # time
 
