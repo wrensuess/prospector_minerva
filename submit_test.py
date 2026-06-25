@@ -88,11 +88,11 @@ if __name__ == '__main__':
     spsver = 'spsbeta'
     fast_dyn = 0 #0:std run, 1:brief run, 2:debug
 
-    cujobname = 'massive20000_threading'
+    cujobname = 'massive20000_oldjax'
     cathead = 'massiveid'
-    chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}_massive20000_threading'.format(field, ver, spsver)
-    logdir = outdir+'log_'+field+"_"+ver+"_massive20000_threading"
-    taskdir = outdir+'task_lists_'+field+"_"+ver+"_massive20000_threading"
+    chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}_massive20000_oldjax'.format(field, ver, spsver)
+    logdir = outdir+'log_'+field+"_"+ver+"_massive20000_oldjax"
+    taskdir = outdir+'task_lists_'+field+"_"+ver+"_massive20000_oldjax"
 
     acc = 'priority' ### 'priority' or 'preempt'
     #env = 'prosp'
