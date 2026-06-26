@@ -72,7 +72,7 @@ def run_params(task_dir='hoge', log_dir='hoge', acc='priority', jobname='p', wti
     f.close()
     os.system('sbatch _params_test.sh')
     time.sleep(0.5)
-    os.system('rm _params_test.sh')
+#    os.system('rm _params_test.sh')
     return None
 
 
