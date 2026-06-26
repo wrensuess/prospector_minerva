@@ -97,6 +97,7 @@ if __name__ == '__main__':
     acc = 'priority' ### 'priority' or 'preempt'
     env = 'prosp'
     #env = '/projects/kasu8993/software/anaconda/envs/prosp_oldjax'
+    env = '/projects/kasu8993/software/anaconda/envs/prosp'
     njobs = 10 #number of job array, max=1000
     wtime = int(24) #int(24*7) # time
 
