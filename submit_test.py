@@ -72,7 +72,7 @@ def run_params(task_dir='hoge', log_dir='hoge', acc='priority', jobname='p', wti
     f.close()
     os.system('sbatch _params_test.sh')
     time.sleep(0.5)
-#    os.system('rm _params_test.sh')
+    os.system('rm _params_test.sh')
     return None
 
 
@@ -95,8 +95,8 @@ if __name__ == '__main__':
     taskdir = outdir+'task_lists_'+field+"_"+ver+"_massive20000_oldjax"
 
     acc = 'priority' ### 'priority' or 'preempt'
-    #env = 'prosp'
-    env = '/projects/kasu8993/software/anaconda/envs/prosp_oldjax'
+    env = 'prosp'
+    #env = '/projects/kasu8993/software/anaconda/envs/prosp_oldjax'
     njobs = 10 #number of job array, max=1000
     wtime = int(24) #int(24*7) # time
 
