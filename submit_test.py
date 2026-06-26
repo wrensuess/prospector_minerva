@@ -59,7 +59,8 @@ def run_params(task_dir='hoge', log_dir='hoge', acc='priority', jobname='p', wti
 #        'export XLA_FLAGS="--xla_cpu_multi_thread_eigen=false intra_op_parallelism_threads=1"',
 #        "",
         "cd /projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/prospector_minerva",
-        "mpirun lb {}/taskfile_${{SLURM_ARRAY_TASK_ID}}.txt".format(task_dir),
+#        "mpirun lb {}/taskfile_${{SLURM_ARRAY_TASK_ID}}.txt".format(task_dir),
+        "srun lb {}/taskfile_${{SLURM_ARRAY_TASK_ID}}.txt".format(task_dir),
         "",
         'now=$(date +"%T")',
         'echo "end time ... $now"',
@@ -96,8 +97,8 @@ if __name__ == '__main__':
 
     acc = 'priority' ### 'priority' or 'preempt'
     env = 'prosp'
-    #env = '/projects/kasu8993/software/anaconda/envs/prosp_oldjax'
-    env = '/projects/kasu8993/software/anaconda/envs/prosp'
+    env = '/projects/kasu8993/software/anaconda/envs/prosp_oldjax'
+    #env = '/projects/kasu8993/software/anaconda/envs/prosp'
     njobs = 10 #number of job array, max=1000
     wtime = int(24) #int(24*7) # time
 
