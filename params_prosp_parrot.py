@@ -74,7 +74,7 @@ def params_parrot_phisfh(obs=None, **extra):
     # --- AGN dust ---
     #model_params['log_fagn'] = {'N': 1, 'isfree': True, 'init': -7.0e-5,
     #                            'prior': priors.FastUniform(a=-5.0, b=np.log10(3.0))}
-    model_params['log_fagn'] = {'N': 1, 'isfree': False, 'init': -1.0e-5,
+    model_params['log_fagn'] = {'N': 1, 'isfree': False, 'init': -5.0,
                                 'prior': priors.FastUniform(a=-5.0, b=np.log10(3.0))}
 
     model_params['log_agn_tau'] = {'N': 1, 'isfree': True, 'init': np.log10(20.0),
