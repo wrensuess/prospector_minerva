@@ -88,18 +88,20 @@ if __name__ == '__main__':
     spsver = 'spsbeta'
     fast_dyn = 0 #0:std run, 1:brief run, 2:debug
 
-    cujobname = 'massive20000_oldjax'
+    #cujobname = 'massive20000_threading'
+    #cujobname = 'massive20000_oldjax'
+    cujobname = 'massive10000_fagn1e5'
     cathead = 'massiveid'
-    chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}_massive20000_oldjax'.format(field, ver, spsver)
-    logdir = outdir+'log_'+field+"_"+ver+"_massive20000_oldjax"
-    taskdir = outdir+'task_lists_'+field+"_"+ver+"_massive20000_oldjax"
+    chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}_massive10000_fagn1e5'.format(field, ver, spsver)
+    logdir = outdir+'log_'+field+"_"+ver+"_massive10000_fagn1e5"
+    taskdir = outdir+'task_lists_'+field+"_"+ver+"_massive10000_fagn1e5"
 
     acc = 'priority' ### 'priority' or 'preempt'
     env = 'prosp'
-    env = 'prosp_oldjax_nompi'
+    #env = 'prosp_oldjax_nompi'
     #env = '/projects/kasu8993/software/anaconda/envs/prosp_oldjax'
     #env = '/projects/kasu8993/software/anaconda/envs/prosp'
-    njobs = 10 #number of job array, max=1000
+    njobs = 100 #number of job array, max=1000
     wtime = int(24) #int(24*7) # time
 
     ################################## step 1. sed fit ####################################
@@ -121,7 +123,7 @@ if __name__ == '__main__':
     
     fitcatalog = catdir+cathead+'_MINERVA-'+field+'_'+ver+'_ACS+WEBB_Kf444w_SUPER_CATALOG.txt' #file includes your objects
     ids_fit = np.loadtxt(fitcatalog)
-    ids_fit = ids_fit[:20]
+    #ids_fit = ids_fit[:20] #for run time check, oldjax or threading
     print('[INFO] Ngalaxies to fit in '+cathead+':',len(ids_fit)) #[Nfit]
 
 
