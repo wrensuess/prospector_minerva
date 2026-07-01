@@ -49,6 +49,7 @@ process = -1
 
 if process==-1: ### priority node
     njobs = 100
+    wtime = int(6) # time
     ids_split = np.array_split(ids, njobs)
     # save each chunk to a separate file
     os.makedirs(outdir+'id_files', exist_ok=True)
@@ -60,30 +61,32 @@ if process==-1: ### priority node
 
     # and make our slurm file 
     txt_acc = '\n'.join(["#!/bin/bash -l",
-                                 "#SBATCH --account=blanca-casa\n",
-                                 "#SBATCH --partition=blanca-casa\n",
-                                 "#SBATCH --qos=blanca-casa\n"
-                                 "#SBATCH --time={:d}:00:00\n".format(wtime),
-                                 "#SBATCH --nodes=1",
-                                 "#SBATCH --ntasks=1",
-                                 "#SBATCH --job-name={}".format(jname),
-                                 "#SBATCH --array=0-{}".format(int(njobs-1)),
-                                 "#SBATCH --output={}/{}_{}_%A_%a.out".format(log_dir, jname, ts),
-                                 "#SBATCH --error={}/{}_{}_%A_%a.err".format(log_dir, jname, ts),
-                                 "",
-                                 'now=$(date +"%T")',
-                                 'echo "start time ... $now"',
-                                 'echo "Running task ID: ${SLURM_ARRAY_TASK_ID}"',
-                                 "",
-                                 'module purge',
-                                 'module load anaconda',
-                                 "source activate {}".format(env),
-                                 "",
-                                 "cd {}".format(code_dir),
-                                 _cmd,
-                                 'now=$(date +"%T")',
-                                 'echo "end time ... $now"',
-                                 ""])
+#                         "#SBATCH --account=blanca-casa\n",
+#                         "#SBATCH --partition=blanca-casa\n",
+#                         "#SBATCH --qos=blanca-casa\n"
+                         "#SBATCH --partition=amilan\n",
+                         "#SBATCH --qos=normal\n",
+                         "#SBATCH --time={:d}:00:00\n".format(wtime),
+                         "#SBATCH --nodes=1",
+                         "#SBATCH --ntasks=1",
+                         "#SBATCH --job-name={}".format(jname),
+                         "#SBATCH --array=0-{}".format(int(njobs-1)),
+                         "#SBATCH --output={}/{}_{}_%A_%a.out".format(log_dir, jname, ts),
+                         "#SBATCH --error={}/{}_{}_%A_%a.err".format(log_dir, jname, ts),
+                         "",
+                         'now=$(date +"%T")',
+                         'echo "start time ... $now"',
+                         'echo "Running task ID: ${SLURM_ARRAY_TASK_ID}"',
+                         "",
+                         'module purge',
+                         'module load anaconda',
+                         "source activate {}".format(env),
+                         "",
+                         "cd {}".format(code_dir),
+                         _cmd,
+                         'now=$(date +"%T")',
+                         'echo "end time ... $now"',
+                         ""])
 
 if process==0: ### first run
     njobs = 1000
