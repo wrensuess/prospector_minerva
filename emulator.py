@@ -21,7 +21,15 @@ class EmulatorBeta(ProspectorParams):
         self.dat = np.load(fp, allow_pickle=True).all()
 
         # Determine the indices of the filters in obs['filters']
-        self.sorter = np.array([self.dat["filter_redir"][f.name] for f in obs["filters"]], dtype=int)
+        #self.sorter = np.array([self.dat["filter_redir"][f.name] for f in obs["filters"]], dtype=int)
+        ### change to run both prosp_oldjax and original prosp???
+        filter_redir = self.dat["filter_redir"]
+        try:
+            if isinstance(filter_redir, np.ndarray) and filter_redir.ndim == 0:
+                filter_redir = filter_redir.item()
+        except Exception:
+            pass
+        self.sorter = np.array([filter_redir[f.name] for f in obs["filters"]], dtype=int)
 
         # TODO: Check if prior bounds are with emulbounds.
         # This will require messing with the massmet prior (which uses prior.bounds()) to
