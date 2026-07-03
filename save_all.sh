@@ -13,7 +13,7 @@
 module purge
 module load slurm/blanca
 
-python save_sfh.py --dir_indiv="/scratch/alpine/ikmi3774/slurm/postprocess_UDS_n3.0_v1.2_massive20000/npz" --dir_collected="/scratch/alpine/ikmi3774/slurm/postprocess_UDS_n3.0_v1.2_massive10000_fagn1e5" --n_workers=20
+python save_sfh.py --dir_indiv="/scratch/alpine/ikmi3774/slurm/postprocess_UDS_n3.0_v1.2_massive10000_fagn1e5/npz" --dir_collected="/scratch/alpine/ikmi3774/slurm/postprocess_UDS_n3.0_v1.2_massive10000_fagn1e5" --n_workers=20
 
 ### this is not good due to time out, run save_chain.sh+combine_chain.py first
 python save_chain.py --dir_indiv="/scratch/alpine/ikmi3774/slurm/postprocess_UDS_n3.0_v1.2_massive10000_fagn1e5/npz" --dir_collected="/scratch/alpine/ikmi3774/slurm/postprocess_UDS_n3.0_v1.2_massive10000_fagn1e5" --n_workers=20
