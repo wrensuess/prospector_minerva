@@ -30,7 +30,11 @@ def run_params(task_dir='hoge', log_dir='hoge', acc='priority', jobname='p', wti
         txt_acc = '\n'.join(["#!/bin/bash -l",
                              "#SBATCH --account=blanca-casa\n",
                              "#SBATCH --partition=blanca-casa\n",
-                             "#SBATCH --qos=blanca-casa\n"])                             
+                             "#SBATCH --qos=blanca-casa\n"])
+    if acc == 'amilian':
+        txt_acc = '\n'.join(["#!/bin/bash -l",
+                             "#SBATCH --partition=acpu\n",
+                             "#SBATCH --qos=cpu-normal\n"]) 
         
     txt_acc += "#SBATCH --time={:d}:00:00\n".format(wtime)
 
@@ -97,7 +101,7 @@ if __name__ == '__main__':
     logdir = outdir+'log_'+field+"_"+ver+"_outliers_fagn1e5"
     taskdir = outdir+'task_lists_'+field+"_"+ver+"_outliers_fagn1e5"
 
-    acc = 'priority' ### 'priority' or 'preempt'
+    acc = 'amilian' ### 'priority' or 'preempt' or 'amilian'
     env = 'prosp'
     #env = 'prosp_oldjax_nompi'
     #env = '/projects/kasu8993/software/anaconda/envs/prosp_oldjax'
