@@ -90,11 +90,12 @@ if __name__ == '__main__':
 
     #cujobname = 'massive20000_threading'
     #cujobname = 'massive20000_oldjax'
-    cujobname = 'massive10000_fagn1e5'
-    cathead = 'massiveid'
-    chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}_massive10000_fagn1e5'.format(field, ver, spsver)
-    logdir = outdir+'log_'+field+"_"+ver+"_massive10000_fagn1e5"
-    taskdir = outdir+'task_lists_'+field+"_"+ver+"_massive10000_fagn1e5"
+    #cujobname = 'massive10000_fagn1e5'
+    cujobname = 'outliers_fagn1e5'
+    cathead = 'outliers'
+    chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}_outliers_fagn1e5'.format(field, ver, spsver)
+    logdir = outdir+'log_'+field+"_"+ver+"_outliers_fagn1e5"
+    taskdir = outdir+'task_lists_'+field+"_"+ver+"_outliers_fagn1e5"
 
     acc = 'priority' ### 'priority' or 'preempt'
     env = 'prosp'
