@@ -48,7 +48,7 @@ print(ids)
 process = -1
 
 if process==-1: ### priority node
-    njobs = 100
+    njobs = 40
     wtime = int(6) # time
     ids_split = np.array_split(ids, njobs)
     # save each chunk to a separate file
