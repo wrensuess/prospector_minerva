@@ -95,18 +95,19 @@ if __name__ == '__main__':
     #cujobname = 'massive20000_threading'
     #cujobname = 'massive20000_oldjax'
     #cujobname = 'massive10000_fagn1e5'
-    cujobname = 'outliers_fagn1e5'
-    cathead = 'outliers'
-    chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}_outliers_fagn1e5'.format(field, ver, spsver)
-    logdir = outdir+'log_'+field+"_"+ver+"_outliers_fagn1e5"
-    taskdir = outdir+'task_lists_'+field+"_"+ver+"_outliers_fagn1e5"
+    #cujobname = 'outliers_fagn1e5'
+    cujobname = 'goodpz_fagn1e5'
+    cathead = 'goodpz'
+    chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}_goodpz_fagn1e5'.format(field, ver, spsver)
+    logdir = outdir+'log_'+field+"_"+ver+"_goodpz_fagn1e5"
+    taskdir = outdir+'task_lists_'+field+"_"+ver+"_goodpz_fagn1e5"
 
     acc = 'amilian' ### 'priority' or 'preempt' or 'amilian'
     env = 'prosp'
     #env = 'prosp_oldjax_nompi'
     #env = '/projects/kasu8993/software/anaconda/envs/prosp_oldjax'
     #env = '/projects/kasu8993/software/anaconda/envs/prosp'
-    njobs = 100 #number of job array, max=1000
+    njobs = 500 #number of job array, max=1000
     wtime = int(24) #int(24*7) # time
 
     ################################## step 1. sed fit ####################################
