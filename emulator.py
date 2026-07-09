@@ -23,7 +23,7 @@ class EmulatorBeta(ProspectorParams):
         # Determine the indices of the filters in obs['filters']
         #self.sorter = np.array([self.dat["filter_redir"][f.name] for f in obs["filters"]], dtype=int)
         ### change to run both prosp_oldjax and original prosp???
-        print(isinstance(self.dat,self.dat.ndim))
+        print(isinstance(self.dat),self.dat.ndim)
         print(self.dat.item())
         if isinstance(self.dat, np.ndarray) and self.dat.ndim == 0:
             self.dat = self.dat.item()
