@@ -103,8 +103,8 @@ if __name__ == '__main__':
     taskdir = outdir+'task_lists_'+field+"_"+ver+"_massive20000_oldjax"
 
     acc = 'amilian' ### 'priority' or 'preempt' or 'amilian'
-    env = 'prosp'
-    #env = 'prosp_oldjax_nompi'
+    #env = 'prosp'
+    env = 'prosp_oldjax_nompi'
     #env = '/projects/kasu8993/software/anaconda/envs/prosp_oldjax'
     #env = '/projects/kasu8993/software/anaconda/envs/prosp'
     njobs = 100 #number of job array, max=1000
