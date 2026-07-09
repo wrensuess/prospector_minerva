@@ -55,7 +55,7 @@ run_params.update({
 'nested_nlive_init': 1600, # number of initial live points
 'nested_weight_kwargs': {'pfrac': 1.0}, # weight posterior over evidence by 100%
 'nested_dlogz_init': 0.01,
-'nested_target_n_effective': 10000, #20000,
+'nested_target_n_effective': 20000, #20000,
 # Model info - not much of this is actually needed
 'zcontinuous': 2,
 'compute_vega_mags': False,
