@@ -16,6 +16,9 @@ class EmulatorBeta(ProspectorParams):
 
     def __init__(self, model_params, fp=multiemul_file, obs=None, param_order=None):
         super(EmulatorBeta, self).__init__(model_params, param_order=param_order)
+        print("emulator fp =", fp)
+        print("type self.dat =", type(self.dat))
+        print("self.dat =", self.dat)
 
         # Load all emulator data.
         self.dat = np.load(fp, allow_pickle=True).all()
@@ -23,9 +26,6 @@ class EmulatorBeta(ProspectorParams):
         # Determine the indices of the filters in obs['filters']
         #self.sorter = np.array([self.dat["filter_redir"][f.name] for f in obs["filters"]], dtype=int)
         ### change to run both prosp_oldjax and original prosp???
-        print(self.dat.ndim)
-        print(self.dat)
-        print(self.dat.item())
         if isinstance(self.dat, np.ndarray) and self.dat.ndim == 0:
             self.dat = self.dat.item()
         filter_redir = self.dat["filter_redir"]
