@@ -113,9 +113,9 @@ if __name__ == '__main__':
     wtime = int(24) #int(24*7) # time
 
     ################################## step 1. sed fit ####################################
-    if wmiri = 'no':
+    if wmiri == 'no':
         catalog = 'MINERVA-{}_{}_ACS+WEBB_Kf444w_SUPER_CATALOG.fits'.format(field, ver)
-    elif wmiri = 'yes':
+    elif wmiri == 'yes':
         catalog = 'MINERVA-{}_{}_ACS+WEBB_Kf444w_SUPER_CATALOG_wMIRI.fits'.format(field, ver)
     else:
         print("***check MIRI availability***")
