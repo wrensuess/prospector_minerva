@@ -110,7 +110,7 @@ if __name__ == '__main__':
     #env = 'prosp_oldjax_nompi'
     #env = '/projects/kasu8993/software/anaconda/envs/prosp_oldjax'
     #env = '/projects/kasu8993/software/anaconda/envs/prosp'
-    njobs = 100 #number of job array, max=1000
+    njobs = 50 #number of job array, max=1000
     wtime = int(24) #int(24*7) # time
 
     ################################## step 1. sed fit ####################################
