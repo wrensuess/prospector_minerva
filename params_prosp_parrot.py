@@ -72,10 +72,10 @@ def params_parrot_phisfh(obs=None, **extra):
                                 'prior': priors.FastUniform(a=-2.0, b=0.5)}
 
     # --- AGN dust ---
-    #model_params['log_fagn'] = {'N': 1, 'isfree': True, 'init': -7.0e-5,
-    #                            'prior': priors.FastUniform(a=-5.0, b=np.log10(3.0))}
-    model_params['log_fagn'] = {'N': 1, 'isfree': True, 'init': -4.5,
-                                'prior': priors.FastUniform(a=-5.0, b=-4.0)}
+    model_params['log_fagn'] = {'N': 1, 'isfree': True, 'init': -7.0e-5,
+                                'prior': priors.FastUniform(a=-5.0, b=np.log10(3.0))}
+    #model_params['log_fagn'] = {'N': 1, 'isfree': True, 'init': -4.5,
+    #                            'prior': priors.FastUniform(a=-5.0, b=-4.0)}
     ### fixed, not good?
     #model_params['log_fagn'] = {'N': 1, 'isfree': False, 'init': -5.0,
     #                            'prior': priors.FastUniform(a=-5.0, b=np.log10(3.0))}

@@ -88,30 +88,38 @@ if __name__ == '__main__':
     outdir = '/scratch/alpine/ikmi3774/slurm/'
     catdir = '../phot_catalog/'
     field = 'UDS'
-    ver = 'n3.0_v1.2'
+    #ver = 'n3.0_v1.2'
+    ver = 'n3.0_m3.1_v1.2.1'
+    wmiri = 'yes'
     spsver = 'spsbeta'
     fast_dyn = 0 #0:std run, 1:brief run, 2:debug
 
     #cujobname = 'massive20000_threading'
-    cujobname = 'massive20000_oldjax'
+    #cujobname = 'massive20000_oldjax'
     #cujobname = 'massive10000_fagn1e5'
     #cujobname = 'outliers_fagn1e5'
     #cujobname = 'goodpz_fagn1e5'
-    cathead = 'massiveid'
-    chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}_massive20000_oldjax'.format(field, ver, spsver)
-    logdir = outdir+'log_'+field+"_"+ver+"_massive20000_oldjax"
-    taskdir = outdir+'task_lists_'+field+"_"+ver+"_massive20000_oldjax"
+    cathead = 'outliers'
+    chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}_outliers_wMIRI'.format(field, ver, spsver)
+    logdir = outdir+'log_'+field+"_"+ver+"_outliers_wMIRI"
+    taskdir = outdir+'task_lists_'+field+"_"+ver+"_outliers_wMIRI"
 
     acc = 'amilian' ### 'priority' or 'preempt' or 'amilian'
-    #env = 'prosp'
-    env = 'prosp_oldjax_nompi'
+    env = 'prosp'
+    #env = 'prosp_oldjax_nompi'
     #env = '/projects/kasu8993/software/anaconda/envs/prosp_oldjax'
     #env = '/projects/kasu8993/software/anaconda/envs/prosp'
     njobs = 100 #number of job array, max=1000
     wtime = int(24) #int(24*7) # time
 
     ################################## step 1. sed fit ####################################
-    catalog = 'MINERVA-{}_{}_ACS+WEBB_Kf444w_SUPER_CATALOG.fits'.format(field, ver)
+    if wmiri = 'no':
+        catalog = 'MINERVA-{}_{}_ACS+WEBB_Kf444w_SUPER_CATALOG.fits'.format(field, ver)
+    elif wmiri = 'yes':
+        catalog = 'MINERVA-{}_{}_ACS+WEBB_Kf444w_SUPER_CATALOG_wMIRI.fits'.format(field, ver)
+    else:
+        print("***check MIRI availability***")
+        print(dddddd)
 
     isExist = os.path.exists(chaindir)
     if not isExist:
