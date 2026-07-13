@@ -99,6 +99,7 @@ if __name__ == '__main__':
     #cujobname = 'massive10000_fagn1e5'
     #cujobname = 'outliers_fagn1e5'
     #cujobname = 'goodpz_fagn1e5'
+    cujobname = 'outliers_wMIRI'
     cathead = 'outliers'
     chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}_outliers_wMIRI'.format(field, ver, spsver)
     logdir = outdir+'log_'+field+"_"+ver+"_outliers_wMIRI"
