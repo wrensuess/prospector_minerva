@@ -98,8 +98,11 @@ if cathead=="refitid":
 subprocess.run(["python", "submit_loop.py", cathead, field, ver, outdir, catdir], check=True)
 time.sleep(CHECK_INTERVAL_SEC)
 
+print(f"[INFO] start checking since run spent {CHECK_INTERVAL_HOURS} hours")
+
 k=0
 while True:
+    print(f"[INFO] wait_job_finish")
     wait_job_finish()
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print(f"[{now}] waited")
