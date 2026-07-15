@@ -84,7 +84,7 @@ spsver = 'spsbeta' #not set as a variable, need to edit submit_loop.py
 outdir = '/scratch/alpine/ikmi3774/slurm/'
 catdir = '/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/phot_catalog/'
 catpath = catdir+cathead+"_MINERVA-"+field+"_"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt"
-catpath_check = catdir_ori+cathead+"_MINERVA-"+field+"_"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt"
+catpath_check = catdir+cathead_ori+"_MINERVA-"+field+"_"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt"
 chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}/'.format(field, ver, spsver)
 
 if cathead=="refitid":
