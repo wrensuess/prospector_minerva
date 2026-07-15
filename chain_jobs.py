@@ -96,8 +96,9 @@ if cathead=="refitid":
         os.system("rm "+chaindir+"id_"+str(int(refitids[j]))+"_mcmc_phisfh.h5")
 
 subprocess.run(["python", "submit_loop.py", cathead, field, ver, outdir, catdir], check=True)
-time.sleep(CHECK_INTERVAL_SEC)
 
+print(f"[INFO] start checking since run spent {CHECK_INTERVAL_SEC} sec")
+time.sleep(CHECK_INTERVAL_SEC)
 print(f"[INFO] start checking since run spent {CHECK_INTERVAL_HOURS} hours")
 
 k=0
