@@ -80,7 +80,8 @@ if __name__ == '__main__':
     ver = sys.argv[3]
     outdir = sys.argv[4]
     catdir = sys.argv[5]
-    
+
+    ##### note, ignore it ######
     #field = 'UDS'
     #ver = 'n2.2_m2.0_v1.0_LW_Kf444w_SUPER'
     #ver = 'n2.3_v1.1_LW_Kf444w_SUPER'
@@ -89,18 +90,18 @@ if __name__ == '__main__':
     #chaindir = '/scratch/alpine/ikmi3774/slurm/chains_parrot_{}_{}'.format(ver, spsver)
     #outdir = '/scratch/alpine/ikmi3774/slurm/'
     #catdir = '/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/phot_catalog/'
+    #ncores = len(tot)
+    #ncores = 5 #840 # number of cores to request
     
     spsver = 'spsbeta'
     chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}'.format(field, ver, spsver)
     logdir = outdir+'log_'+field+"_"+ver
     taskdir = outdir+'task_lists_'+field+"_"+ver
-    fast_dyn = 0 #0:std run, 1:brief run, 2:debug
+    fast_dyn = 2 #0:std run, 1:brief run, 2:debug
 
     acc = 'bc' ### we do not have to use this specification, but useful if we use both alpine&blanca
     #env = 'prosp'
     env = '/projects/kasu8993/software/anaconda/envs/prosp'
-    #ncores = len(tot)
-    #ncores = 5 #840 # number of cores to request
     njobs = 1000 #number of job array, max=1000
     wtime = int(24) #int(24*7) # time
 
