@@ -38,8 +38,8 @@ def wait_job_finish():
 
         lines = res.stdout.strip().splitlines()
 
-        # Nline = 1 :only header, no job
-        if len(lines) <= 1:
+        # Nline = 1 :only header, no job, Nline = 2: header+sbatch chain_job.sh
+        if len(lines) <= 2:
             print(f"[{now}] no job. finished.")
             # a few columns
             for line in lines:
@@ -98,7 +98,6 @@ if cathead=="refitid":
 #subprocess.run(["python", "submit_loop.py", cathead, field, ver, outdir, catdir], check=True)
 subprocess.Popen(["python", "submit_loop.py", cathead, field, ver, outdir, catdir])
 
-print(f"[INFO] start checking since run spent {CHECK_INTERVAL_SEC} sec")
 time.sleep(CHECK_INTERVAL_SEC)
 print(f"[INFO] start checking since run spent {CHECK_INTERVAL_HOURS} hours")
 
