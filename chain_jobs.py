@@ -4,7 +4,7 @@ import glob,time,os,pdb
 import numpy as np
 from datetime import datetime
 
-CHECK_INTERVAL_HOURS = 6 #6 for first run, 1-2 for second run, 0.5 for later?
+CHECK_INTERVAL_HOURS = 0.05 #6 for first run, 1-2 for second run, 0.5 for later?
 CHECK_INTERVAL_SEC = 3600*CHECK_INTERVAL_HOURS
 
 
