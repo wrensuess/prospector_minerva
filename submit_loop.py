@@ -72,32 +72,36 @@ def run_params(task_dir='hoge', log_dir='hoge', acc='bc', jobname='p', wtime=24,
 if __name__ == '__main__':
 
     # check the number of arguments
-    if len(sys.argv)!=4:
-        print('Error! usage: python '+sys.argv[0]+' [cathead] [field] [ver]')
+    if len(sys.argv)!=6:
+        print('Error! usage: python '+sys.argv[0]+' [cathead] [field] [ver] [outdir] [catdir]')
         sys.exit()
     cathead = sys.argv[1]
     field = sys.argv[2] 
     ver = sys.argv[3]
+    outdir = sys.argv[4]
+    catdir = sys.argv[5]
     
     #field = 'UDS'
     #ver = 'n2.2_m2.0_v1.0_LW_Kf444w_SUPER'
     #ver = 'n2.3_v1.1_LW_Kf444w_SUPER'
-    spsver = 'spsbeta'
     #outdir = '../slurm/'
-    outdir = '/scratch/alpine/ikmi3774/slurm/'
-    catdir = '../phot_catalog/'
     #chaindir = outdir+'chains_parrot_{}_{}'.format(ver, spsver)
-    chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}'.format(field, ver, spsver)
     #chaindir = '/scratch/alpine/ikmi3774/slurm/chains_parrot_{}_{}'.format(ver, spsver)
+    #outdir = '/scratch/alpine/ikmi3774/slurm/'
+    #catdir = '/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/phot_catalog/'
+    
+    spsver = 'spsbeta'
+    chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}'.format(field, ver, spsver)
     logdir = outdir+'log_'+field+"_"+ver
     taskdir = outdir+'task_lists_'+field+"_"+ver
     fast_dyn = 0 #0:std run, 1:brief run, 2:debug
 
     acc = 'bc' ### we do not have to use this specification, but useful if we use both alpine&blanca
-    env = 'prosp'
+    #env = 'prosp'
+    env = '/projects/kasu8993/software/anaconda/envs/prosp'
     #ncores = len(tot)
     #ncores = 5 #840 # number of cores to request
-    njobs = 9#1000 #number of job array, max=1000
+    njobs = 1000 #number of job array, max=1000
     wtime = int(24) #int(24*7) # time
 
     ################################## step 1. sed fit ####################################
@@ -117,7 +121,7 @@ if __name__ == '__main__':
         print("new task directory created:", taskdir)
     
     
-    fitcatalog = catdir+cathead+'_MINERVA-'+field+'_'+ver+'_ACS+WEBB_Kf444w_SUPER_CATALOG.txt' #file includes use_photo=1 and nmband>5 sources for now
+    fitcatalog = catdir+cathead+'_MINERVA-'+field+'_'+ver+'_ACS+WEBB_Kf444w_SUPER_CATALOG.txt' #file includes use_photo=1
     ids_fit = np.loadtxt(fitcatalog)
     print('[INFO] Ngalaxies to fit in '+cathead+':',len(ids_fit)) #[Nfit]
 

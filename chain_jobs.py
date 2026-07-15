@@ -57,15 +57,12 @@ def wait_job_finish():
         print(f"[INFO] next check will be {CHECK_INTERVAL_HOURS} hours later\n")
         time.sleep(CHECK_INTERVAL_SEC)
 
-def get_unfit_number(catdir,cathead_ori,field,ver):
+def get_unfit_number(chaindir,catpath_check):
     ### check path is consistent with submit_loop.py
-    outdir = '/scratch/alpine/ikmi3774/slurm/'
-    spsver = 'spsbeta'
-    chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}/'.format(field, ver, spsver)
     fitted = glob.glob(chaindir+"id_*.h5")
     fitted_id = [a.split("/")[-1].split("_")[1] for a in fitted]
 
-    whole_id_ = np.loadtxt(catdir+cathead_ori+"_MINERVA-"+field+"_"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt")
+    whole_id_ = np.loadtxt(catpath_check)
     whole_id = [str(int(a)) for a in list(whole_id_)]
 
     not_fitted =  list(set(fitted_id)^set(whole_id))
@@ -78,14 +75,16 @@ def get_unfit_number(catdir,cathead_ori,field,ver):
 
     
 
-field = "UDS"
-ver = "n3.0_v1.2"
-spsver = 'spsbeta'
+field = "COSMOS"
+ver = "n3.0_v1.0"
+cathead = "fitid1" #name of catalog for the first attempt, fitid or refitid 
+cathead_ori = "fitid1" #name of reference catalog to check fitting is completed
+
+spsver = 'spsbeta' #not set as a variable, need to edit submit_loop.py
 outdir = '/scratch/alpine/ikmi3774/slurm/'
-catdir = '../phot_catalog/'
-cathead = "fitid" #fitid or refitid #name of catalog for the first attempt
-cathead_ori = "fitid" #name of reference catalog to check fitting is completed
+catdir = '/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/phot_catalog/'
 catpath = catdir+cathead+"_MINERVA-"+field+"_"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt"
+catpath_check = catdir_ori+cathead+"_MINERVA-"+field+"_"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt"
 chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}/'.format(field, ver, spsver)
 
 if cathead=="refitid":
@@ -96,7 +95,7 @@ if cathead=="refitid":
         print("rm "+chaindir+"id_"+str(int(refitids[j]))+"_mcmc_phisfh.h5")
         os.system("rm "+chaindir+"id_"+str(int(refitids[j]))+"_mcmc_phisfh.h5")
 
-subprocess.run(["python", "submit_loop.py", cathead, field, ver], check=True)
+subprocess.run(["python", "submit_loop.py", cathead, field, ver, outdir, catdir], check=True)
 time.sleep(CHECK_INTERVAL_SEC)
 
 k=0
@@ -104,7 +103,7 @@ while True:
     wait_job_finish()
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print(f"[{now}] waited")
-    Nresi, unfit_id_array = get_unfit_number(catdir,cathead_ori,field,ver)
+    Nresi, unfit_id_array = get_unfit_number(chaindir,catpath_check)
     if Nresi==0:
         break
     else:
@@ -115,7 +114,7 @@ while True:
             cathead = "fitid"+str(int(k)) #name of catalog for k-th attempt
         catpath = catdir+cathead+"_MINERVA-"+field+"_"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt"
         np.savetxt(catpath,np.array(unfit_id_array))
-        subprocess.run(["python", "submit_loop.py", cathead, field, ver], check=True)
+        subprocess.run(["python", "submit_loop.py", cathead, field, ver, outdir, catdir], check=True)
         print(f"[INFO] job with "+cathead+" catalog is running...")
         time.sleep(CHECK_INTERVAL_SEC)
 
