@@ -12,4 +12,4 @@
 module purge
 module load slurm/blanca
 
-python -u chain_jobs.py
+python -u chain_jobs2.py
