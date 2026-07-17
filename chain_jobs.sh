@@ -11,5 +11,6 @@
 
 module purge
 module load slurm/blanca
+module load anaconda
 
 python -u chain_jobs.py
