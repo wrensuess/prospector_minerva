@@ -1,4 +1,4 @@
-#!/bin/bash
+e#!/bin/bash
 #SBATCH --job-name=run_chan_job
 #SBATCH --partition=blanca-casa
 #SBATCH --nodes=1
@@ -11,5 +11,7 @@
 
 module purge
 module load slurm/blanca
+module load anaconda
+source activate /projects/kasu8993/software/anaconda/envs/prosp
 
 python -u chain_jobs.py
