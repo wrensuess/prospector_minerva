@@ -12,5 +12,6 @@
 module purge
 module load slurm/blanca
 module load anaconda
+source activate /projects/kasu8993/software/anaconda/envs/prosp
 
 python -u chain_jobs.py
