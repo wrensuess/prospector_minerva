@@ -12,7 +12,6 @@
 #SBATCH --error=./../log_chain/%x_%j.err
 
 module purge
-module load slurm/blanca
 
 CHUNK=500
 START=$((SLURM_ARRAY_TASK_ID * CHUNK))
