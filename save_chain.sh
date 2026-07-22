@@ -18,4 +18,4 @@ CHUNK=500
 START=$((SLURM_ARRAY_TASK_ID * CHUNK))
 END=$((START + CHUNK))
 
-python save_chain.py --dir_indiv="/scratch/alpine/ikmi3774/slurm/postprocess_UDS_n3.0_v1.2/npz" --dir_collected="/scratch/alpine/ikmi3774/slurm/postprocess_UDS_n3.0_v1.2" --n_workers=20 --start $START --end $END --split_id ${START}_${END}
+python save_chain.py --dir_indiv="/scratch/alpine/ikmi3774/slurm/postprocess_UDS_n3.0_v1.2/npz" --dir_collected="/scratch/alpine/ikmi3774/slurm/postprocess_UDS_n3.0_v1.2" --n_workers=1 --start $START --end $END --split_id ${START}_${END}
