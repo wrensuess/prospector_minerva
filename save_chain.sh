@@ -1,11 +1,11 @@
 #!/bin/bash
 #SBATCH --job-name=run_chan_job
-#SBATCH --partition=amilan
-#SBATCH --qos=normal
+#SBATCH --partition=acpu
+#SBATCH --qos=cpu-normal
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --time=24:00:00
+#SBATCH --time=6:00:00
 #SBATCH --mem=4G
 #SBATCH --array=0-459%20
 #SBATCH --output=./../log_chain/%x_%j.out

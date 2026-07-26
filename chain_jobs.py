@@ -81,7 +81,7 @@ cathead = "fitid1" #name of catalog for the first attempt, fitid or refitid
 cathead_ori = "fitid1" #name of reference catalog to check fitting is completed
 
 spsver = 'spsbeta' #not set as a variable, need to edit submit_loop.py
-outdir = '/scratch/alpine/ikmi3774/slurm/COSMOS1/'
+outdir = '/scratch/alpine/ikmi3774/slurm/COSMOS4/'
 catdir = '/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/phot_catalog/'
 catpath = catdir+cathead+"_MINERVA-"+field+"_"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt"
 catpath_check = catdir+cathead_ori+"_MINERVA-"+field+"_"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt"
