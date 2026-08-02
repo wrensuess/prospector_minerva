@@ -74,4 +74,4 @@ print("overlap check:",len(common_all))
 print("only fitting (=remaining):",len(only_fit_all))
 print("only fitted:",len(only_fitted_all))
 
-print(only_fit_all[:,100])
+print(only_fit_all[:100])
