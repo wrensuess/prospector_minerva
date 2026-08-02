@@ -16,15 +16,17 @@ fitid2 = np.loadtxt(cat_dir+cat_ori2)
 fitid3 = np.loadtxt(cat_dir+cat_ori3)
 fitid_all = np.concatenate([fitid1,fitid2,fitid3])
 fitid_unique = np.unique(fitid_all)
-print("[Info] overlap check:",len(fitid_unique),"/",len(fitid_all),"=0?")
-
+print("[Info] overlap check:",len(fitid_unique),"/",len(fitid_all),"= 1?")
 
 idlist1 = glob.glob(check_dir1+output_name+"id_*_mcmc_phisfh.h5")
 idlist2 = glob.glob(check_dir1+output_name+"id_*_mcmc_phisfh.h5")
 idlist3 = glob.glob(check_dir1+output_name+"id_*_mcmc_phisfh.h5")
-fittedid1 = np.array([a.split("/")[-1].split("_")[1] for a in idlist1])
-fittedid2 = np.array([a.split("/")[-1].split("_")[1] for a in idlist2])
-fittedid3 = np.array([a.split("/")[-1].split("_")[1] for a in idlist3])
+fittedid1 = np.array([int(a.split("/")[-1].split("_")[1]) for a in idlist1])
+fittedid2 = np.array([int(a.split("/")[-1].split("_")[1]) for a in idlist2])
+fittedid3 = np.array([int(a.split("/")[-1].split("_")[1]) for a in idlist3])
+
+print(type(fitid1[0]))
+print(type(fittedid1[0]))
 
 common1 = np.intersect1d(fittedid1, fitid1)
 only_fitted1 = np.setdiff1d(fittedid1, fitid1)
