@@ -75,4 +75,5 @@ print("only fitting (=remaining):",len(only_fit_all))
 print("only fitted:",len(only_fitted_all))
 
 print(only_fit_all[:100])
-print(fitid1[:100])
+#print(fitid1[:100])
+np.savetxt(cat_dir+"refitid_MINERVA-COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_CATALOG.txt",only_fit_all)
