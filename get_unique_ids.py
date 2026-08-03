@@ -1,6 +1,7 @@
 import numpy as np
 import glob
 
+### first large calculation
 cat_dir = "/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/phot_catalog/"
 cat_ori1 = "fitid1_MINERVA-COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_CATALOG.txt"
 cat_ori2 = "fitid2_MINERVA-COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_CATALOG.txt"
@@ -77,3 +78,32 @@ print("only fitted:",len(only_fitted_all))
 #print(only_fit_all[:100])
 #print(fitid1[:100])
 #np.savetxt(cat_dir+"refitid_MINERVA-COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_CATALOG.txt",only_fit_all)
+
+
+### remaining sources
+cat_ori4 = "refitid_MINERVA-COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_CATALOG.txt"
+check_dir4 = "/scratch/alpine/ikmi3774/slurm/COSMOS5/"
+fitid4 = np.loadtxt(cat_dir+cat_ori4)
+idlist4 = glob.glob(check_dir4+output_name+"id_*_mcmc_phisfh.h5")
+fittedid4 = np.array([int(a.split("/")[-1].split("_")[1]) for a in idlist4])
+fittedid_all = np.concatenate([fittedid1,fittedid2,fittedid3,fittedid4])
+
+common4 = np.intersect1d(fittedid4, fitid4)
+only_fitted4 = np.setdiff1d(fittedid4, fitid4)
+only_fit4 = np.setdiff1d(fitid4, fittedid4)
+
+print("[Info] all fitting ids in "+check_dir4)
+print("=====>",len(fitid4))
+print("[Info] N fitting completed")
+print("=====>",len(fittedid4))
+print("overlap check:",len(common4))
+print("only fitting (=remaining):",len(only_fit4))
+print("only fitted:",len(only_fitted4))
+
+print("[Info] all fitting ids in TOTAL")
+print("=====>",len(fitid_all))
+print("[Info] N fitting completed")
+print("=====>",len(fittedid_all))
+print("overlap check:",len(common_all))
+print("only fitting (=remaining):",len(only_fit_all))
+print("only fitted:",len(only_fitted_all))
