@@ -87,6 +87,8 @@ fitid4 = np.loadtxt(cat_dir+cat_ori4)
 idlist4 = glob.glob(check_dir4+output_name+"id_*_mcmc_phisfh.h5")
 fittedid4 = np.array([int(a.split("/")[-1].split("_")[1]) for a in idlist4])
 fittedid_all = np.concatenate([fittedid1,fittedid2,fittedid3,fittedid4])
+fittedid_unique = np.unique(fittedid_all)
+print("[Info] overlap check:",len(fittedid_unique),"/",len(fittedid_all),"= 1?")
 
 common4 = np.intersect1d(fittedid4, fitid4)
 only_fitted4 = np.setdiff1d(fittedid4, fitid4)
