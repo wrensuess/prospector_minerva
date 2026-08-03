@@ -92,6 +92,10 @@ common4 = np.intersect1d(fittedid4, fitid4)
 only_fitted4 = np.setdiff1d(fittedid4, fitid4)
 only_fit4 = np.setdiff1d(fitid4, fittedid4)
 
+common_all = np.intersect1d(fittedid_all, fitid_all)
+only_fitted_all = np.setdiff1d(fittedid_all, fitid_all)
+only_fit_all = np.setdiff1d(fitid_all, fittedid_all)
+
 print("[Info] all fitting ids in "+check_dir4)
 print("=====>",len(fitid4))
 print("[Info] N fitting completed")
