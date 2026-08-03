@@ -13,10 +13,10 @@ from utils import get_dir
 #log_dir = '/scratch/alpine/kasu8993/postprocess_n2.2_m1.0_v1.0/logs/'
 
 #catalog = '/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/phot_catalog/MINERVA-UDS_n3.0_v1.2_ACS+WEBB_Kf444w_SUPER_CATALOG.fits'
-catalog = '/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/phot_catalog/MINERVA-UDS_n3.0_m3.1_v1.2.1_ACS+WEBB_Kf444w_SUPER_CATALOG_wMIRI.fits'
-indir = '/scratch/alpine/ikmi3774/slurm/chains_parrot_UDS_n3.0_v1.2_ACS+WEBB_Kf444w_SUPER_spsbeta_outliers_wMIRI/'
-outdir = '/scratch/alpine/ikmi3774/slurm/postprocess_UDS_n3.0_v1.2_outliers_wMIRI/'
-log_dir = '/scratch/alpine/ikmi3774/slurm/postprocess_UDS_n3.0_v1.2_outliers_wMIRI/logs/'
+catalog = '/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/phot_catalog/MINERVA-COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_CATALOG.fits'
+indir = '/scratch/alpine/ikmi3774/slurm/chains_parrot_COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_spsbeta/'
+outdir = '/scratch/alpine/ikmi3774/slurm/postprocess_COSMOS_n3.0_v1.0/'
+log_dir = '/scratch/alpine/ikmi3774/slurm/postprocess_COSMOS_n3.0_v1.0/logs/'
 #outdir = '/scratch/alpine1/kasu8993/postprocess_UDS_n3.0_v1.2/'
 #log_dir = '/scratch/alpine1/kasu8993/postprocess_UDS_n3.0_v1.2/logs/'
 
@@ -30,8 +30,8 @@ prior = 'phisfh' # 'phisfhzfixed' if you're using zspec fits
 #code_dir = '/projects/kasu8993/prospector_minerva/'
 code_dir= '/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/prospector_minerva/'
 
-njobs = 50 #1000 #number of job array, max=1000
-wtime = int(24) # time
+njobs = 1000 #1000 #number of job array, max=1000
+wtime = int(12) # time
 jname = 'postproc_{}'.format(prior)
 ts = time.strftime("%y%b%d-%H.%M", time.localtime())
 
@@ -49,8 +49,8 @@ print(ids)
 process = -1
 
 if process==-1: ### priority node
-    njobs = 50
-    wtime = int(6) # time
+    njobs = 1000
+    wtime = int(12) # time
     ids_split = np.array_split(ids, njobs)
     # save each chunk to a separate file
     os.makedirs(outdir+'id_files', exist_ok=True)
