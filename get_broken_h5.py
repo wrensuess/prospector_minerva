@@ -27,7 +27,8 @@ all_unique = np.unique(np.concatenate([postid1, postid2, postid3]))
 not_in_all = np.setdiff1d(all_unique, common_post)
 
 print("[Info] all fitting ids in TOTAL:",len(fittedid_all))
-
+print("[Info] post-process runned:",len(postid1))
+print("[Info] post-process completed:",len(all_unique))
 print("[Info] post-process interrupted?:",len(not_in_all))
 print("[Info] Interrupted IDs:")
 print(not_in_all)
