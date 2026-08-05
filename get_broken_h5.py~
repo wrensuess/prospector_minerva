@@ -1,0 +1,37 @@
+import h5py
+
+failed_ids = []
+
+for obj_id in id_list:
+
+    h5file = f"{obj_id}.h5"   # 適宜変更
+
+    try:
+        with h5py.File(h5file, "r") as f:
+            # メタデータを読ませる
+            list(f.keys())
+
+        print(f"{obj_id}: OK")
+
+    except OSError as e:
+        msg = str(e).lower()
+
+        if "truncated file" in msg:
+            print(f"{obj_id}: FAILED (truncated file)")
+        elif "bad object header version number" in msg:
+            print(f"{obj_id}: FAILED (bad object header)")
+        else:
+            print(f"{obj_id}: FAILED (other OSError)")
+            print(f"    {e}")
+
+        failed_ids.append(obj_id)
+
+    except Exception as e:
+        print(f"{obj_id}: FAILED (other Exception)")
+        print(f"    {e}")
+
+        failed_ids.append(obj_id)
+
+print(f"\nNumber of failed files: {len(failed_ids)}")
+print("Failed IDs:")
+print(failed_ids)
