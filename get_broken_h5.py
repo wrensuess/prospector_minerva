@@ -1,4 +1,4 @@
-import h5py, glob, pdb
+import h5py, glob, pdb, tqdm
 import numpy as np
 
 check_dir1 = "/scratch/alpine/ikmi3774/slurm/chains_parrot_COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_spsbeta/COSMOS4/"
@@ -44,7 +44,7 @@ failed_ids = []
 
 #for obj_id in id_list:
     #h5file = f"id_{obj_id}_spec_phisfh.h5"
-for obj_id in fittedpath_all:
+for obj_id in tqdm(fittedpath_all):
     h5file = obj_id
     
     try:
