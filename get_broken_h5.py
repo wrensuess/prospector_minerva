@@ -1,4 +1,5 @@
-import h5py, glob, pdb, tqdm
+import h5py, glob, pdb
+from tqdm import tqdm
 import numpy as np
 
 check_dir1 = "/scratch/alpine/ikmi3774/slurm/chains_parrot_COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_spsbeta/COSMOS4/"
