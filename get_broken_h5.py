@@ -44,8 +44,8 @@ failed_ids = []
 
 #for obj_id in id_list:
     #h5file = f"id_{obj_id}_spec_phisfh.h5"
-for path in fittedpath_all:
-    h5file = path
+for obj_id in fittedpath_all:
+    h5file = obj_id
     
     try:
         with h5py.File(h5file, "r") as f:
