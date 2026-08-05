@@ -15,6 +15,7 @@ fittedid2 = np.array([int(a.split("/")[-1].split("_")[1]) for a in idlist2])
 fittedid3 = np.array([int(a.split("/")[-1].split("_")[1]) for a in idlist3])
 fittedid_all = np.concatenate([fittedid1,fittedid2,fittedid3])
 fittedpath_all = idlist1+idlist2+idlist3
+fittedpathid_all = [int(a.split("/")[-1].split("_")[1]) for a in fittedpath_all]
 
 processed_dir = "/scratch/alpine/ikmi3774/slurm/postprocess_COSMOS_n3.0_v1.0/npz/"
 post1 = glob.glob(processed_dir+"id_*_spec_phisfh.h5")
@@ -39,13 +40,18 @@ pdb.set_trace()
 
 common = np.intersect1d(fittedid_all, all_unique)
 only_fitted = np.setdiff1d(fittedid_all, all_unique)
-id_list = [str(int(a)) for a in list(only_fitted)]
+
+check_path = []
+id_list = [int(a) for a in list(only_fitted)]
+for k in range(0,len(id_list)):
+    cid = np.where(id_list[k]==fittedpathid_all)[0][0]
+    check_path.append(fittedpath_all[cid])
 
 failed_ids = []
 
 #for obj_id in id_list:
     #h5file = f"id_{obj_id}_spec_phisfh.h5"
-for obj_id in tqdm(fittedpath_all):
+for obj_id in tqdm(check_path):
     h5file = obj_id
     
     try:
