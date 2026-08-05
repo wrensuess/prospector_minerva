@@ -13,6 +13,7 @@ fittedid1 = np.array([int(a.split("/")[-1].split("_")[1]) for a in idlist1])
 fittedid2 = np.array([int(a.split("/")[-1].split("_")[1]) for a in idlist2])
 fittedid3 = np.array([int(a.split("/")[-1].split("_")[1]) for a in idlist3])
 fittedid_all = np.concatenate([fittedid1,fittedid2,fittedid3])
+fittedpath_all = idlist1+idlist2+idlist3
 
 processed_dir = "/scratch/alpine/ikmi3774/slurm/postprocess_COSMOS_n3.0_v1.0/npz/"
 post1 = glob.glob(processed_dir+"id_*_spec_phisfh.h5")
@@ -41,8 +42,10 @@ id_list = [str(int(a)) for a in list(only_fitted)]
 
 failed_ids = []
 
-for obj_id in id_list:
-    h5file = f"id_{obj_id}_spec_phisfh.h5"
+#for obj_id in id_list:
+    #h5file = f"id_{obj_id}_spec_phisfh.h5"
+for path in fittedpath_all:
+    h5file = path
     
     try:
         with h5py.File(h5file, "r") as f:
@@ -67,6 +70,7 @@ for obj_id in id_list:
 
         failed_ids.append(obj_id)
 
-print(f"[Info] Number of failed files: {len(failed_ids)}")
-print("[Info] Failed IDs:")
-print(failed_ids)
+print("[Info] Number of failed files:",len(failed_ids))
+#print("[Info] Failed IDs:")
+#print(failed_ids)
+print("[Info] TOTAL-processed =",len(fittedid_all)-len(all_unique))
