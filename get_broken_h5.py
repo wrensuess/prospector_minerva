@@ -50,8 +50,7 @@ for obj_id in fittedpath_all:
     try:
         with h5py.File(h5file, "r") as f:
             list(f.keys())
-
-        print(f"{obj_id}: OK")
+        #print(f"{obj_id}: OK")
         
     except OSError as e:
         msg = str(e).lower()
