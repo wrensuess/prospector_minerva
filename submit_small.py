@@ -112,7 +112,7 @@ if __name__ == '__main__':
         for j in range(0,len(brokenpath)):
             print("rm "+brokenpath[j])
             #os.system("rm "+brokenpath[j])
-            brokenids.append(int(brokenpath[j].split("/").[-1]split("_")[1]))
+            brokenids.append(int(brokenpath[j].split("/")[-1].split("_")[1]))
         ids_fit = np.array(brokenids)        
     else:
         ids_fit = np.loadtxt(fitcatalog)
