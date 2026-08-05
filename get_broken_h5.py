@@ -15,7 +15,7 @@ fittedid2 = np.array([int(a.split("/")[-1].split("_")[1]) for a in idlist2])
 fittedid3 = np.array([int(a.split("/")[-1].split("_")[1]) for a in idlist3])
 fittedid_all = np.concatenate([fittedid1,fittedid2,fittedid3])
 fittedpath_all = idlist1+idlist2+idlist3
-fittedpathid_all = [int(a.split("/")[-1].split("_")[1]) for a in fittedpath_all]
+fittedpathid_all = np.array([int(a.split("/")[-1].split("_")[1]) for a in fittedpath_all])
 
 processed_dir = "/scratch/alpine/ikmi3774/slurm/postprocess_COSMOS_n3.0_v1.0/npz/"
 post1 = glob.glob(processed_dir+"id_*_spec_phisfh.h5")
