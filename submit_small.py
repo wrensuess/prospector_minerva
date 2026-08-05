@@ -118,12 +118,13 @@ if __name__ == '__main__':
         ids_fit = np.loadtxt(fitcatalog)
         #ids_fit = ids_fit[:20] #for run time check, oldjax or threading
     print('[INFO] Ngalaxies to fit in '+cathead+':',len(ids_fit)) #[Nfit]
+    print(ids_fit)
     pdb.set_trace()
 
     acc = 'amilian' ### 'priority' or 'preempt' or 'amilian'
     #env = 'prosp'
     env = '/projects/kasu8993/software/anaconda/envs/prosp'
-    njobs = 800 #number of job array, max=1000
+    njobs = 10 #number of job array, max=1000
     wtime = int(12) #int(24*7) # time
 
     ################################## step 1. sed fit ####################################
