@@ -1,4 +1,4 @@
-import os, sys, time
+import os, sys, time, pdb
 import numpy as np
 from astropy.table import Table
 
@@ -99,26 +99,26 @@ if __name__ == '__main__':
     taskdir = outdir+'task_lists_'+field+"_"+ver
     fast_dyn = 0 #0:std run, 1:brief run, 2:debug
 
-    cujobname = 'refit_COSMOS'
-    cathead = 'refitid'
+    cujobname = 'brokenh5_COSMOS'
+    cathead = 'brokenid'
 
     fitcatalog = catdir+cathead+'_MINERVA-'+field+'_'+ver+'_ACS+WEBB_Kf444w_SUPER_CATALOG.txt' #file includes your objects
     
     if "brokenid" in cathead:
-        brokenpath = np.loadtxt(fitcatalog)
+        brokenpath = np.load(fitcatalog)
         brokenids = []
         print(brokenpath)
         #pdb.set_trace()
         for j in range(0,len(brokenpath)):
             print("rm "+brokenpath[j])
-            os.system("rm "+brokenpath[j])
+            #os.system("rm "+brokenpath[j])
             brokenids.append(int(brokenpath[j].split("/").[-1]split("_")[1]))
         ids_fit = np.array(brokenids)        
     else:
         ids_fit = np.loadtxt(fitcatalog)
         #ids_fit = ids_fit[:20] #for run time check, oldjax or threading
     print('[INFO] Ngalaxies to fit in '+cathead+':',len(ids_fit)) #[Nfit]
-            
+    pdb.set_trace()
 
     acc = 'amilian' ### 'priority' or 'preempt' or 'amilian'
     #env = 'prosp'
