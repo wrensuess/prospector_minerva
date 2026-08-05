@@ -99,8 +99,9 @@ if __name__ == '__main__':
     taskdir = outdir+'task_lists_'+field+"_"+ver
     fast_dyn = 0 #0:std run, 1:brief run, 2:debug
 
-    cujobname = 'brokenh5_COSMOS'
+    cujobname = 'brokenfiles_COSMOS'
     cathead = 'brokenid'
+    cathead = 'refitid'
 
     fitcatalog = catdir+cathead+'_MINERVA-'+field+'_'+ver+'_ACS+WEBB_Kf444w_SUPER_CATALOG.txt' #file includes your objects
     
