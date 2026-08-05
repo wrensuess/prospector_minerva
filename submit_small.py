@@ -101,7 +101,6 @@ if __name__ == '__main__':
 
     cujobname = 'brokenfiles_COSMOS'
     cathead = 'brokenid'
-    cathead = 'refitid'
 
     fitcatalog = catdir+cathead+'_MINERVA-'+field+'_'+ver+'_ACS+WEBB_Kf444w_SUPER_CATALOG.txt' #file includes your objects
     
@@ -112,7 +111,7 @@ if __name__ == '__main__':
         #pdb.set_trace()
         for j in range(0,len(brokenpath)):
             print("rm "+brokenpath[j])
-            #os.system("rm "+brokenpath[j])
+            os.system("rm "+brokenpath[j])
             brokenids.append(int(brokenpath[j].split("/")[-1].split("_")[1]))
         ids_fit = np.array(brokenids)        
     else:
@@ -120,7 +119,6 @@ if __name__ == '__main__':
         #ids_fit = ids_fit[:20] #for run time check, oldjax or threading
     print('[INFO] Ngalaxies to fit in '+cathead+':',len(ids_fit)) #[Nfit]
     print(ids_fit)
-    pdb.set_trace()
 
     acc = 'amilian' ### 'priority' or 'preempt' or 'amilian'
     #env = 'prosp'
