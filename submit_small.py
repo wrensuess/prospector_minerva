@@ -105,7 +105,7 @@ if __name__ == '__main__':
     fitcatalog = catdir+cathead+'_MINERVA-'+field+'_'+ver+'_ACS+WEBB_Kf444w_SUPER_CATALOG.txt' #file includes your objects
     
     if "brokenid" in cathead:
-        brokenpath = np.load(fitcatalog)
+        brokenpath = np.load(fitcatalog+".npy")
         brokenids = []
         print(brokenpath)
         #pdb.set_trace()
