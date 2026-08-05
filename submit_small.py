@@ -94,12 +94,31 @@ if __name__ == '__main__':
     spsver = 'spsbeta'
     fast_dyn = 0 #0:std run, 1:brief run, 2:debug
 
-    cujobname = 'refit_COSMOS'
-    cathead = 'refitid'
     chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}'.format(field, ver, spsver)
     logdir = outdir+'log_'+field+"_"+ver
     taskdir = outdir+'task_lists_'+field+"_"+ver
     fast_dyn = 0 #0:std run, 1:brief run, 2:debug
+
+    cujobname = 'refit_COSMOS'
+    cathead = 'refitid'
+
+    fitcatalog = catdir+cathead+'_MINERVA-'+field+'_'+ver+'_ACS+WEBB_Kf444w_SUPER_CATALOG.txt' #file includes your objects
+    
+    if "brokenid" in cathead:
+        brokenpath = np.loadtxt(fitcatalog)
+        brokenids = []
+        print(brokenpath)
+        #pdb.set_trace()
+        for j in range(0,len(brokenpath)):
+            print("rm "+brokenpath[j])
+            os.system("rm "+brokenpath[j])
+            brokenids.append(int(brokenpath[j].split("/").[-1]split("_")[1]))
+        ids_fit = np.array(brokenids)        
+    else:
+        ids_fit = np.loadtxt(fitcatalog)
+        #ids_fit = ids_fit[:20] #for run time check, oldjax or threading
+    print('[INFO] Ngalaxies to fit in '+cathead+':',len(ids_fit)) #[Nfit]
+            
 
     acc = 'amilian' ### 'priority' or 'preempt' or 'amilian'
     #env = 'prosp'
@@ -129,12 +148,6 @@ if __name__ == '__main__':
     if not isExist:
         os.makedirs(taskdir)
         print("new task directory created:", taskdir)
-    
-    
-    fitcatalog = catdir+cathead+'_MINERVA-'+field+'_'+ver+'_ACS+WEBB_Kf444w_SUPER_CATALOG.txt' #file includes your objects
-    ids_fit = np.loadtxt(fitcatalog)
-    #ids_fit = ids_fit[:20] #for run time check, oldjax or threading
-    print('[INFO] Ngalaxies to fit in '+cathead+':',len(ids_fit)) #[Nfit]
 
 
     ids_fit_split = np.array_split(ids_fit, njobs) #split [Nfit] into [njobs] jobs

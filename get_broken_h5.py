@@ -80,3 +80,5 @@ print("[Info] Number of failed files:",len(failed_ids))
 #print("[Info] Failed IDs:")
 #print(failed_ids)
 print("[Info] TOTAL-processed =",len(fittedid_all)-len(all_unique))
+
+np.savetxt("./../photo_catalog/brokenid_MINERVA-COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_CATALOG.txt",np.array(failed_ids))
