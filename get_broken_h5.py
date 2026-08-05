@@ -15,9 +15,9 @@ fittedid3 = np.array([int(a.split("/")[-1].split("_")[1]) for a in idlist3])
 fittedid_all = np.concatenate([fittedid1,fittedid2,fittedid3])
 
 processed_dir = "/scratch/alpine/ikmi3774/slurm/postprocess_COSMOS_n3.0_v1.0/npz/"
-post1 = glob.glob(check_dir3+output_name+"id_*_spec_phisfh.h5")
-post2 = glob.glob(check_dir3+output_name+"id_*_perc_phisfh.h5")
-post3 = glob.glob(check_dir3+output_name+"id_*_unw_phisfh.h5")
+post1 = glob.glob(processed_dir+"id_*_spec_phisfh.h5")
+post2 = glob.glob(processed_dir+"id_*_perc_phisfh.h5")
+post3 = glob.glob(processed_dir+"id_*_unw_phisfh.h5")
 postid1 = np.array([int(a.split("/")[-1].split("_")[1]) for a in post1])
 postid2 = np.array([int(a.split("/")[-1].split("_")[1]) for a in post2])
 postid3 = np.array([int(a.split("/")[-1].split("_")[1]) for a in post3])
