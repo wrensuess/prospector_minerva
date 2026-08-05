@@ -1,9 +1,9 @@
 import h5py, glob, pdb
 import numpy as np
 
-check_dir1 = "/scratch/alpine/ikmi3774/slurm/COSMOS4/"
-check_dir2 = "/scratch/alpine/ikmi3774/slurm/COSMOS2/"
-check_dir3 = "/scratch/alpine/ikmi3774/slurm/COSMOS3/"
+check_dir1 = "/scratch/alpine/ikmi3774/slurm/chains_parrot_COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_spsbeta/COSMOS4/"
+check_dir2 = "/scratch/alpine/ikmi3774/slurm/chains_parrot_COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_spsbeta/COSMOS2/"
+check_dir3 = "/scratch/alpine/ikmi3774/slurm/chains_parrot_COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_spsbeta/COSMOS3/"
 output_name = "chains_parrot_COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_spsbeta/"
 
 idlist1 = glob.glob(check_dir1+output_name+"id_*_mcmc_phisfh.h5")
