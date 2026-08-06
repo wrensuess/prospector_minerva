@@ -7,9 +7,9 @@ cat_ori1 = "fitid1_MINERVA-COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_CATALOG.txt"
 cat_ori2 = "fitid2_MINERVA-COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_CATALOG.txt"
 cat_ori3 = "fitid3_MINERVA-COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_CATALOG.txt"
 
-check_dir1 = "/scratch/alpine/ikmi3774/slurm/COSMOS4/"
-check_dir2 = "/scratch/alpine/ikmi3774/slurm/COSMOS2/"
-check_dir3 = "/scratch/alpine/ikmi3774/slurm/COSMOS3/"
+check_dir1 = "/scratch/alpine/ikmi3774/slurm/chains_parrot_COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_spsbeta/COSMOS4/"
+check_dir2 = "/scratch/alpine/ikmi3774/slurm/chains_parrot_COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_spsbeta/COSMOS2/"
+check_dir3 = "/scratch/alpine/ikmi3774/slurm/chains_parrot_COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_spsbeta/COSMOS3/"
 output_name = "chains_parrot_COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_spsbeta/"
 
 fitid1 = np.loadtxt(cat_dir+cat_ori1)
@@ -82,7 +82,7 @@ print("only fitted:",len(only_fitted_all))
 
 ### remaining sources
 cat_ori4 = "refitid_MINERVA-COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_CATALOG.txt"
-check_dir4 = "/scratch/alpine/ikmi3774/slurm/COSMOS5/"
+check_dir4 = "/scratch/alpine/ikmi3774/slurm/chains_parrot_COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_spsbeta/COSMOS5/"
 fitid4 = np.loadtxt(cat_dir+cat_ori4)
 idlist4 = glob.glob(check_dir4+output_name+"id_*_mcmc_phisfh.h5")
 fittedid4 = np.array([int(a.split("/")[-1].split("_")[1]) for a in idlist4])
