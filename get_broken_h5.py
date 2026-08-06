@@ -5,16 +5,19 @@ import numpy as np
 check_dir1 = "/scratch/alpine/ikmi3774/slurm/chains_parrot_COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_spsbeta/COSMOS4/"
 check_dir2 = "/scratch/alpine/ikmi3774/slurm/chains_parrot_COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_spsbeta/COSMOS2/"
 check_dir3 = "/scratch/alpine/ikmi3774/slurm/chains_parrot_COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_spsbeta/COSMOS3/"
+check_dir4 = "/scratch/alpine/ikmi3774/slurm/chains_parrot_COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_spsbeta/COSMOS5/"
 output_name = "chains_parrot_COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_spsbeta/"
 
 idlist1 = glob.glob(check_dir1+output_name+"id_*_mcmc_phisfh.h5")
 idlist2 = glob.glob(check_dir2+output_name+"id_*_mcmc_phisfh.h5")
 idlist3 = glob.glob(check_dir3+output_name+"id_*_mcmc_phisfh.h5")
+idlist4 = glob.glob(check_dir4+output_name+"id_*_mcmc_phisfh.h5")
 fittedid1 = np.array([int(a.split("/")[-1].split("_")[1]) for a in idlist1])
 fittedid2 = np.array([int(a.split("/")[-1].split("_")[1]) for a in idlist2])
 fittedid3 = np.array([int(a.split("/")[-1].split("_")[1]) for a in idlist3])
-fittedid_all = np.concatenate([fittedid1,fittedid2,fittedid3])
-fittedpath_all = idlist1+idlist2+idlist3
+fittedid4 = np.array([int(a.split("/")[-1].split("_")[1]) for a in idlist4])
+fittedid_all = np.concatenate([fittedid1,fittedid2,fittedid3,fittedid4])
+fittedpath_all = idlist1+idlist2+idlist3+idlist4
 fittedpathid_all = np.array([int(a.split("/")[-1].split("_")[1]) for a in fittedpath_all])
 
 processed_dir = "/scratch/alpine/ikmi3774/slurm/postprocess_COSMOS_n3.0_v1.0/npz/"
@@ -81,4 +84,4 @@ print("[Info] Number of failed files:",len(failed_ids))
 #print(failed_ids)
 print("[Info] TOTAL-processed =",len(fittedid_all)-len(all_unique))
 
-np.save("./../phot_catalog/brokenid_MINERVA-COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_CATALOG.txt",np.array(failed_ids))
+#np.save("./../phot_catalog/brokenid_MINERVA-COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_CATALOG.txt",np.array(failed_ids))
