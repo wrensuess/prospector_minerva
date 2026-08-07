@@ -41,6 +41,10 @@ print(not_in_all)
 
 pdb.set_trace()
 
+'''
+##########################################################
+################### for fitting file #####################
+##########################################################
 common = np.intersect1d(fittedid_all, all_unique)
 only_fitted = np.setdiff1d(fittedid_all, all_unique)
 
@@ -85,3 +89,81 @@ print("[Info] Number of failed files:",len(failed_ids))
 print("[Info] TOTAL-processed =",len(fittedid_all)-len(all_unique))
 
 #np.save("./../phot_catalog/brokenid_MINERVA-COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_CATALOG.txt",np.array(failed_ids))
+'''
+
+#################################################################
+################### for post-processed file #####################
+#################################################################
+failed_ids1 = []
+failed_ids2 = []
+failed_ids3 = []
+
+for j in tqdm(range(0,len(post1))):
+    h5file1 = post1[j]
+    h5file2 = post2[j]
+    h5file3 = post3[j]
+    
+    try:
+        with h5py.File(h5file1, "r") as f:
+            list(f.keys())
+    except OSError as e:
+        msg = str(e).lower()
+        if "truncated file" in msg:
+            print(f"{obj_id}: FAILED (truncated file)")
+        elif "bad object header version number" in msg:
+            print(f"{obj_id}: FAILED (bad object header)")
+        else:
+            print(f"{obj_id}: FAILED (other OSError)")
+            print(f"    {e}")
+        failed_ids1.append(obj_id)
+    except Exception as e:
+        print(f"{obj_id}: FAILED (other Exception)")
+        print(f"    {e}")
+
+        failed_ids1.append(obj_id)
+
+    try:
+        with h5py.File(h5file2, "r") as f:
+            list(f.keys())
+    except OSError as e:
+        msg = str(e).lower()
+        if "truncated file" in msg:
+            print(f"{obj_id}: FAILED (truncated file)")
+        elif "bad object header version number" in msg:
+            print(f"{obj_id}: FAILED (bad object header)")
+        else:
+            print(f"{obj_id}: FAILED (other OSError)")
+            print(f"    {e}")
+        failed_ids2.append(obj_id)
+    except Exception as e:
+        print(f"{obj_id}: FAILED (other Exception)")
+        print(f"    {e}")
+
+        failed_ids2.append(obj_id)
+
+    try:
+        with h5py.File(h5file3, "r") as f:
+            list(f.keys())
+    except OSError as e:
+        msg = str(e).lower()
+        if "truncated file" in msg:
+            print(f"{obj_id}: FAILED (truncated file)")
+        elif "bad object header version number" in msg:
+            print(f"{obj_id}: FAILED (bad object header)")
+        else:
+            print(f"{obj_id}: FAILED (other OSError)")
+            print(f"    {e}")
+        failed_ids3.append(obj_id)
+    except Exception as e:
+        print(f"{obj_id}: FAILED (other Exception)")
+        print(f"    {e}")
+
+        failed_ids3.append(obj_id)
+
+print("[Info] Number of failed spec files:",len(failed_ids1))
+print("[Info] Number of failed perc files:",len(failed_ids2))
+print("[Info] Number of failed unw files:",len(failed_ids3))
+
+np.save("./../phot_catalog/brokenspec_MINERVA-COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_CATALOG.txt",np.array(failed_ids1))
+np.save("./../phot_catalog/brokenperc_MINERVA-COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_CATALOG.txt",np.array(failed_ids2))
+np.save("./../phot_catalog/brokenunw_MINERVA-COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_CATALOG.txt",np.array(failed_ids3))
