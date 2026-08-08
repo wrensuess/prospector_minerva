@@ -3,7 +3,7 @@
 import warnings
 warnings.filterwarnings('ignore')
 
-import time, sys, os
+import time, sys, os, pdb
 import numpy as np
 import numpy.ma as ma
 import argparse
@@ -88,7 +88,10 @@ cat.meta = meta
 # (unrun IDs, including all use_phot=0 objects, will be filled with NaNs)
 # first, get index in cat for the results files
 mask = np.isin(cat['id'], dspec['objid'][:])
-idx_finished = np.where(mask)[0]
+#idx_finished = np.where(mask)[0] ### not good if original cat is not sorted by number
+objids = dspec['objid'][:]
+id_to_catidx = {objid: i for i, objid in enumerate(cat['id'])}
+idx_finished = np.array([id_to_catidx[objid] for objid in objids])
 print(cat['id'][:100])
 print(dspec['objid'][:][:100])
 print(len(cat['id'][idx_finished]),len(dspec['objid'][:]))
@@ -98,6 +101,7 @@ print(diff[:10])
 print('there '+str(len(cat))+' total objects in the catalog and '+str(np.sum(cat['use_phot']==1))+
     ' with use_phot=1. '+str(len(dperc['objid']))+' have SED-fitting results.')
 assert np.array_equal(cat['id'][idx_finished], dspec['objid'][:])
+pdb.set_trace()
 
 def fill_col(data, idx_finished=idx_finished):
     new_arr = np.ones(len(cat['id'])) + np.nan    
@@ -246,5 +250,6 @@ print('SPS catalog saved to '+fcat)
 # cleanup
 dperc.close()
 dspec.close()
+dsfh.close()
 
 
