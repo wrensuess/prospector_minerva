@@ -53,7 +53,7 @@ def main():
         start, end = get_start_end(ff)
 
         with h5py.File(ff, "r") as f:
-            print(list(f.keys()))
+            print(ff,list(f.keys()))
             n_obj_i = f["chains"].shape[0]
             n_samples_i = f["chains"].shape[1]
             n_params_i = f["chains"].shape[2]
