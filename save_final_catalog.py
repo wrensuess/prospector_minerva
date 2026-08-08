@@ -39,17 +39,21 @@ obj_spec = dspec['objid'][:]
 obj_sfh = dsfh['objid'][:]
 
 ### check correspondance of the IDs between perc files and spec files
-print(obj_perc.shape, obj_spec.shape)
+print(obj_perc.shape, obj_spec.shape, obj_sfh.shape)
 print(obj_perc[:10])
 print(obj_spec[:10])
 print(obj_sfh[:10])
 
-print("same set?", set(obj_perc) == set(obj_spec))
-print("same set?", set(obj_perc) == set(obj_sfh))
-print("n common", len(set(obj_perc) & set(obj_spec)))
-print("n common", len(set(obj_perc) & set(obj_sfh)))
-print("only perc", sorted(set(obj_perc) - set(obj_spec))[:20])
-print("only spec", sorted(set(obj_spec) - set(obj_perc))[:20])
+print("same set? (perc vs spec)", set(obj_perc) == set(obj_spec))
+print("same set? (perc vs sfh)", set(obj_perc) == set(obj_sfh))
+print("n common (perc vs spec)", len(set(obj_perc) & set(obj_spec)))
+print("n common (perc vs sfh)", len(set(obj_perc) & set(obj_sfh)))
+print("only perc (against spec)", sorted(set(obj_perc) - set(obj_spec))[:20])
+print("only perc (against sfh)", sorted(set(obj_perc) - set(obj_sfh))[:20])
+print("only spec (against perc)", sorted(set(obj_spec) - set(obj_perc))[:20])
+print("only spec (against sfh)", sorted(set(obj_spec) - set(obj_sfh))[:20])
+print("only sfh (against spec)", sorted(set(obj_sfh) - set(obj_spec))[:20])
+print("only sfh (against perc)", sorted(set(obj_sfh) - set(obj_perc))[:20])
 
 print(np.where(dspec['objid'][:] == 0))
 
@@ -91,9 +95,9 @@ print(len(cat['id'][idx_finished]),len(dspec['objid'][:]))
 diff = np.where(cat['id'][idx_finished]!=dspec['objid'][:])[0]
 print(len(diff))
 print(diff[:10])
-assert np.array_equal(cat['id'][idx_finished], dspec['objid'][:])
 print('there '+str(len(cat))+' total objects in the catalog and '+str(np.sum(cat['use_phot']==1))+
     ' with use_phot=1. '+str(len(dperc['objid']))+' have SED-fitting results.')
+assert np.array_equal(cat['id'][idx_finished], dspec['objid'][:])
 
 def fill_col(data, idx_finished=idx_finished):
     new_arr = np.ones(len(cat['id'])) + np.nan    
