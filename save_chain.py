@@ -166,7 +166,7 @@ def main():
     # Build list of (objid, filename) and an indexed version for exact ordering
     file_infos = [get_file_info(f) for f in all_files]  # (objid, filename)
     file_infos.sort(key=lambda x: x[0])
-    #indexed_infos = [(i, objid, fname) for i, (objid, fname) in enumerate(file_infos)]
+    indexed_infos = [(i, objid, fname) for i, (objid, fname) in enumerate(file_infos)]
     #n_obj = len(indexed_infos)
     
     n_total = len(indexed_infos)
