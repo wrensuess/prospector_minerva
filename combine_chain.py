@@ -55,7 +55,7 @@ def main():
         try:
             with h5py.File(ff, "r") as f:
                 if "chains" not in f:
-                    print(f"Skipping empty file: {fname}")
+                    print(f"Skipping empty file: {ff}")
                     continue
                 n_obj_i = f["chains"].shape[0]
                 n_samples_i = f["chains"].shape[1]
@@ -74,7 +74,7 @@ def main():
             total_nobj += n_obj_i
             
         except Exception as e:
-            print(f"Skipping invalid file: {fname}: {e}")
+            print(f"Skipping invalid file: {ff}: {e}")
             continue
 
     print(f"Total objects: {total_nobj}")
