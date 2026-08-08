@@ -81,6 +81,9 @@ cat.meta = meta
 mask = np.isin(cat['id'], dspec['objid'][:])
 idx_finished = np.where(mask)[0]
 print(len(cat['id'][idx_finished]),len(dspec['objid'][:]))
+diff = np.where(cat['id'][idx_finished]!=dspec['objid'][:])[0]
+print(len(diff))
+print(diff[:10])
 assert np.array_equal(cat['id'][idx_finished], dspec['objid'][:])
 print('there '+str(len(cat))+' total objects in the catalog and '+str(np.sum(cat['use_phot']==1))+
     ' with use_phot=1. '+str(len(dperc['objid']))+' have SED-fitting results.')
