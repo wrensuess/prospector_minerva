@@ -52,22 +52,30 @@ def main():
     for ff in files:
         start, end = get_start_end(ff)
 
-        with h5py.File(ff, "r") as f:
-            n_obj_i = f["chains"].shape[0]
-            n_samples_i = f["chains"].shape[1]
-            n_params_i = f["chains"].shape[2]
-            print(ff.split("/")[-1],n_obj_i,list(f.keys()))
+        try:
+            with h5py.File(ff, "r") as f:
+                if "chains" not in f:
+                    print(f"Skipping empty file: {fname}")
+                    continue
+                n_obj_i = f["chains"].shape[0]
+                n_samples_i = f["chains"].shape[1]
+                n_params_i = f["chains"].shape[2]
+                print(ff.split("/")[-1],n_obj_i,list(f.keys()))
 
-            if n_samples is None:
-                n_samples = n_samples_i
-                n_params = n_params_i
-                theta_labels = f["theta_labels"][:]
-            else:
-                if n_samples_i != n_samples or n_params_i != n_params:
-                    raise ValueError(f"Shape mismatch in {ff}")
+                if n_samples is None:
+                    n_samples = n_samples_i
+                    n_params = n_params_i
+                    theta_labels = f["theta_labels"][:]
+                else:
+                    if n_samples_i != n_samples or n_params_i != n_params:
+                        raise ValueError(f"Shape mismatch in {ff}")
 
-        file_info.append((start, end, ff, n_obj_i))
-        total_nobj += n_obj_i
+            file_info.append((start, end, ff, n_obj_i))
+            total_nobj += n_obj_i
+            
+        except Exception as e:
+            print(f"Skipping invalid file: {fname}: {e}")
+            continue
 
     print(f"Total objects: {total_nobj}")
     print(f"Shape: ({total_nobj}, {n_samples}, {n_params})")
