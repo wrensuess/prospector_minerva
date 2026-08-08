@@ -80,6 +80,8 @@ cat.meta = meta
 # first, get index in cat for the results files
 mask = np.isin(cat['id'], dspec['objid'][:])
 idx_finished = np.where(mask)[0]
+print(cat['id'][:100])
+print(dspec['objid'][:][:100])
 print(len(cat['id'][idx_finished]),len(dspec['objid'][:]))
 diff = np.where(cat['id'][idx_finished]!=dspec['objid'][:])[0]
 print(len(diff))
