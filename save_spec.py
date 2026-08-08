@@ -162,11 +162,12 @@ def main():
     print("Fitting filters:", filts)
 
     # Discover files
-    '''
+    '''### npz
     all_files = sorted([f for f in os.listdir(args.dir_indiv) if f.endswith(f'_spec_{args.prior}.npz')])
     if not all_files:
         raise RuntimeError(f"No files found in {args.dir_indiv} matching '*_spec_{args.prior}.npz'")
     '''
+    ### h5
     all_files = sorted([f for f in os.listdir(args.dir_indiv) if f.endswith(f'_spec_{args.prior}.h5')])
     if not all_files:
         raise RuntimeError(f"No files found in {args.dir_indiv} matching '*_spec_{args.prior}.h5'")

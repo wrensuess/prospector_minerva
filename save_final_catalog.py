@@ -32,17 +32,22 @@ cat = Table.read(args.catalog_path)
 # should probably update to have a version number in the filename....
 dperc = h5py.File('{}/quant_{}.h5'.format(args.dir_collected, args.prior), 'r')
 dspec = h5py.File('{}/spec_{}.h5'.format(args.dir_collected, args.prior), 'r')
+dsfh = h5py.File('{}/sfh_{}.h5'.format(args.dir_collected, args.prior), 'r')
 
 obj_perc = dperc['objid'][:]
 obj_spec = dspec['objid'][:]
+obj_sfh = dsfh['objid'][:]
 
 ### check correspondance of the IDs between perc files and spec files
 print(obj_perc.shape, obj_spec.shape)
 print(obj_perc[:10])
 print(obj_spec[:10])
+print(obj_sfh[:10])
 
 print("same set?", set(obj_perc) == set(obj_spec))
+print("same set?", set(obj_perc) == set(obj_sfh))
 print("n common", len(set(obj_perc) & set(obj_spec)))
+print("n common", len(set(obj_perc) & set(obj_sfh)))
 print("only perc", sorted(set(obj_perc) - set(obj_spec))[:20])
 print("only spec", sorted(set(obj_spec) - set(obj_perc))[:20])
 
