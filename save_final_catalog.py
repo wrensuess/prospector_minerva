@@ -80,6 +80,7 @@ cat.meta = meta
 # first, get index in cat for the results files
 mask = np.isin(cat['id'], dspec['objid'][:])
 idx_finished = np.where(mask)[0]
+print(len(cat['id'][idx_finished]),len(dspec['objid'][:]))
 assert np.array_equal(cat['id'][idx_finished], dspec['objid'][:])
 print('there '+str(len(cat))+' total objects in the catalog and '+str(np.sum(cat['use_phot']==1))+
     ' with use_phot=1. '+str(len(dperc['objid']))+' have SED-fitting results.')
