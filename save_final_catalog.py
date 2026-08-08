@@ -63,9 +63,10 @@ all_files = sorted([f for f in os.listdir(args.dir_indiv) if f.endswith(f'_spec_
 for i in bad:
     print("bad file", i, all_files[i])
 
-print("copy-paste the following and re-run post process")
+print("re-run post-process for the following ids")
 for i in bad:
     print(all_files[i].split("_")[1])
+print(".")
 
 assert np.array_equal(dperc['objid'][:], dspec['objid'][:]) # update the [:,0] once i fix the save_perc.py file
 
@@ -92,11 +93,12 @@ mask = np.isin(cat['id'], dspec['objid'][:])
 objids = dspec['objid'][:]
 id_to_catidx = {objid: i for i, objid in enumerate(cat['id'])}
 idx_finished = np.array([id_to_catidx[objid] for objid in objids])
+print("IDs in orignal catalog:")
 print(cat['id'][:100])
+print("IDs in spec/perc/sfh outputs:")
 print(dspec['objid'][:][:100])
-print(len(cat['id'][idx_finished]),len(dspec['objid'][:]))
 diff = np.where(cat['id'][idx_finished]!=dspec['objid'][:])[0]
-print(len(diff))
+print("Difference between original catalog and spec/perc/sfh outputs:",len(diff))
 print(diff[:10])
 print('there '+str(len(cat))+' total objects in the catalog and '+str(np.sum(cat['use_phot']==1))+
     ' with use_phot=1. '+str(len(dperc['objid']))+' have SED-fitting results.')
