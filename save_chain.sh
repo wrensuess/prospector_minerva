@@ -8,8 +8,8 @@
 #SBATCH --time=6:00:00
 #SBATCH --mem=4G
 #SBATCH --array=0-459%20
-#SBATCH --output=./../log_chain/%x_%j.out
-#SBATCH --error=./../log_chain/%x_%j.err
+#SBATCH --output=./../log_chain/%x_%A_%a.out
+#SBATCH --error=./../log_chain/%x_%A_%a.err
 
 module purge
 

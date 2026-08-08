@@ -150,14 +150,6 @@ def main():
     os.makedirs(args.dir_collected, exist_ok=True)
     #sname = os.path.join(args.dir_collected, f'chains_{args.prior}.h5')
 
-    if args.split_id is None:
-        tag = f"{args.start}_{end}"
-    else:
-        tag = args.split_id
-    sname = os.path.join(args.dir_collected, f'chains_{args.prior}_{tag}.h5')
-
-    print(f"Output file: {sname}")
-    print(f"Using {n_workers} workers with chunk size {args.chunk_size}")
 
     # Discover files (keep your original pattern, preserving sorted order)
     '''
@@ -174,14 +166,25 @@ def main():
     # Build list of (objid, filename) and an indexed version for exact ordering
     file_infos = [get_file_info(f) for f in all_files]  # (objid, filename)
     file_infos.sort(key=lambda x: x[0])
-    indexed_infos = [(i, objid, fname) for i, (objid, fname) in enumerate(file_infos)]
+    #indexed_infos = [(i, objid, fname) for i, (objid, fname) in enumerate(file_infos)]
     #n_obj = len(indexed_infos)
     
     n_total = len(indexed_infos)
     end = args.end if args.end is not None else n_total
-    indexed_infos = indexed_infos[args.start:end]
+    #indexed_infos = indexed_infos[args.start:end]
+    selected_infos = file_infos[args.start:end]
+    indexed_infos = [(i, objid, fname) for i, (objid, fname) in enumerate(selected_infos)]
     n_obj = len(indexed_infos)
     print(f"Using files {args.start}:{end} out of {n_total}")
+
+    if args.split_id is None:
+        tag = f"{args.start}_{end}"
+    else:
+        tag = args.split_id
+    sname = os.path.join(args.dir_collected, f'chains_{args.prior}_{tag}.h5')
+
+    print(f"Output file: {sname}")
+    print(f"Using {n_workers} workers with chunk size {args.chunk_size}")
 
     # Inspect shape from the first file
     '''
