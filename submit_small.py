@@ -87,10 +87,12 @@ if __name__ == '__main__':
     ### variables
     outdir = '/scratch/alpine/ikmi3774/slurm/COSMOS5/'
     catdir = '../phot_catalog/'
-    field = 'COSMOS'
-    ver = 'n3.0_v1.0'
-    #vermiri = 'n3.0_m3.1_v1.2.1'
-    #wmiri = 'yes'
+    #field = 'COSMOS'
+    #ver = 'n3.0_v1.0'
+    field = 'UDS'
+    ver = 'n3.0_v1.2'
+    vermiri = 'n3.0_m3.1_v1.2.1'
+    wmiri = 'yes'
     spsver = 'spsbeta'
     fast_dyn = 0 #0:std run, 1:brief run, 2:debug
 
@@ -127,14 +129,14 @@ if __name__ == '__main__':
     wtime = int(12) #int(24*7) # time
 
     ################################## step 1. sed fit ####################################
-    #if wmiri == 'no':
-    #    catalog = 'MINERVA-{}_{}_ACS+WEBB_Kf444w_SUPER_CATALOG.fits'.format(field, ver)
-    #elif wmiri == 'yes':
-    #    catalog = 'MINERVA-{}_{}_ACS+WEBB_Kf444w_SUPER_CATALOG_wMIRI.fits'.format(field, vermiri)
-    #else:
-    #    print("***check MIRI availability***")
-    #    print(dddddd)
-    catalog = 'MINERVA-{}_{}_ACS+WEBB_Kf444w_SUPER_CATALOG.fits'.format(field, ver)
+    if wmiri == 'no':
+        catalog = 'MINERVA-{}_{}_ACS+WEBB_Kf444w_SUPER_CATALOG.fits'.format(field, ver)
+    elif wmiri == 'yes':
+        catalog = 'MINERVA-{}_{}_ACS+WEBB_Kf444w_SUPER_CATALOG_wMIRI.fits'.format(field, vermiri)
+    else:
+        print("***check MIRI availability***")
+        print(dddddd)
+    #catalog = 'MINERVA-{}_{}_ACS+WEBB_Kf444w_SUPER_CATALOG.fits'.format(field, ver)
 
     isExist = os.path.exists(chaindir)
     if not isExist:

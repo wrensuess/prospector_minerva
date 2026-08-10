@@ -30,13 +30,17 @@ def run_params(task_dir='hoge', log_dir='hoge', acc='priority', jobname='p', wti
         txt_acc = '\n'.join(["#!/bin/bash -l",
                              "#SBATCH --account=blanca-casa\n",
                              "#SBATCH --partition=blanca-casa\n",
-                             "#SBATCH --qos=blanca-casa\n"])                             
+                             "#SBATCH --qos=blanca-casa\n"])
+    if acc == 'amilian':
+        txt_acc = '\n'.join(["#!/bin/bash -l",
+                             "#SBATCH --partition=acpu\n",
+                             "#SBATCH --qos=cpu-normal\n"])
         
     txt_acc += "#SBATCH --time={:d}:00:00\n".format(wtime)
 
     txt_2 = '\n'.join([
         "#SBATCH --nodes=1",
-        "#SBATCH --ntasks=2", #1 for main job +1 for loadbalancer
+        "#SBATCH --ntasks=5", #1 for main job +1 for loadbalancer
         "#SBATCH --job-name={}".format(jname),
         "#SBATCH --array=0-{}".format(int(njob-1)),
         "#SBATCH --output={}/{}_{}_%A_%a.out".format(log_dir, jname, ts),
@@ -79,22 +83,36 @@ if __name__ == '__main__':
     cathead = 'speczid'
     field = 'UDS'
     ver = 'n3.0_v1.2'
+    vermiri = 'n3.0_m3.1_v1.2.1'
+    wmiri = 'yes'
     spsver = 'spsbeta'
     
     outdir = '/scratch/alpine/ikmi3774/slurm/'
     catdir = '../phot_catalog/'
-    chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}_fixzred'.format(field, ver, spsver)
-    logdir = outdir+'log_'+field+"_"+ver+"_fixzred"
-    taskdir = outdir+'task_lists_'+field+"_"+ver+"_fixzred"
+    chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}_fixzred_wMIRI'.format(field, ver, spsver)
+    logdir = outdir+'log_'+field+"_"+ver+"_fixzred_wMIRI"
+    taskdir = outdir+'task_lists_'+field+"_"+ver+"_fixzred_wMIRI"
     fast_dyn = 0 #0:std run, 1:brief run, 2:debug
 
-    acc = 'preempt' ### 'priority' or 'preempt'
+    fitcatalog = catdir+cathead+'_MINERVA-'+field+'_'+ver+'_ACS+WEBB_Kf444w_SUPER_CATALOG.txt' #file includes your objects
+    ids_fit = np.loadtxt(fitcatalog)
+    print('[INFO] Ngalaxies to fit in '+cathead+':',len(ids_fit)) #[Nfit]
+
+    acc = 'amilian' ### 'priority' or 'preempt' or 'amilian'
     env = 'prosp'
-    njobs = 5 #number of job array, max=1000
+    env = '/projects/kasu8993/software/anaconda/envs/prosp'
+    njobs = 1000 #number of job array, max=1000
     wtime = int(24) #int(24*7) # time
 
     ################################## step 1. sed fit ####################################
-    catalog = 'MINERVA-{}_{}_ACS+WEBB_Kf444w_SUPER_CATALOG.fits'.format(field, ver)
+    if wmiri == 'no':
+        catalog = 'MINERVA-{}_{}_ACS+WEBB_Kf444w_SUPER_CATALOG.fits'.format(field, ver)
+    elif wmiri == 'yes':
+        catalog = 'MINERVA-{}_{}_ACS+WEBB_Kf444w_SUPER_CATALOG_wMIRI.fits'.format(field, vermiri)
+    else:
+        print("***check MIRI availability***")
+        print(dddddd)
+    #catalog = 'MINERVA-{}_{}_ACS+WEBB_Kf444w_SUPER_CATALOG.fits'.format(field, ver)
 
     isExist = os.path.exists(chaindir)
     if not isExist:
@@ -108,11 +126,6 @@ if __name__ == '__main__':
     if not isExist:
         os.makedirs(taskdir)
         print("new task directory created:", taskdir)
-    
-    
-    fitcatalog = catdir+cathead+'_MINERVA-'+field+'_'+ver+'_ACS+WEBB_Kf444w_SUPER_CATALOG.txt' #file includes your objects
-    ids_fit = np.loadtxt(fitcatalog)
-    print('[INFO] Ngalaxies to fit in '+cathead+':',len(ids_fit)) #[Nfit]
 
 
     ids_fit_split = np.array_split(ids_fit, njobs) #split [Nfit] into [njobs] jobs
