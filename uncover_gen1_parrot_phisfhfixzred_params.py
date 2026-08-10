@@ -152,7 +152,8 @@ def load_obs(idx=None, err_floor=0.05, **extras):
 
 def build_model(obs=None, emulfp=multiemul_file, **extras):
 
-    import params_prosp_parrot as pfile
+    #import params_prosp_parrot as pfile
+    import params_prosp_parrot_AGNfree as pfile
     model_params, fit_order = pfile.params_parrot_phisfhfixzred(obs=obs)
 
     return Emu.EmulatorBeta(model_params, fp=emulfp, obs=obs, param_order=fit_order)

@@ -78,6 +78,8 @@ def run_params(task_dir='hoge', log_dir='hoge', acc='priority', jobname='p', wti
 
 if __name__ == '__main__':
 
+    ### IMPORTANT NOTE ###
+    #please check fAGN on/off. it is hard-coded. in uncover_gen1_parrot_phisfhfixzred_params.py as "import params_prosp_parrot as pfile" or "import params_prosp_parrot_AGNfree as pfile"
     ### variables
     cujobname = 'fixzred'
     cathead = 'speczid'
