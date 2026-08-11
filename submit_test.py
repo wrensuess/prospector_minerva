@@ -99,18 +99,18 @@ if __name__ == '__main__':
     #cujobname = 'massive10000_fagn1e5'
     #cujobname = 'outliers_fagn1e5'
     #cujobname = 'goodpz_fagn1e5'
-    cujobname = 'outliers_wMIRI'
-    cathead = 'outliers'
-    chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}_outliers_wMIRI'.format(field, ver, spsver)
-    logdir = outdir+'log_'+field+"_"+ver+"_outliers_wMIRI"
-    taskdir = outdir+'task_lists_'+field+"_"+ver+"_outliers_wMIRI"
+    cujobname = 'fixzred_wMIRI_zfree'
+    cathead = 'speczid'
+    chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}_fixzred_wMIRI_zfree'.format(field, ver, spsver)
+    logdir = outdir+'log_'+field+"_"+ver+"_fixzred_wMIRI_zfree"
+    taskdir = outdir+'task_lists_'+field+"_"+ver+"_fixzred_wMIRI_zfree"
 
     acc = 'amilian' ### 'priority' or 'preempt' or 'amilian'
     env = 'prosp'
     #env = 'prosp_oldjax_nompi'
     #env = '/projects/kasu8993/software/anaconda/envs/prosp_oldjax'
     #env = '/projects/kasu8993/software/anaconda/envs/prosp'
-    njobs = 50 #number of job array, max=1000
+    njobs = 1000 #number of job array, max=1000
     wtime = int(24) #int(24*7) # time
 
     ################################## step 1. sed fit ####################################
