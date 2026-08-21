@@ -75,13 +75,13 @@ def get_unfit_number(chaindir,catpath_check):
 
     
 
-field = "COSMOS"
-ver = "n3.0_v1.0"
+field = "EGS"
+ver = "n2.0_v1.3"
 cathead = "fitid3" #name of catalog for the first attempt, fitid or refitid 
 cathead_ori = "fitid3" #name of reference catalog to check fitting is completed
 
 spsver = 'spsbeta' #not set as a variable, need to edit submit_loop.py
-outdir = '/scratch/alpine/ikmi3774/slurm/COSMOS3/'
+outdir = '/scratch/alpine/ikmi3774/slurm/EGS3/'
 catdir = '/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/phot_catalog/'
 catpath = catdir+cathead+"_MINERVA-"+field+"_"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt"
 catpath_check = catdir+cathead_ori+"_MINERVA-"+field+"_"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt"
