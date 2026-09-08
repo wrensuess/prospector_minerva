@@ -101,8 +101,8 @@ if __name__ == '__main__':
     fast_dyn = 0 #0:std run, 1:brief run, 2:debug
 
     acc = 'bc' ### we do not have to use this specification, but useful if we use both alpine&blanca
-    #env = 'prosp'
-    env = '/projects/kasu8993/software/anaconda/envs/prosp'
+    env = 'prosp'
+    #env = '/projects/kasu8993/software/anaconda/envs/prosp'
     njobs = 1000 #number of job array, max=1000
     wtime = int(24) #int(24*7) # time
 
