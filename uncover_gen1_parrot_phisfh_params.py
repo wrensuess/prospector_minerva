@@ -1,4 +1,10 @@
 import time, sys, os
+# One fit per core: keep numpy/BLAS and JAX (XLA) single-threaded so that many fits on a
+# node don't oversubscribe it. Must be set before numpy/jax are imported; values already
+# in the environment win.
+for _var in ['OMP_NUM_THREADS', 'MKL_NUM_THREADS', 'OPENBLAS_NUM_THREADS']:
+    os.environ.setdefault(_var, '1')
+os.environ.setdefault('XLA_FLAGS', '--xla_cpu_multi_thread_eigen=false intra_op_parallelism_threads=1')
 import numpy as np
 import numpy.ma as ma
 from astropy.table import Table
