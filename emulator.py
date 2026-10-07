@@ -5,7 +5,8 @@ from functools import partial
 import numpy as np
 import jax
 
-from prospect.models import ProspectorParams
+from prospect.models import ProspectorParams, priors
+from prospect.models import priors_beta as PZ
 from utils import get_dir, piratedir
 
 multiemul_file = os.path.join(get_dir(dirtype='pirate', outdir=piratedir), "parrot_v4_obsphot_512n_5l_24s_00z24.npy")
@@ -37,6 +38,9 @@ class EmulatorBeta(ProspectorParams):
 
     def __init__(self, model_params, fp=multiemul_file, obs=None, param_order=None):
         super(EmulatorBeta, self).__init__(model_params, param_order=param_order)
+
+        # prior bounds, used by prior_product
+        self._prior_lo, self._prior_hi = self._free_prior_bounds()
 
         # Load all emulator data.
         self.dat = np.load(fp, allow_pickle=True).all()
@@ -92,6 +96,37 @@ class EmulatorBeta(ProspectorParams):
         new_theta = theta[1:]
         new_theta = np.insert(new_theta, self.zred_index, theta[0])
         return new_theta
+
+    # In nested sampling the prior enters through prior_transform, so prospector's
+    # lnprobfn uses prior_product(nested=True) only as a check that theta is inside the
+    # prior (it returns 0 or -inf), but it evaluates the full joint prior to do so on
+    # every likelihood call (~0.3 ms). The check can only fail when a parameter sits on
+    # or beyond a prior bound (in practice: transforms of unit-cube values within ~1e-16
+    # of 0 or 1). So return 0 directly when every parameter is strictly inside its
+    # bounds, and otherwise run the full check as before. The full prior (nested=False,
+    # e.g. in write_hdf5) is unchanged.
+    def prior_product(self, theta, nested=False, **extras):
+        if nested and self._prior_lo is not None:
+            if np.all((theta > self._prior_lo) & (theta < self._prior_hi)):
+                return 0.0
+        return super(EmulatorBeta, self).prior_product(theta, nested=nested, **extras)
+
+    # Lower/upper bounds of every free parameter, for prior_product. None (always run
+    # the full check) if any prior is of a type whose bounds aren't known here.
+    def _free_prior_bounds(self):
+        lo, hi = np.zeros(self.ndim), np.zeros(self.ndim)
+        for k, inds in self.theta_index.items():
+            p = self.config_dict[k]['prior']
+            n = len(range(self.ndim)[inds])
+            if isinstance(p, PZ.PhiSFH):
+                r = p.range # zred, logmass, logzsol, logsfr_ratios
+                b = list(r[:3]) + [r[3]] * (n - 3)
+            elif isinstance(p, (priors.FastUniform, priors.FastTruncatedNormal)):
+                b = [(p.a, p.b)] * n
+            else:
+                return None, None
+            lo[inds], hi[inds] = np.array(b, dtype=float).T
+        return lo, hi
 
     # Determine the relevant angle needed for the sin and cos functions in
     # transition_coef. z0 is the center of an sub-network overlap and deltaz
