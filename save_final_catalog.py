@@ -103,7 +103,7 @@ print(diff[:10])
 print('there '+str(len(cat))+' total objects in the catalog and '+str(np.sum(cat['use_phot']==1))+
     ' with use_phot=1. '+str(len(dperc['objid']))+' have SED-fitting results.')
 assert np.array_equal(cat['id'][idx_finished], dspec['objid'][:])
-pdb.set_trace()
+#pdb.set_trace()
 
 def fill_col(data, idx_finished=idx_finished):
     new_arr = np.ones(len(cat['id'])) + np.nan    
