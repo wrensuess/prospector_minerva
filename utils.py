@@ -90,8 +90,8 @@ def filter_dictionary(filternames=None):
         'f336w':'wfc3_uvis_f336w',
         'f435w':'acs_wfc_f435w',
         'f475w':'wfc3_uvis_f475w',
-        'f606w':'wfc3_uvis_f606w',
-        'f814w':'wfc3_uvis_f814w',
+        'f606w':'acs_wfc_f606w',
+        'f814w':'acs_wfc_f814w',
         'f850lp':'acs_wfc_f850lp',
         # wfc3 / IR
         'f105w':'wfc3_ir_f105w',
