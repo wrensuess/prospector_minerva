@@ -3,6 +3,7 @@ import numpy as np
 from astropy.cosmology import WMAP9 as cosmo
 from prospect.models import priors, transforms
 from prospect.models import priors_beta as PZ
+from priors_beta_fast import PhiSFHFast
 
 def params_parrot_phisfh(obs=None, **extra):
     '''mass + metallicity + sfh priors from p-beta
@@ -25,7 +26,7 @@ def params_parrot_phisfh(obs=None, **extra):
 
     # --- BASIC PARAMETERS ---
     model_params['nzsfh'] = {'N': 9, 'isfree': True, 'init': np.array([0.5,8,0.0,0,0,0,0,0,0]),
-                             'prior': PZ.PhiSFH(zred_mini=1e-3, zred_maxi=20.0,
+                             'prior': PhiSFHFast(zred_mini=1e-3, zred_maxi=20.0,
                                                 mass_mini=6.0, mass_maxi=12.5,
                                                 z_mini=-1.98, z_maxi=0.19,
                                                 logsfr_ratio_mini=-5.0, logsfr_ratio_maxi=5.0,
