@@ -7,9 +7,52 @@ import jax
 
 from prospect.models import ProspectorParams, priors
 from prospect.models import priors_beta as PZ
+from prospect.fitting import lnprobfn as prospect_lnprobfn
+from prospect.likelihood import lnlike_spec, lnlike_phot
 from utils import get_dir, piratedir
 
 multiemul_file = os.path.join(get_dir(dirtype='pirate', outdir=piratedir), "parrot_v4_obsphot_512n_5l_24s_00z24.npy")
+
+
+def lnprobfn(theta, model=None, obs=None, sps=None, noise=(None, None), nested=False, **extras):
+    '''prospect.fitting.lnprobfn for the emulator models, without its per-call
+    model.set_parameters(theta): the emulator predicts directly from theta and never
+    reads model.params, so propagating the parameter dependencies (~25 us per call) is
+    wasted. Otherwise the same steps in the same order, so the same ln-probability.
+    Falls back to prospect's lnprobfn if noise models are used or if any outlier
+    parameter is free (those are read from model.params). Pass it to fit_model with
+    lnprobfn=...
+    '''
+    _outlier = ('f_outlier_spec', 'nsigma_outlier_spec', 'f_outlier_phot', 'nsigma_outlier_phot')
+    if any(n is not None for n in noise) or any(p in model.free_params for p in _outlier):
+        return prospect_lnprobfn(theta, model=model, obs=obs, sps=sps, noise=noise, nested=nested, **extras)
+
+    # --- Calculate prior probability and exit if not within prior ---
+    lnp_prior = model.prior_product(theta, nested=nested)
+    if not np.isfinite(lnp_prior):
+        return -np.inf
+
+    # --- Generate mean model ---
+    try:
+        spec, phot, x = model.predict(theta, obs, sps=sps, sigma_spec=None)
+    except(ValueError):
+        return -np.inf
+
+    #  --- Mixture Model ---
+    vectors = {}
+    f_outlier_spec = model.params.get('f_outlier_spec', 0.0)
+    if (f_outlier_spec != 0.0):
+        vectors.update({'nsigma_outlier_spec': model.params.get('nsigma_outlier_spec', 10)})
+    f_outlier_phot = model.params.get('f_outlier_phot', 0.0)
+    if (f_outlier_phot != 0.0):
+        vectors.update({'nsigma_outlier_phot': model.params.get('nsigma_outlier_phot', 10)})
+
+    # --- Calculate likelihoods ---
+    lnp_spec = lnlike_spec(spec, obs=obs, f_outlier_spec=f_outlier_spec, spec_noise=None, **vectors)
+    lnp_phot = lnlike_phot(phot, obs=obs, f_outlier_phot=f_outlier_phot, phot_noise=None, **vectors)
+    lnp_eline = getattr(model, '_ln_eline_penalty', 0.0)
+
+    return lnp_prior + lnp_phot + lnp_spec + lnp_eline
 
 
 # Compiled photometry prediction. Running the same JAX operations eagerly costs ~1 ms per

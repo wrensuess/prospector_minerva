@@ -224,7 +224,7 @@ for _ifit in np.arange(args.idx0, args.idx1, 1):
         ts = time.strftime("%y%b%d-%H.%M", time.localtime())
         #hfile = os.path.join(run_params['outdir'], "id_{0}_mcmc_phisfh.h5".format(objid))
 
-        output = fit_model(obs, model, sps, **run_params)
+        output = fit_model(obs, model, sps, lnprobfn=Emu.lnprobfn, **run_params)
         print('done in {0}s'.format(output["sampling"][1]))
 
         prospect.io.write_results.write_hdf5(hfile, run_params, model, obs,
