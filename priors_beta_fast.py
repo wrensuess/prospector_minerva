@@ -9,7 +9,14 @@ priors_beta.py) with:
     the same cosmology (agrees with astropy to ~1e-9 relative or better, below the
     tolerance of astropy's own quadrature),
   - cosmo.lookback_time(15), which is a constant, computed once,
-  - np.interp in place of interp1d (the same linear interpolation).
+  - np.interp in place of interp1d (the same linear interpolation), for the mass draw
+    and for the age -> redshift lookup,
+  - the SFRD integral over each age bin as differences of the spline's antiderivative,
+    evaluated in one call (instead of one FITPACK integral per bin),
+  - the six SFR-ratio Student-t transforms in one vectorized call,
+  - with const_phi, the mass-function CDF cached outside 0.2 < z < 3, where prospect
+    holds the Leja+20 mass function at its z = 0.2 / z = 3 form (priors_beta.draw_at_z),
+    so the CDF there does not depend on z.
 The prior density (__call__) and everything else are inherited unchanged.
 '''
 import numpy as np
@@ -26,6 +33,13 @@ _lookback_gyr = cosmo.hubble_time.to(u.Gyr).value * cumulative_simpson(
     cosmo.lookback_time_integrand(_zgrid), x=_zgrid, initial=0.)
 _age0_gyr = cosmo.age(0).value
 _tuniv15_yr = cosmo.lookback_time(15).to(u.yr).value  # onset of star formation (z~15)
+
+# PZ.f_age_z = interp1d(age, z_age): the same table in increasing age, for np.interp
+_age_asc = PZ.age[::-1].copy()
+_z_age_asc = PZ.z_age[::-1].copy()
+
+# antiderivative of the SFRD spline, so that integral(a, b) = F(b) - F(a)
+_sfrd_cumulative = PZ.spl_tl_sfrd.antiderivative()
 
 
 def age_gyr(z):
@@ -84,7 +98,7 @@ def expe_logsfr_ratios(this_z, this_m, logsfr_ratio_mini, logsfr_ratio_maxi,
     elif age_shifted > PZ.age[0]:
         z_shifted = zmin_thres * 1
     else:
-        z_shifted = PZ.f_age_z(age_shifted)
+        z_shifted = np.interp(age_shifted, _age_asc, _z_age_asc)
     if z_shifted > zmax_thres:
         z_shifted = zmax_thres * 1
     if z_shifted < zmin_thres:
@@ -93,11 +107,10 @@ def expe_logsfr_ratios(this_z, this_m, logsfr_ratio_mini, logsfr_ratio_maxi,
     agebins_shifted = z_to_agebins_rescale(zstart=z_shifted, nbins_sfh=nbins_sfh, amin=amin)
 
     nsfrbins = agebins_shifted.shape[0]
-    sfr_shifted = np.zeros(nsfrbins)
-    for i in range(nsfrbins):
-        a = agebins_shifted[i,0]
-        b = agebins_shifted[i,1]
-        sfr_shifted[i] = PZ.spl_tl_sfrd.integral(a=a, b=b)/(b-a)
+    a = agebins_shifted[:,0]
+    b = agebins_shifted[:,1]
+    F = _sfrd_cumulative(agebins_shifted)
+    sfr_shifted = (F[:,1] - F[:,0])/(b-a)
 
     logsfr_ratios_shifted = np.zeros(nsfrbins-1)
     with np.errstate(invalid='ignore', divide='ignore'):
@@ -120,13 +133,34 @@ def expe_logsfr_ratios(this_z, this_m, logsfr_ratio_mini, logsfr_ratio_maxi,
 class PhiSFHFast(PZ.PhiSFH):
     '''PZ.PhiSFH with a faster unit_transform (see module docstring).'''
 
+    def cdf_mass(self, zred):
+        '''PZ.cdf_mass_func_at_z on self.mgrid; with const_phi, the CDF for z < 0.2 and for
+        z > 3 is computed once and reused (prospect evaluates the mass function there at
+        exactly z = 0.2 / z = 3).'''
+        key = None
+        if self.params['const_phi']:
+            if zred < 0.2:
+                key = 'below 0.2'
+            elif zred > 3.0:
+                key = 'above 3'
+        if key is not None and key in self._cdf_cache:
+            return self._cdf_cache[key]
+        cdf = PZ.cdf_mass_func_at_z(z=zred, logm=self.mgrid, const_phi=self.params['const_phi'], bounds=[self.params['mass_mini'], self.params['mass_maxi']])
+        if key is not None:
+            self._cdf_cache[key] = cdf
+        return cdf
+
+    def update(self, **kwargs):
+        super(PhiSFHFast, self).update(**kwargs)
+        self._cdf_cache = {} # the prior parameters may have changed
+
     def unit_transform(self, x, **kwargs):
         if len(kwargs) > 0:
             self.update(**kwargs)
 
         zred = self.zred_dist.unit_transform(x[0])
 
-        cdf_mass = PZ.cdf_mass_func_at_z(z=zred, logm=self.mgrid, const_phi=self.params['const_phi'], bounds=[self.params['mass_mini'], self.params['mass_maxi']])
+        cdf_mass = self.cdf_mass(zred)
         mass = np.interp(x[1], cdf_mass, self.mgrid)
 
         met_dist = priors.FastTruncatedNormal(a=self.params['z_mini'], b=self.params['z_maxi'],
@@ -138,9 +172,7 @@ class PhiSFHFast(PZ.PhiSFH):
                                            logsfr_ratio_mini=self.params['logsfr_ratio_mini'],
                                            logsfr_ratio_maxi=self.params['logsfr_ratio_maxi'])
 
-        logsfr_ratios_ppf = np.zeros_like(logsfr_ratios)
-        for i in range(len(logsfr_ratios_ppf)):
-            logsfr_ratios_ppf[i] = self.logsfr_ratios_dist.unit_transform(x[3+i]) + logsfr_ratios[i]
+        logsfr_ratios_ppf = self.logsfr_ratios_dist.unit_transform(x[3:3+len(logsfr_ratios)]) + logsfr_ratios
         logsfr_ratios_ppf = np.clip(logsfr_ratios_ppf, a_min=self.params['logsfr_ratio_mini'], a_max=self.params['logsfr_ratio_maxi'])
         return np.concatenate([np.atleast_1d(zred), np.atleast_1d(mass),
                                np.atleast_1d(met), np.atleast_1d(logsfr_ratios_ppf)])
