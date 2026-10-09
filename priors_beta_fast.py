@@ -14,9 +14,15 @@ priors_beta.py) with:
   - the SFRD integral over each age bin as differences of the spline's antiderivative,
     evaluated in one call (instead of one FITPACK integral per bin),
   - the six SFR-ratio Student-t transforms in one vectorized call,
-  - with const_phi, the mass-function CDF cached outside 0.2 < z < 3, where prospect
-    holds the Leja+20 mass function at its z = 0.2 / z = 3 form (priors_beta.draw_at_z),
-    so the CDF there does not depend on z.
+  - the mass-function CDF tabulated instead of evaluated on every call:
+      0.2 < z <= 3 (Leja+20, whose parameters vary smoothly with z): prospect's own CDF
+        at redshift nodes dz_mass apart, interpolated linearly in z. This is the one
+        approximation (see MassCDFTable);
+      z <= 0.2, and z > 3 with const_phi: prospect holds the mass function at its
+        z = 0.2 / z = 3 form (priors_beta.draw_at_z), so the CDF is the end node, exactly;
+      z > 3 without const_phi: the fixed Leja+20(z=3) and Tacchella+18 curves are stored
+        and blended with prospect's cos^2 weights, then normalised as prospect does
+        (exact to rounding).
 The prior density (__call__) and everything else are inherited unchanged.
 '''
 import numpy as np
@@ -130,29 +136,99 @@ def expe_logsfr_ratios(this_z, this_m, logsfr_ratio_mini, logsfr_ratio_maxi,
     return logsfr_ratios_shifted
 
 
+def _cdf_from_phi(phi, logm):
+    '''The normalisation steps of PZ.pdf_mass_func_at_z + PZ.cdf_mass_func_at_z, in the
+    same order, for a mass function phi already evaluated on logm.'''
+    pdf_at_m = phi/np.trapz(phi, logm)
+    cdf_of_m = np.cumsum(pdf_at_m)
+    cdf_of_m /= max(cdf_of_m)
+    cdf_of_m[cdf_of_m < 0] = 0
+    cdf_of_m[0] = 0
+    cdf_of_m[-1] = 1
+    return cdf_of_m
+
+
+class MassCDFTable:
+    '''PZ.cdf_mass_func_at_z(z, logm, const_phi, bounds) without evaluating the mass
+    function per call.
+
+    0.2 < z <= 3: prospect's CDF at nodes z_j = 0.2, 0.2 + dz, ..., 3 (computed with
+    prospect's own function), interpolated linearly in z between the two neighbouring
+    nodes. Exact at the nodes; a mix of two CDFs is itself a monotone CDF. Below 0.2 (and
+    above 3 with const_phi) prospect uses the z = 0.2 (z = 3) mass function, which is the
+    end node, so those are exact.
+    z > 3 without const_phi: the fixed curves (Leja+20 at z = 3, Tacchella+18 at z = 4..12)
+    are stored and blended with prospect's cos^2 weights in prospect's operation order,
+    then normalised as prospect does: equal to prospect's CDF.
+    '''
+
+    def __init__(self, logm, const_phi, bounds, dz=1e-3):
+        self.logm, self.const_phi, self.bounds = logm, bool(const_phi), list(bounds)
+        n = int(round((3.0 - 0.2) / dz)) + 1
+        self.z_nodes = np.linspace(0.2, 3.0, n)
+        with np.errstate(over='ignore', under='ignore'):
+            self.rows = np.array([PZ.cdf_mass_func_at_z(z=z, logm=logm, const_phi=const_phi, bounds=bounds)
+                                  for z in self.z_nodes])
+            if not self.const_phi:
+                inside = (logm >= bounds[0]) & (logm <= bounds[1])
+                self.phi_l3 = np.where(inside, PZ.low_z_mass_func(z0=3, logm=logm), 0.)
+                self.phi_t18 = {k: np.where(inside, PZ.high_z_mass_func_discreate(k, 10**logm), 0.)
+                                for k in range(4, 13)}
+
+    def __call__(self, z):
+        if z > 3.0 and not self.const_phi:
+            return self._high_z(z)
+        if z <= 0.2:
+            return self.rows[0]
+        if z >= 3.0:
+            return self.rows[-1]
+        zc = z
+        j = min(max(np.searchsorted(self.z_nodes, zc, side='right') - 1, 0), len(self.z_nodes) - 2)
+        t = (zc - self.z_nodes[j]) / (self.z_nodes[j+1] - self.z_nodes[j])
+        return (1. - t) * self.rows[j] + t * self.rows[j+1]
+
+    def _high_z(self, z):
+        '''PZ.mass_func_at_z for z > 3, const_phi False, from the stored curves'''
+        if z < 4.0:
+            w = PZ.cos_weight(z)
+            phi = self.phi_l3*w[0] + self.phi_t18[4]*w[1]
+        elif z <= 4.0:
+            phi = self.phi_t18[4]
+        elif z >= 12.0:
+            phi = self.phi_t18[12]
+        else:
+            k = int(z)
+            w = PZ.cos_weight(z, zrange=[k, k+1])
+            phi = self.phi_t18[k]*w[0] + self.phi_t18[k+1]*w[1]
+        return _cdf_from_phi(phi, self.logm)
+
+
+_mass_cdf_tables = {}  # one table per (grid, const_phi, dz), shared by every model in a process
+
+
+def mass_cdf_table(logm, const_phi, bounds, dz):
+    key = (logm[0], logm[-1], len(logm), bool(const_phi), tuple(bounds), dz)
+    if key not in _mass_cdf_tables:
+        _mass_cdf_tables[key] = MassCDFTable(logm, const_phi, bounds, dz)
+    return _mass_cdf_tables[key]
+
+
 class PhiSFHFast(PZ.PhiSFH):
-    '''PZ.PhiSFH with a faster unit_transform (see module docstring).'''
+    '''PZ.PhiSFH with a faster unit_transform (see module docstring).
+    dz_mass: node spacing of the tabulated mass-function CDF in 0.2 < z <= 3.'''
+
+    dz_mass = 1e-3
 
     def cdf_mass(self, zred):
-        '''PZ.cdf_mass_func_at_z on self.mgrid; with const_phi, the CDF for z < 0.2 and for
-        z > 3 is computed once and reused (prospect evaluates the mass function there at
-        exactly z = 0.2 / z = 3).'''
-        key = None
-        if self.params['const_phi']:
-            if zred < 0.2:
-                key = 'below 0.2'
-            elif zred > 3.0:
-                key = 'above 3'
-        if key is not None and key in self._cdf_cache:
-            return self._cdf_cache[key]
-        cdf = PZ.cdf_mass_func_at_z(z=zred, logm=self.mgrid, const_phi=self.params['const_phi'], bounds=[self.params['mass_mini'], self.params['mass_maxi']])
-        if key is not None:
-            self._cdf_cache[key] = cdf
-        return cdf
+        '''PZ.cdf_mass_func_at_z on self.mgrid, from the tabulated CDF'''
+        if self._mass_cdf is None:
+            self._mass_cdf = mass_cdf_table(self.mgrid, self.params['const_phi'],
+                                            [self.params['mass_mini'], self.params['mass_maxi']], self.dz_mass)
+        return self._mass_cdf(zred)
 
     def update(self, **kwargs):
         super(PhiSFHFast, self).update(**kwargs)
-        self._cdf_cache = {} # the prior parameters may have changed
+        self._mass_cdf = None # the prior parameters may have changed
 
     def unit_transform(self, x, **kwargs):
         if len(kwargs) > 0:
