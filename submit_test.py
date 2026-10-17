@@ -45,6 +45,7 @@ def run_params(task_dir='hoge', log_dir='hoge', acc='priority', jobname='p', wti
         "#SBATCH --array=0-{}".format(int(njob-1)),
         "#SBATCH --output={}/{}_{}_%A_%a.out".format(log_dir, jname, ts),
         "#SBATCH --error={}/{}_{}_%A_%a.err".format(log_dir, jname, ts),
+        "#SBATCH --hint=nomultithread",
         "",
         'now=$(date +"%T")',
         'echo "start time ... $now"',
@@ -90,7 +91,7 @@ if __name__ == '__main__':
     field = 'UDS'
     ver = 'n3.0_v1.2'
     vermiri = 'n3.0_m3.1_v1.2.1'
-    wmiri = 'yes'
+    wmiri = 'no'
     spsver = 'spsbeta'
     fast_dyn = 0 #0:std run, 1:brief run, 2:debug
 
@@ -99,18 +100,18 @@ if __name__ == '__main__':
     #cujobname = 'massive10000_fagn1e5'
     #cujobname = 'outliers_fagn1e5'
     #cujobname = 'goodpz_fagn1e5'
-    cujobname = 'fixzred_wMIRI_zfree'
+    cujobname = 'AGNfree'
     cathead = 'speczid'
-    chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}_fixzred_wMIRI_zfree'.format(field, ver, spsver)
-    logdir = outdir+'log_'+field+"_"+ver+"_fixzred_wMIRI_zfree"
-    taskdir = outdir+'task_lists_'+field+"_"+ver+"_fixzred_wMIRI_zfree"
+    chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}_AGNfree'.format(field, ver, spsver)
+    logdir = outdir+'log_'+field+"_"+ver+"_AGNfree"
+    taskdir = outdir+'task_lists_'+field+"_"+ver+"_AGNfree"
 
     acc = 'amilian' ### 'priority' or 'preempt' or 'amilian'
     env = 'prosp'
     #env = 'prosp_oldjax_nompi'
     #env = '/projects/kasu8993/software/anaconda/envs/prosp_oldjax'
     #env = '/projects/kasu8993/software/anaconda/envs/prosp'
-    njobs = 1000 #number of job array, max=1000
+    njobs = 500 #number of job array, max=1000
     wtime = int(24) #int(24*7) # time
 
     ################################## step 1. sed fit ####################################
