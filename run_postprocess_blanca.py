@@ -12,12 +12,12 @@ from utils import get_dir
 #outdir = '/scratch/alpine/kasu8993/postprocess_n2.2_m1.0_v1.0/'
 #log_dir = '/scratch/alpine/kasu8993/postprocess_n2.2_m1.0_v1.0/logs/'
 
-#catalog = '/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/phot_catalog/MINERVA-UDS_n3.0_v1.2_ACS+WEBB_Kf444w_SUPER_CATALOG.fits'
-catalog = '/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/phot_catalog/MINERVA-UDS_n3.0_m3.1_v1.2.1_ACS+WEBB_Kf444w_SUPER_CATALOG_wMIRI.fits'
+catalog = '/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/phot_catalog/MINERVA-UDS_n3.0_v1.2_ACS+WEBB_Kf444w_SUPER_CATALOG.fits'
+#catalog = '/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/phot_catalog/MINERVA-UDS_n3.0_m3.1_v1.2.1_ACS+WEBB_Kf444w_SUPER_CATALOG_wMIRI.fits'
 #catalog = '/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/phot_catalog/MINERVA-COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_CATALOG.fits'
-indir = '/scratch/alpine/ikmi3774/slurm/chains_parrot_UDS_n3.0_v1.2_ACS+WEBB_Kf444w_SUPER_spsbeta_fixzred_wMIRI_zfree/'
-outdir = '/scratch/alpine/ikmi3774/slurm/postprocess_UDS_n3.0_v1.2_fixzred_wMIRI_zfree/'
-log_dir = '/scratch/alpine/ikmi3774/slurm/postprocess_UDS_n3.0_v1.2_fixzred_wMIRI_zfree/logs/'
+indir = '/scratch/alpine/ikmi3774/slurm/chains_parrot_UDS_n3.0_v1.2_ACS+WEBB_Kf444w_SUPER_spsbeta_speczobj_AGNfree/'
+outdir = '/scratch/alpine/ikmi3774/slurm/postprocess_UDS_n3.0_v1.2_speczobj_AGNfree/'
+log_dir = '/scratch/alpine/ikmi3774/slurm/postprocess_UDS_n3.0_v1.2_speczobj_AGNfree/logs/'
 #outdir = '/scratch/alpine1/kasu8993/postprocess_UDS_n3.0_v1.2/'
 #log_dir = '/scratch/alpine1/kasu8993/postprocess_UDS_n3.0_v1.2/logs/'
 
@@ -50,7 +50,7 @@ print(ids)
 process = -1
 
 if process==-1: ### priority node
-    njobs = 1000
+    njobs = 500
     wtime = int(12) # time
     ids_split = np.array_split(ids, njobs)
     # save each chunk to a separate file
