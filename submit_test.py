@@ -1,4 +1,4 @@
-import os, sys, time
+import os, sys, time, pdb
 import numpy as np
 from astropy.table import Table
 
@@ -92,6 +92,7 @@ if __name__ == '__main__':
     ver = 'n3.0_v1.2'
     vermiri = 'n3.0_m3.1_v1.2.1'
     wmiri = 'no'
+    AGNfree = 'no'
     spsver = 'spsbeta'
     fast_dyn = 0 #0:std run, 1:brief run, 2:debug
 
@@ -153,7 +154,13 @@ if __name__ == '__main__':
             os.system('rm '+taskfile)
         with open(taskfile, mode="w") as f:
             for k in range(len(ids_fit_injobarray)):
-                _cmd = 'python uncover_gen1_parrot_phisfh_params_AGNfree.py --catalog {} --outdir {} --dyn {} --idx0 {} --idx1 {}'.format(catalog, chaindir, fast_dyn, int(ids_fit_injobarray[k]), int(ids_fit_injobarray[k]+1))
+                if AGNfree=='yes':
+                    _cmd = 'python uncover_gen1_parrot_phisfh_params_AGNfree.py --catalog {} --outdir {} --dyn {} --idx0 {} --idx1 {}'.format(catalog, chaindir, fast_dyn, int(ids_fit_injobarray[k]), int(ids_fit_injobarray[k]+1))
+                elif AGNfree=='no':
+                    _cmd = 'python uncover_gen1_parrot_phisfh_params.py --catalog {} --outdir {} --dyn {} --idx0 {} --idx1 {}'.format(catalog, chaindir, fast_dyn, int(ids_fit_injobarray[k]), int(ids_fit_injobarray[k]+1))
+                else:
+                    print("+++ no appropriate AGNfree parameter +++")
+                    pdb.set_trace()
                 f.write(_cmd+"\n")
     run_params(jobname=cujobname, task_dir=taskdir, log_dir=logdir, acc=acc, wtime=wtime, env=env, njob=njobs)
     time.sleep(0.05)
