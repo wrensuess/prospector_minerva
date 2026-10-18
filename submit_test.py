@@ -101,11 +101,11 @@ if __name__ == '__main__':
     #cujobname = 'massive10000_fagn1e5'
     #cujobname = 'outliers_fagn1e5'
     #cujobname = 'goodpz_fagn1e5'
-    cujobname = 'AGNfree'
+    cujobname = 'AGNfix'
     cathead = 'speczid'
-    chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}_speczobj_AGNfree'.format(field, ver, spsver)
-    logdir = outdir+'log_'+field+"_"+ver+"_speczobj_AGNfree"
-    taskdir = outdir+'task_lists_'+field+"_"+ver+"_speczobj_AGNfree"
+    chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}_speczobj_AGNfix'.format(field, ver, spsver)
+    logdir = outdir+'log_'+field+"_"+ver+"_speczobj_AGNfix"
+    taskdir = outdir+'task_lists_'+field+"_"+ver+"_speczobj_AGNfix"
 
     acc = 'amilian' ### 'priority' or 'preempt' or 'amilian'
     env = 'prosp'
