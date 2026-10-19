@@ -88,8 +88,8 @@ if __name__ == '__main__':
     ### variables
     outdir = '/scratch/alpine/ikmi3774/slurm/'
     catdir = '../phot_catalog/'
-    field = 'UDS'
-    ver = 'n3.0_v1.2'
+    field = 'COSMOS'
+    ver = 'n3.0_v1.0'
     vermiri = 'n3.0_m3.1_v1.2.1'
     wmiri = 'no'
     AGNfree = 'no'
@@ -112,7 +112,7 @@ if __name__ == '__main__':
     #env = 'prosp_oldjax_nompi'
     #env = '/projects/kasu8993/software/anaconda/envs/prosp_oldjax'
     #env = '/projects/kasu8993/software/anaconda/envs/prosp'
-    njobs = 500 #number of job array, max=1000
+    njobs = 900 #number of job array, max=1000
     wtime = int(24) #int(24*7) # time
 
     ################################## step 1. sed fit ####################################
