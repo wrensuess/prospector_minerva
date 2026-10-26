@@ -92,7 +92,7 @@ if __name__ == '__main__':
     ver = 'n3.0_v1.0'
     vermiri = 'n3.0_m3.1_v1.2.1'
     wmiri = 'no'
-    AGNfree = 'no'
+    AGNfree = 'yes'
     spsver = 'spsbeta'
     fast_dyn = 0 #0:std run, 1:brief run, 2:debug
 
@@ -101,11 +101,11 @@ if __name__ == '__main__':
     #cujobname = 'massive10000_fagn1e5'
     #cujobname = 'outliers_fagn1e5'
     #cujobname = 'goodpz_fagn1e5'
-    cujobname = 'AGNfix'
+    cujobname = 'AGNfree'
     cathead = 'speczid'
-    chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}_speczobj_AGNfix'.format(field, ver, spsver)
-    logdir = outdir+'log_'+field+"_"+ver+"_speczobj_AGNfix"
-    taskdir = outdir+'task_lists_'+field+"_"+ver+"_speczobj_AGNfix"
+    chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}_speczobj_AGNfree'.format(field, ver, spsver)
+    logdir = outdir+'log_'+field+"_"+ver+"_speczobj_AGNfree"
+    taskdir = outdir+'task_lists_'+field+"_"+ver+"_speczobj_AGNfree"
 
     acc = 'amilian' ### 'priority' or 'preempt' or 'amilian'
     env = 'prosp'
