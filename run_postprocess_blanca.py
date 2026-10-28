@@ -15,9 +15,9 @@ from utils import get_dir
 catalog = '/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/phot_catalog/MINERVA-COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_CATALOG.fits'
 #catalog = '/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/phot_catalog/MINERVA-UDS_n3.0_m3.1_v1.2.1_ACS+WEBB_Kf444w_SUPER_CATALOG_wMIRI.fits'
 #catalog = '/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/phot_catalog/MINERVA-COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_CATALOG.fits'
-indir = '/scratch/alpine/ikmi3774/slurm/chains_parrot_COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_spsbeta_speczobj_AGNfix/'
-outdir = '/scratch/alpine/ikmi3774/slurm/postprocess_COSMOS_n3.0_v1.0_speczobj_AGNfix/'
-log_dir = '/scratch/alpine/ikmi3774/slurm/postprocess_COSMOS_n3.0_v1.0_speczobj_AGNfix/logs/'
+indir = '/scratch/alpine/ikmi3774/slurm/chains_parrot_COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_spsbeta_speczobj_AGNfree/'
+outdir = '/scratch/alpine/ikmi3774/slurm/postprocess_COSMOS_n3.0_v1.0_speczobj_AGNfree/'
+log_dir = '/scratch/alpine/ikmi3774/slurm/postprocess_COSMOS_n3.0_v1.0_speczobj_AGNfree/logs/'
 #outdir = '/scratch/alpine1/kasu8993/postprocess_UDS_n3.0_v1.2/'
 #log_dir = '/scratch/alpine1/kasu8993/postprocess_UDS_n3.0_v1.2/logs/'
 
