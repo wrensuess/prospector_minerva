@@ -16,6 +16,8 @@ from sedpy import observate
 import utils as ut_cwd
 import utils_unit as ut_u
 
+from dynesty.utils import resample_equal, resample_equal as _resample_equal
+
 percents = [0.1,2.3,15.9,50,84.1,97.7,99.9]
 nsamp = 1000
 
@@ -284,6 +286,10 @@ def run_all(h5_fname=None,
             input_folder='chains_parrot', output_folder='chains_parrot',
             percents=percents, **extra):
 
+    seed = 42 + int(objid)
+    np.random.seed(seed)
+    random.seed(seed)
+
     _in_dir = input_folder[:]
     _out_dir = output_folder[:]
     if h5_fname is None:
@@ -299,8 +305,15 @@ def run_all(h5_fname=None,
     chain_ml = res['chain'][-1]
     res['theta_index'] = theta_dict_from_run(fit)
     res['scalar'] = theta_dict_from_run(fit, rtn_dict=False)
+    ### without saving indecies, just sampling parameters
     unweighted_chain = resample_equal(res['chain'], res['weights']) # unweighted_chain
     res['chain'] = np.vstack([unweighted_chain, chain_ml]) # last chain is always ml
+    ### save indecies to have likelyhood
+    indices = resample_equal(np.arange(len(res['chain'])), res['weights']).astype(int)
+    unweighted_chain = res['chain'][indices]
+    unweighted_lnlike = res['lnlikelihood'][indices]
+    res['chain'] = np.vstack([unweighted_chain, chain_ml])
+    res['lnlikelihood'] = np.append(unweighted_lnlike, res['lnlikelihood'][-1])
 
     percentiles, chains, sub_idx = get_all_outputs_and_chains(res)
 
