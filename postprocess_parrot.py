@@ -306,8 +306,8 @@ def run_all(h5_fname=None,
     res['theta_index'] = theta_dict_from_run(fit)
     res['scalar'] = theta_dict_from_run(fit, rtn_dict=False)
     ### without saving indecies, just sampling parameters
-    unweighted_chain = resample_equal(res['chain'], res['weights']) # unweighted_chain
-    res['chain'] = np.vstack([unweighted_chain, chain_ml]) # last chain is always ml
+    #unweighted_chain = resample_equal(res['chain'], res['weights']) # unweighted_chain
+    #res['chain'] = np.vstack([unweighted_chain, chain_ml]) # last chain is always ml
     ### save indecies to have likelyhood
     indices = resample_equal(np.arange(len(res['chain'])), res['weights']).astype(int)
     unweighted_chain = res['chain'][indices]
@@ -316,6 +316,8 @@ def run_all(h5_fname=None,
     res['lnlikelihood'] = np.append(unweighted_lnlike, res['lnlikelihood'][-1])
 
     percentiles, chains, sub_idx = get_all_outputs_and_chains(res)
+    ### save likelyhood
+    chains['lnlikelihood'] = res['lnlikelihood'][sub_idx]
 
     # total mass formed -> stellar mass
     stellarmass = []
