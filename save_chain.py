@@ -94,8 +94,11 @@ def process_single_file_h5(indexed_info, dir_indiv):
         chain_data[:, 23] = chains["logsfr_ratios_4"][:]
         chain_data[:, 24] = chains["logsfr_ratios_5"][:]
         chain_data[:, 25] = chains["logsfr_ratios_6"][:]
+        
+        ### added to save likelyhood
+        lnlike_data = chains["lnlikelihood"][:].astype(np.float64)
 
-    return idx, objid, chain_data
+    return idx, objid, chain_data, lnlike_data
 
 
 def process_chunk(indexed_chunk, dir_indiv, n_samples, n_params):
@@ -108,15 +111,27 @@ def process_chunk(indexed_chunk, dir_indiv, n_samples, n_params):
         except Exception as e:
             idx, objid, filename = entry
             # Fill with NaN for failed files
-            results.append((idx, objid, np.full((n_samples, n_params), np.nan, dtype=np.float32)))
+            #results.append((idx, objid, np.full((n_samples, n_params), np.nan, dtype=np.float32)))
+            ### changed to save likelyhood
+            results.append((idx, objid, np.full((n_samples, n_params), np.nan, dtype=np.float32), np.full(n_samples, np.nan, dtype=np.float64)))
             errors.append(f"{filename}: {e}")
     return results, errors
 
+'''
 def write_results(results, chains_ds, objids_ds):
     """Single-writer: place each result at its final index (preserve input order)."""
     for idx, objid, chain_data in results:
         chains_ds[idx] = chain_data
         objids_ds[idx] = objid
+    return len(results)
+'''
+### changed to save likelyhood
+def write_results(results, chains_ds, objids_ds, lnlike_ds):
+    for idx, objid, chain_data, lnlike_data in results:
+        chains_ds[idx] = chain_data
+        objids_ds[idx] = objid
+        lnlike_ds[idx] = lnlike_data
+
     return len(results)
 
 # ----------------------
@@ -233,8 +248,20 @@ def main():
             shuffle=True,
             track_times=False
         )
-        objids_ds = h5f.create_dataset('objid', shape=(n_obj,), dtype=np.int64,
-            compression='gzip', chunks=(objid_chunk,))
+        objids_ds = h5f.create_dataset(
+            'objid', shape=(n_obj,), dtype=np.int64,
+            compression='gzip', chunks=(objid_chunk,)
+        )
+        
+        ### added to save likelyhood
+        lnlike_ds = h5f.create_dataset(
+            'lnlikelihood',
+            shape=(n_obj, n_samples),
+            dtype=np.float64,
+            compression='gzip',
+            chunks=(objid_chunk, n_samples),
+            shuffle=True
+        )
 
         files_processed = 0
         processed_chunks = 0
@@ -265,7 +292,9 @@ def main():
                         for msg in errors:
                             print(f"Error processing {msg}")
 
-                        written = write_results(results, chains_ds, objids_ds)
+                        #written = write_results(results, chains_ds, objids_ds)
+                        ### changed to save likelyhood
+                        written = write_results(results, chains_ds, objids_ds, lnlike_ds)
                         files_processed += written
                         processed_chunks += 1
 
