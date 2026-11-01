@@ -1,6 +1,7 @@
 import numpy as np
 import glob
 from astropy.table import Table
+import utils as ut_cwd
 
 ver = "COSMOS_n3.0_v1.0"
 ver = "EGS_n2.0_v1.3"
@@ -85,7 +86,7 @@ print("only fitted:",len(only_fitted_all))
 
 
 ### no phot object?
-cat = Table.read("/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/phot_catalog/MINERVA-"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.fits")
+cat = Table.read(cat_dir+"MINERVA-"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.fits")
 
 id_list = only_fit_all
 
