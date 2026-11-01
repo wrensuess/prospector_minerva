@@ -85,24 +85,25 @@ def run_params(task_dir='hoge', log_dir='hoge', acc='priority', jobname='p', wti
 if __name__ == '__main__':
 
     ### variables
-    outdir = '/scratch/alpine/ikmi3774/slurm/COSMOS5/'
+    outdir = '/scratch/alpine/ikmi3774/slurm/EGS4/'
     catdir = '../phot_catalog/'
     #field = 'COSMOS'
     #ver = 'n3.0_v1.0'
-    field = 'UDS'
-    ver = 'n3.0_v1.2'
+    #field = 'UDS'
+    #ver = 'n3.0_v1.2'
+    field = 'EGS'
+    ver = 'n2.0_v1.3'
     vermiri = 'n3.0_m3.1_v1.2.1'
-    wmiri = 'yes'
+    wmiri = 'no'
     spsver = 'spsbeta'
-    fast_dyn = 0 #0:std run, 1:brief run, 2:debug
 
     chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}'.format(field, ver, spsver)
     logdir = outdir+'log_'+field+"_"+ver
     taskdir = outdir+'task_lists_'+field+"_"+ver
     fast_dyn = 0 #0:std run, 1:brief run, 2:debug
 
-    cujobname = 'brokenfiles_COSMOS'
-    cathead = 'brokenid'
+    cujobname = 'unfitfiles_EGS'
+    cathead = 'refitid'
 
     fitcatalog = catdir+cathead+'_MINERVA-'+field+'_'+ver+'_ACS+WEBB_Kf444w_SUPER_CATALOG.txt' #file includes your objects
     
