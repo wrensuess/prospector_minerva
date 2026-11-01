@@ -126,7 +126,7 @@ if __name__ == '__main__':
     acc = 'amilian' ### 'priority' or 'preempt' or 'amilian'
     #env = 'prosp'
     env = '/projects/kasu8993/software/anaconda/envs/prosp'
-    njobs = 16 #number of job array, max=1000
+    njobs = 92 #number of job array, max=1000
     wtime = int(12) #int(24*7) # time
 
     ################################## step 1. sed fit ####################################
