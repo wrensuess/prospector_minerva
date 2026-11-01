@@ -158,6 +158,8 @@ if __name__ == '__main__':
                     _cmd = 'python uncover_gen1_parrot_phisfh_params_AGNfree.py --catalog {} --outdir {} --dyn {} --idx0 {} --idx1 {}'.format(catalog, chaindir, fast_dyn, int(ids_fit_injobarray[k]), int(ids_fit_injobarray[k]+1))
                 elif AGNfree=='no':
                     _cmd = 'python uncover_gen1_parrot_phisfh_params.py --catalog {} --outdir {} --dyn {} --idx0 {} --idx1 {}'.format(catalog, chaindir, fast_dyn, int(ids_fit_injobarray[k]), int(ids_fit_injobarray[k]+1))
+                elif AGNfree=='test':
+                    _cmd = 'python uncover_gen1_parrot_phisfh_params_AGNprior.py --catalog {} --outdir {} --dyn {} --idx0 {} --idx1 {}'.format(catalog, chaindir, fast_dyn, int(ids_fit_injobarray[k]), int(ids_fit_injobarray[k]+1))
                 else:
                     print("+++ no appropriate AGNfree parameter +++")
                     pdb.set_trace()

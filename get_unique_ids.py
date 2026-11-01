@@ -1,16 +1,19 @@
 import numpy as np
 import glob
 
+ver = "COSMOS_n3.0_v1.0"
+ver = "EGS_n2.0_v1.3"
+
 ### first large calculation
 cat_dir = "/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/phot_catalog/"
-cat_ori1 = "fitid1_MINERVA-COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_CATALOG.txt"
-cat_ori2 = "fitid2_MINERVA-COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_CATALOG.txt"
-cat_ori3 = "fitid3_MINERVA-COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_CATALOG.txt"
+cat_ori1 = "fitid1_MINERVA-"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt"
+cat_ori2 = "fitid2_MINERVA-"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt"
+cat_ori3 = "fitid3_MINERVA-"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt"
 
-check_dir1 = "/scratch/alpine/ikmi3774/slurm/chains_parrot_COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_spsbeta/COSMOS4/"
-check_dir2 = "/scratch/alpine/ikmi3774/slurm/chains_parrot_COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_spsbeta/COSMOS2/"
-check_dir3 = "/scratch/alpine/ikmi3774/slurm/chains_parrot_COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_spsbeta/COSMOS3/"
-output_name = "chains_parrot_COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_spsbeta/"
+check_dir1 = "/scratch/alpine/ikmi3774/slurm/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS1/"
+check_dir2 = "/scratch/alpine/ikmi3774/slurm/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS2/"
+check_dir3 = "/scratch/alpine/ikmi3774/slurm/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS3/"
+output_name = "chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/"
 
 fitid1 = np.loadtxt(cat_dir+cat_ori1)
 fitid2 = np.loadtxt(cat_dir+cat_ori2)
@@ -79,7 +82,7 @@ print("only fitted:",len(only_fitted_all))
 #print(fitid1[:100])
 #np.savetxt(cat_dir+"refitid_MINERVA-COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_CATALOG.txt",only_fit_all)
 
-
+'''
 ### remaining sources
 cat_ori4 = "refitid_MINERVA-COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_CATALOG.txt"
 check_dir4 = "/scratch/alpine/ikmi3774/slurm/chains_parrot_COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_spsbeta/COSMOS5/"
@@ -113,3 +116,4 @@ print("=====>",len(fittedid_all))
 print("overlap check:",len(common_all))
 print("only fitting (=remaining):",len(only_fit_all))
 print("only fitted:",len(only_fitted_all))
+'''
