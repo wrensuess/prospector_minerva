@@ -107,9 +107,11 @@ for objid in id_list:
     print(f"{objid}: {'NO PHOT' if n_valid == 0 else 'OK'} ({n_valid} bands)")
     
     if n_valid == 0:
-        n_nophot.appen(objid)
+        n_nophot.append(objid)
         print(f"{objid}: NO PHOT")
 print(f"\nNO PHOT: {len(n_nophot)} / {len(id_list)} ({len(n_nophot) / len(id_list) * 100:.1f}%)")
+
+print(n_nophot)
 
 '''
 ### remaining sources
