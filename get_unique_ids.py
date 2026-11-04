@@ -94,7 +94,7 @@ all_filts = [f[2:] for f in cat.colnames if f.startswith("f_f")]
 filter_dict = ut_cwd.filter_dictionary(all_filts)
 filts = list(filter_dict.keys())
 
-n_nophot = 0
+n_nophot = []
 for objid in id_list:
     match = np.where(cat["id"] == objid)[0]
     if len(match) == 0:
@@ -107,9 +107,9 @@ for objid in id_list:
     print(f"{objid}: {'NO PHOT' if n_valid == 0 else 'OK'} ({n_valid} bands)")
     
     if n_valid == 0:
-        n_nophot += 1
+        n_nophot.appen(objid)
         print(f"{objid}: NO PHOT")
-print(f"\nNO PHOT: {n_nophot} / {len(id_list)} ({n_nophot / len(id_list) * 100:.1f}%)")
+print(f"\nNO PHOT: {len(n_nophot)} / {len(id_list)} ({len(n_nophot) / len(id_list) * 100:.1f}%)")
 
 '''
 ### remaining sources
