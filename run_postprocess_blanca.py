@@ -49,7 +49,7 @@ print(len(ids))
 print(ids)
 
 process = -1
-process = 0
+#process = 0
 
 if process==-1: ### priority node
     njobs = 500
