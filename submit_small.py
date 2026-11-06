@@ -110,8 +110,8 @@ if __name__ == '__main__':
     if "brokenid" in cathead:
         brokenpath = np.load(fitcatalog+".npy")
         brokenids = []
-        print(brokenpath)
-        #pdb.set_trace()
+        print('[INFO] broken fiels:',len(brokenpath))
+        pdb.set_trace()
         for j in range(0,len(brokenpath)):
             print("rm "+brokenpath[j])
             os.system("rm -f "+brokenpath[j])
