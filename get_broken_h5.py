@@ -2,11 +2,13 @@ import h5py, glob, pdb
 from tqdm import tqdm
 import numpy as np
 
-check_dir1 = "/scratch/alpine/ikmi3774/slurm/chains_parrot_COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_spsbeta/COSMOS4/"
-check_dir2 = "/scratch/alpine/ikmi3774/slurm/chains_parrot_COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_spsbeta/COSMOS2/"
-check_dir3 = "/scratch/alpine/ikmi3774/slurm/chains_parrot_COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_spsbeta/COSMOS3/"
-check_dir4 = "/scratch/alpine/ikmi3774/slurm/chains_parrot_COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_spsbeta/COSMOS5/"
-output_name = "chains_parrot_COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_spsbeta/"
+ver = "EGS_n3.0_v1.0"
+
+check_dir1 = "/scratch/alpine/ikmi3774/slurm/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS1/"
+check_dir2 = "/scratch/alpine/ikmi3774/slurm/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS2/"
+check_dir3 = "/scratch/alpine/ikmi3774/slurm/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS3/"
+check_dir4 = "/scratch/alpine/ikmi3774/slurm/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS4/"
+output_name = "chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/"
 
 idlist1 = glob.glob(check_dir1+output_name+"id_*_mcmc_phisfh.h5")
 idlist2 = glob.glob(check_dir2+output_name+"id_*_mcmc_phisfh.h5")
@@ -20,7 +22,7 @@ fittedid_all = np.concatenate([fittedid1,fittedid2,fittedid3,fittedid4])
 fittedpath_all = idlist1+idlist2+idlist3+idlist4
 fittedpathid_all = np.array([int(a.split("/")[-1].split("_")[1]) for a in fittedpath_all])
 
-processed_dir = "/scratch/alpine/ikmi3774/slurm/postprocess_COSMOS_n3.0_v1.0/npz/"
+processed_dir = "/scratch/alpine/ikmi3774/slurm/postprocess_"+ver+"/npz/"
 post1 = glob.glob(processed_dir+"id_*_spec_phisfh.h5")
 post2 = glob.glob(processed_dir+"id_*_perc_phisfh.h5")
 post3 = glob.glob(processed_dir+"id_*_unw_phisfh.h5")
