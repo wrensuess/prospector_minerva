@@ -103,7 +103,7 @@ if __name__ == '__main__':
     fast_dyn = 0 #0:std run, 1:brief run, 2:debug
 
     cujobname = 'brokenfiles_EGS'
-    cathead = 'brokenid'
+    cathead = 'brokenid2'
 
     fitcatalog = catdir+cathead+'_MINERVA-'+field+'_'+ver+'_ACS+WEBB_Kf444w_SUPER_CATALOG.txt' #file includes your objects
     
