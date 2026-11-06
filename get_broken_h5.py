@@ -90,8 +90,9 @@ print("[Info] Number of failed files:",len(failed_ids))
 #print(failed_ids)
 print("[Info] TOTAL-processed =",len(fittedid_all)-len(all_unique))
 
-np.save("./../phot_catalog/brokenid_MINERVA-"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt",np.array(failed_ids))
+#np.save("./../phot_catalog/brokenid_MINERVA-"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt",np.array(failed_ids))
 
+pdb.set_trace()
 
 #################################################################
 ################### for post-processed file #####################
