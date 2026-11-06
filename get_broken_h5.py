@@ -2,7 +2,7 @@ import h5py, glob, pdb
 from tqdm import tqdm
 import numpy as np
 
-ver = "EGS_n3.0_v1.0"
+ver = "EGS_n2.0_v1.3"
 
 check_dir1 = "/scratch/alpine/ikmi3774/slurm/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS1/"
 check_dir2 = "/scratch/alpine/ikmi3774/slurm/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS2/"
