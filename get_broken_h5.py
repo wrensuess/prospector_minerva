@@ -43,7 +43,7 @@ print(not_in_all)
 
 pdb.set_trace()
 
-'''
+
 ##########################################################
 ################### for fitting file #####################
 ##########################################################
@@ -90,8 +90,8 @@ print("[Info] Number of failed files:",len(failed_ids))
 #print(failed_ids)
 print("[Info] TOTAL-processed =",len(fittedid_all)-len(all_unique))
 
-#np.save("./../phot_catalog/brokenid_MINERVA-COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_CATALOG.txt",np.array(failed_ids))
-'''
+#np.save("./../phot_catalog/brokenid_MINERVA-"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt",np.array(failed_ids))
+
 
 #################################################################
 ################### for post-processed file #####################
@@ -166,6 +166,6 @@ print("[Info] Number of failed spec files:",len(failed_ids1))
 print("[Info] Number of failed perc files:",len(failed_ids2))
 print("[Info] Number of failed unw files:",len(failed_ids3))
 
-np.save("./../phot_catalog/brokenspec_MINERVA-"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt",np.array(failed_ids1))
-np.save("./../phot_catalog/brokenperc_MINERVA-"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt",np.array(failed_ids2))
-np.save("./../phot_catalog/brokenunw_MINERVA-"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt",np.array(failed_ids3))
+#np.save("./../phot_catalog/brokenspec_MINERVA-"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt",np.array(failed_ids1))
+#np.save("./../phot_catalog/brokenperc_MINERVA-"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt",np.array(failed_ids2))
+#np.save("./../phot_catalog/brokenunw_MINERVA-"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt",np.array(failed_ids3))
