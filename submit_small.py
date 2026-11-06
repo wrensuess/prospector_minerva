@@ -114,7 +114,7 @@ if __name__ == '__main__':
         #pdb.set_trace()
         for j in range(0,len(brokenpath)):
             print("rm "+brokenpath[j])
-            os.system("rm "+brokenpath[j])
+            os.system("rm -f"+brokenpath[j])
             brokenids.append(int(brokenpath[j].split("/")[-1].split("_")[1]))
         ids_fit = np.array(brokenids)        
     else:
