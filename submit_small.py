@@ -102,8 +102,8 @@ if __name__ == '__main__':
     taskdir = outdir+'task_lists_'+field+"_"+ver
     fast_dyn = 0 #0:std run, 1:brief run, 2:debug
 
-    cujobname = 'unfitfiles_EGS'
-    cathead = 'refitid'
+    cujobname = 'brokenfiles_EGS'
+    cathead = 'brokenid'
 
     fitcatalog = catdir+cathead+'_MINERVA-'+field+'_'+ver+'_ACS+WEBB_Kf444w_SUPER_CATALOG.txt' #file includes your objects
     
@@ -126,8 +126,8 @@ if __name__ == '__main__':
     acc = 'amilian' ### 'priority' or 'preempt' or 'amilian'
     #env = 'prosp'
     env = '/projects/kasu8993/software/anaconda/envs/prosp'
-    njobs = 92 #number of job array, max=1000
-    wtime = int(12) #int(24*7) # time
+    njobs = 1000 #number of job array, max=1000
+    wtime = int(24) #int(24*7) # time
 
     ################################## step 1. sed fit ####################################
     if wmiri == 'no':
