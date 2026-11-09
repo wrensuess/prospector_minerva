@@ -1,6 +1,8 @@
 # NSS + E-FSPS for MINERVA: startup, status, next steps
 
-Handoff guide (2026-11-09) for whoever picks this up next, human or Claude. Read this first.
+Handoff guide (2026-11-09) for whoever picks this up next, human or Claude. Read this first,
+then [`STATUS.md`](STATUS.md) for the whole-project picture: both fitting paths, costs,
+robustness, decisions and ranked next steps.
 The public parts live here, on branch `nss-efsps` of `wrensuess/prospector_minerva`, in
 `nss/`. Unreleased MINERVA photometry and MINERVA-specific results are NOT in this public
 repo; they are in the private handoff folder (see "Data and private files").
