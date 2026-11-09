@@ -1,0 +1,3 @@
+  baseline         wall  138.0 s  cpu/wall 1.75  logZ 47.93835778528128
+  (1) two-point    wall  102.1 s  cpu/wall 4.01  logZ 47.93835778528128
+  (1)+(2) tables   wall   84.1 s  cpu/wall 3.21  logZ 47.93835778528128

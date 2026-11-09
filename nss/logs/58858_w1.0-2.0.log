@@ -1,0 +1,12 @@
+[58858] 26 free params, 20 bands, mu=1.579, n_live=500, num_delete=50, num_inner_steps=52, z_window=[1.0, 2.0], fix_z=None
+  it     50  logZ    -99.43  max logL    233.75  rows     775295      211 s
+  it    100  logZ    202.70  max logL    262.19  rows    1808338      480 s
+  it    150  logZ    243.38  max logL    303.18  rows    3061064      814 s
+  it    200  logZ    281.29  max logL    335.94  rows    4347937     1197 s
+  it    250  logZ    304.72  max logL    354.97  rows    5651732     1496 s
+  it    300  logZ    317.16  max logL    360.64  rows    6985265     1799 s
+  it    350  logZ    324.50  max logL    369.19  rows    8321353     2062 s
+  it    400  logZ    327.39  max logL    372.31  rows    9689657     2312 s
+  it    450  logZ    328.00  max logL    374.98  rows   11196003     2575 s
+[58858] done: logZ 328.13 +- 0.28, max logL 374.98 (chi2 244.6), ESS 4746, 11259578 model rows in 349205 calls, wall 2586 s (2518 s in numpy model)
+[58858] z weight by bin: {'1.5-2': 1.0}; z at max logL 1.648

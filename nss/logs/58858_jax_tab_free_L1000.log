@@ -1,0 +1,8 @@
+[58858] JAX model: 26 free params, 20 bands, n_live=1000, num_delete=100, num_inner_steps=52, seed=0, mass prior tabulated
+  it     50  logZ   -102.87  max logL    353.91     44.7 s
+  it    100  logZ    231.80  max logL    447.47     93.4 s
+  it    150  logZ    408.68  max logL    478.65    141.1 s
+  it    200  logZ    450.93  max logL    484.55    191.0 s
+  it    250  logZ    457.78  max logL    487.36    245.1 s
+[58858] done: logZ 458.65 +- 0.17, max logL 488.61 (chi2 17.3), ESS 7697, 299 iterations, wall 299 s + compile 4 s
+[58858] z weight by bin: {'3.5-4': 0.999976071756918}; z at max logL 3.877

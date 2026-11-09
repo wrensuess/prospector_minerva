@@ -1,0 +1,17 @@
+emulator: w256 (/Users/wren/Projects/MINERVA/efsps-photfit/efsps_photfit/data/v4_n22000000_w256_d5_s0_parrot.npy); quality accurate: n_live 1500, 4 network(s)
+[mockB_z2.8_dusty] PRIOR CLIPPED TO EMULATOR RANGE: zred science [0.001, 15.0] -> [0.01, 15.0] (truncate)
+[mockB_z2.8_dusty] PRIOR CLIPPED TO EMULATOR RANGE: logsfr_ratios_1 science [-5.0, 5.0] -> [-4.0, 4.0] (clip)
+[mockB_z2.8_dusty] PRIOR CLIPPED TO EMULATOR RANGE: logsfr_ratios_2 science [-5.0, 5.0] -> [-4.0, 4.0] (clip)
+[mockB_z2.8_dusty] PRIOR CLIPPED TO EMULATOR RANGE: logsfr_ratios_3 science [-5.0, 5.0] -> [-4.0, 4.0] (clip)
+[mockB_z2.8_dusty] PRIOR CLIPPED TO EMULATOR RANGE: logsfr_ratios_4 science [-5.0, 5.0] -> [-4.0, 4.0] (clip)
+[mockB_z2.8_dusty] PRIOR CLIPPED TO EMULATOR RANGE: logsfr_ratios_5 science [-5.0, 5.0] -> [-4.0, 4.0] (clip)
+[mockB_z2.8_dusty] PRIOR CLIPPED TO EMULATOR RANGE: logsfr_ratios_6 science [-5.0, 5.0] -> [-4.0, 4.0] (clip)
+[mockB_z2.8_dusty] PRIOR CLIPPED TO EMULATOR RANGE: logsfr_ratios_7 science [-5.0, 5.0] -> [-4.0, 4.0] (clip)
+[mockB_z2.8_dusty] PRIOR CLIPPED TO EMULATOR RANGE: logsfr_ratios_8 science [-5.0, 5.0] -> [-4.0, 4.0] (clip)
+[mockB_z2.8_dusty] PRIOR CLIPPED TO EMULATOR RANGE: logsfr_ratios_9 science [-5.0, 5.0] -> [-4.0, 4.0] (clip)
+[mockB_z2.8_dusty] PRIOR CLIPPED TO EMULATOR RANGE: dust_index science [-2.0, 0.5] -> [-1.0, 0.4] (truncate)
+[mockB_z2.8_dusty] PRIOR CLIPPED TO EMULATOR RANGE: duste_qpah science [0.5, 7.0] -> [0.5, 4.58] (truncate)
+[mockB_z2.8_dusty] 26 free parameters, 27/27 bands used, mu=1.000, net=w256, quality=accurate (n_live=1500, n_networks=4), pool=1, seed=653529064
+[mockB_z2.8_dusty] kept 99801 of 166181 posterior points (weight > 1e-06 x max); dropped weight 5.11e-06
+[mockB_z2.8_dusty] final output verified complete; checkpoint deleted
+[mockB_z2.8_dusty] done: wall 2243.7 s (sampling 2201.4 s), 166400 likelihood calls, n_eff 12252, log Z 683.34

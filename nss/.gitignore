@@ -1,0 +1,13 @@
+# Large results stay out of git (they live on Blanca / the analysis machine)
+blanca_runs/
+nautilus/
+smoke/
+results/*.npz
+!results/58858_free_L1000.npz
+!results/58858_jax_free_L1000.npz
+# Unreleased MINERVA photometry: private handoff folder only, never this public repo
+minerva_*.fits
+*.fits
+__pycache__/
+*.pyc
+.DS_Store

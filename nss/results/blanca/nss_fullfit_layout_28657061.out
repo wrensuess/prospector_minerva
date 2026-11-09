@@ -1,0 +1,42 @@
+Welcome to University of Colorado Boulder Research Computing!
+
+Full documentation is available in our user guide at
+https://www.rc.colorado.edu/support/user-guide. If you have a question
+that's not answered there, contact us at rc-help@colorado.edu.
+
+A number of directories have been created for you already:
+
+* `/home/$USER`, your home directory
+* `/projects/$USER`, your project directory
+  
+Run the command `module avail` to see a list of available software.
+
+To prevent this README from being displayed at login, edit your
+`.bash_profile` or `.login` files.
+===== Thu Oct  8 13:14:38 MDT 2026 on bnode0414.rc.int.colorado.edu, job 28657061, restart 0, BIND=''
+CPU:  Intel(R) Xeon(R) Gold 6130 CPU @ 2.10GHz; node CPUs 64; job allowed 1
+===== per-fit results
+fit          logZ   err     z50  logM50  wall s compile RSS GB  CPU%
+seed0      458.36  0.14   3.877   8.428    3937    19.8   1.72   179
+seed1      457.86  0.15   3.877   8.535    3948    19.6   1.62   179
+seed10     458.21  0.18   3.878   8.405    3940    20.6   1.71   179
+seed11     458.33  0.16   3.879   8.397    3969    19.7   1.71   179
+seed12     457.59  0.14   3.878   8.593    3953    19.6   1.66   179
+seed13     457.03  0.17   3.879   8.750    4125    19.5   1.69   180
+seed14     458.17  0.16   3.877   8.448    3926    19.8   1.71   179
+seed15     457.54  0.15   3.877   8.417    4108    19.8   1.74   179
+seed16     459.13  0.17   3.875   8.346    3819    19.8    1.7   180
+seed17     457.57  0.17   3.877   8.512    4026    19.5   1.67   180
+seed18     457.15  0.16   3.876   8.540    4109    19.5   1.69   180
+seed19     458.24  0.15   3.878   8.468    3887    19.8   1.72   180
+seed2      458.36  0.17   3.879   8.739    3928    19.7    1.7   179
+seed3      457.59  0.16   3.877   8.301    4276    19.5   1.74   179
+seed4      456.22  0.18   3.876   8.557    4203    19.6   1.69   179
+seed5      458.15  0.18   3.878   8.549    4234    19.5   1.64   179
+seed6      458.90  0.18   3.880   8.272    4056    19.3   1.65   179
+seed7      458.19  0.16   3.879   8.560    3904    19.5   1.63   179
+seed8      457.21  0.15   3.878   8.571    4070    19.6   1.72   180
+seed9      458.09  0.15   3.880   8.633    3925    19.9    1.7   179
+
+20 fits: logZ mean 457.90, scatter 0.67 (mean quoted err 0.16); wall median 3961 s, range 3819-4276 s
+===== Thu Oct  8 14:26:39 MDT 2026 done

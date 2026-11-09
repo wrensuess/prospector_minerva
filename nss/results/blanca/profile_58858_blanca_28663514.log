@@ -1,0 +1,16 @@
+jax 0.10.2, blackjax 1.7.1; host bhpc-c7-u31-7.rc.int.colorado.edu, CPU Intel(R) Xeon(R) Gold 6254 CPU @ 3.10GHz; affinity [34] of 36 CPUs = 1 physical core(s); OS threads after the first jit: 15
+
+== A. counts over the first 60 iterations
+  46564 batched calls (776 per iteration, 14.9 per inner step), 4657300 lanes
+  lanes inside the cube 2281122 (49.0%)
+  lanes the chains needed (2 + expansions + shrinks) 1625140 (34.9% of computed); per chain-step mean expansions 0.49, shrinks 2.72 (max 4, 22)
+
+== B. in-context timing, 60 iterations per variant
+  baseline   wall   595.1 s  cpu/wall 1.00  logZ 47.938357785280665  (compile 13.0 s)
+  tabulated  wall    58.8 s  cpu/wall 1.00  logZ 46.48233590755864  (compile 11.9 s)
+  baseline   wall   594.5 s  cpu/wall 1.00  logZ 47.938357785280665  (compile 13.1 s)
+  tabulated  wall    58.6 s  cpu/wall 1.00  logZ 46.48233590755864  (compile 11.6 s)
+
+  baseline mean 594.8 s; cost of each component inside the step:
+    tabulated   -536.0 s  (10.11x faster than baseline)
+    tabulated   -536.3 s  (10.16x faster than baseline)

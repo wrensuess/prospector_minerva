@@ -1,0 +1,41 @@
+Welcome to University of Colorado Boulder Research Computing!
+
+Full documentation is available in our user guide at
+https://www.rc.colorado.edu/support/user-guide. If you have a question
+that's not answered there, contact us at rc-help@colorado.edu.
+
+A number of directories have been created for you already:
+
+* `/home/$USER`, your home directory
+* `/projects/$USER`, your project directory
+  
+Run the command `module avail` to see a list of available software.
+
+To prevent this README from being displayed at login, edit your
+`.bash_profile` or `.login` files.
+===== Thu Oct  8 12:01:22 MDT 2026 on blanca-g4-u10-1.rc.int.colorado.edu, job 28655543
+CPU:  AMD EPYC 7713P 64-Core Processor
+nproc: 1; affinity: pid 359128's current affinity list: 49
+jax 0.10.2 blackjax 1.7.1 numpy 2.4.6 scipy 1.17.1
+partition blanca, qos preemptable, restart count 0
+===== numerics tests (reduced size)
+RESULT: PASS
+RESULT: PASS
+===== profile --skip-micro --variants baseline fix_twopoint fix_tables baseline
+jax 0.10.2, blackjax 1.7.1; host blanca-g4-u10-1.rc.int.colorado.edu, CPU AMD EPYC 7713P 64-Core Processor; affinity [49] of 64 CPUs = 1 physical core(s); OS threads after the first jit: 15
+
+== A. counts over the first 60 iterations
+  46564 batched calls (776 per iteration, 14.9 per inner step), 4657300 lanes
+  lanes inside the cube 2281122 (49.0%)
+  lanes the chains needed (2 + expansions + shrinks) 1625140 (34.9% of computed); per chain-step mean expansions 0.49, shrinks 2.72 (max 4, 22)
+
+== B. in-context timing, 60 iterations per variant
+  baseline   wall   567.6 s  cpu/wall 1.00  logZ 47.938357785281326  (compile 14.7 s)
+  fix_twopoint wall  1031.1 s  cpu/wall 1.00  logZ 47.938357785281326  (compile 16.1 s)
+  fix_tables wall   648.6 s  cpu/wall 1.00  logZ 47.938357785281326  (compile 14.7 s)
+  baseline   wall   566.7 s  cpu/wall 1.00  logZ 47.938357785281326  (compile 14.6 s)
+
+  baseline mean 567.1 s; cost of each component inside the step:
+    fix_twopoint  +463.9 s  (0.55x faster than baseline)
+    fix_tables   +81.4 s  (0.87x faster than baseline)
+===== Thu Oct  8 13:10:48 MDT 2026 done

@@ -1,0 +1,55 @@
+{
+ "n_it": 60,
+ "jax": "0.10.2",
+ "blackjax": "1.7.1",
+ "affinity": [
+  16
+ ],
+ "physical_cores": 1,
+ "cpu_count": 36,
+ "cpu_model": "Intel(R) Xeon(R) Gold 6150 CPU @ 2.70GHz",
+ "os_threads_after_first_jit": 15,
+ "host": "bhpc-c7-u19-17.rc.int.colorado.edu",
+ "slurm_job": "28655534",
+ "counts": {
+  "calls": 46564,
+  "lanes": 4657300,
+  "lanes_inside_cube": 2281122,
+  "lanes_needed": 1625140,
+  "logZ": 47.938357785280665,
+  "mean_expansions": 0.4905576923076923,
+  "mean_shrinks": 2.718224358974359,
+  "max_expansions": 4,
+  "max_shrinks": 22
+ },
+ "variants": [
+  {
+   "name": "baseline",
+   "wall": 952.3486956919951,
+   "cpu": 945.2559892839998,
+   "logZ": 47.938357785280665,
+   "compile": 20.28715176298283
+  },
+  {
+   "name": "fix_twopoint",
+   "wall": 1742.2923927619995,
+   "cpu": 1730.180614552,
+   "logZ": 47.938357785280665,
+   "compile": 22.291762109991396
+  },
+  {
+   "name": "fix_tables",
+   "wall": 1153.3469158399967,
+   "cpu": 1145.7803311650005,
+   "logZ": 47.938357785280665,
+   "compile": 20.091909127979307
+  },
+  {
+   "name": "baseline",
+   "wall": 942.6139083809976,
+   "cpu": 935.8637845950007,
+   "logZ": 47.938357785280665,
+   "compile": 19.082994272001088
+  }
+ ]
+}

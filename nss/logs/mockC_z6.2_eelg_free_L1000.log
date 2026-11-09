@@ -1,0 +1,7 @@
+[mockC_z6.2_eelg] 26 free params, 27 bands, mu=1.000, n_live=1000, num_delete=100, num_inner_steps=52, z_window=None, fix_z=None
+  it     50  logZ    548.31  max logL    660.91  rows    1829058      326 s
+  it    100  logZ    638.74  max logL    690.99  rows    4301595      751 s
+  it    150  logZ    666.63  max logL    694.38  rows    7030384     1286 s
+  it    200  logZ    672.90  max logL    695.23  rows    9540199     1857 s
+[mockC_z6.2_eelg] done: logZ 673.29 +- 0.13, max logL 695.74 (chi2 20.6), ESS 6357, 11372193 model rows in 189868 calls, wall 2264 s (2222 s in numpy model)
+[mockC_z6.2_eelg] z weight by bin: {'5-6': 0.01642731071654132, '6-7': 0.9835709132487653}; z at max logL 6.166

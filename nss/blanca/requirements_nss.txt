@@ -1,0 +1,10 @@
+# The versions the pure-JAX NSS model was validated with on the Mac (nssenv), 2026-10-08.
+# blackjax >= 1.7 is required: 1.2.x has no blackjax.ns (nested slice sampling).
+# Python 3.11.
+jax==0.10.2
+jaxlib==0.10.2
+blackjax==1.7.1
+numpy==2.4.6
+scipy==1.17.1
+astropy==8.0.1
+h5py==3.16.0

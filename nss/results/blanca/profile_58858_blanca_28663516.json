@@ -1,0 +1,55 @@
+{
+ "n_it": 60,
+ "jax": "0.10.2",
+ "blackjax": "1.7.1",
+ "affinity": [
+  48
+ ],
+ "physical_cores": 1,
+ "cpu_count": 64,
+ "cpu_model": "AMD EPYC 7713P 64-Core Processor",
+ "os_threads_after_first_jit": 15,
+ "host": "blanca-g4-u10-1.rc.int.colorado.edu",
+ "slurm_job": "28663516",
+ "counts": {
+  "calls": 46564,
+  "lanes": 4657300,
+  "lanes_inside_cube": 2281122,
+  "lanes_needed": 1625140,
+  "logZ": 47.938357785281326,
+  "mean_expansions": 0.4905576923076923,
+  "mean_shrinks": 2.718224358974359,
+  "max_expansions": 4,
+  "max_shrinks": 22
+ },
+ "variants": [
+  {
+   "name": "baseline",
+   "wall": 565.4184811279993,
+   "cpu": 564.380663168,
+   "logZ": 47.938357785281326,
+   "compile": 14.675641234993236
+  },
+  {
+   "name": "tabulated",
+   "wall": 84.51985117400181,
+   "cpu": 84.34400491199995,
+   "logZ": 46.48233590755727,
+   "compile": 13.474628317999304
+  },
+  {
+   "name": "baseline",
+   "wall": 565.9185981379997,
+   "cpu": 564.866222801,
+   "logZ": 47.938357785281326,
+   "compile": 14.67129631600983
+  },
+  {
+   "name": "tabulated",
+   "wall": 84.57629997500044,
+   "cpu": 84.399226279,
+   "logZ": 46.48233590755727,
+   "compile": 13.463794434996089
+  }
+ ]
+}

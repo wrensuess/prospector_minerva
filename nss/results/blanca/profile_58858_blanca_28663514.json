@@ -1,0 +1,55 @@
+{
+ "n_it": 60,
+ "jax": "0.10.2",
+ "blackjax": "1.7.1",
+ "affinity": [
+  34
+ ],
+ "physical_cores": 1,
+ "cpu_count": 36,
+ "cpu_model": "Intel(R) Xeon(R) Gold 6254 CPU @ 3.10GHz",
+ "os_threads_after_first_jit": 15,
+ "host": "bhpc-c7-u31-7.rc.int.colorado.edu",
+ "slurm_job": "28663514",
+ "counts": {
+  "calls": 46564,
+  "lanes": 4657300,
+  "lanes_inside_cube": 2281122,
+  "lanes_needed": 1625140,
+  "logZ": 47.938357785280665,
+  "mean_expansions": 0.4905576923076923,
+  "mean_shrinks": 2.718224358974359,
+  "max_expansions": 4,
+  "max_shrinks": 22
+ },
+ "variants": [
+  {
+   "name": "baseline",
+   "wall": 595.1158460310253,
+   "cpu": 593.9026979839999,
+   "logZ": 47.938357785280665,
+   "compile": 12.950963069015415
+  },
+  {
+   "name": "tabulated",
+   "wall": 58.814219970983686,
+   "cpu": 58.61163817700003,
+   "logZ": 46.48233590755864,
+   "compile": 11.936392716976115
+  },
+  {
+   "name": "baseline",
+   "wall": 594.5257562980114,
+   "cpu": 593.245863484,
+   "logZ": 47.938357785280665,
+   "compile": 13.05754094599979
+  },
+  {
+   "name": "tabulated",
+   "wall": 58.55442659801338,
+   "cpu": 58.35490563899998,
+   "logZ": 46.48233590755864,
+   "compile": 11.592568243009737
+  }
+ ]
+}

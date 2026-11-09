@@ -1,0 +1,55 @@
+{
+ "n_it": 60,
+ "jax": "0.10.2",
+ "blackjax": "1.7.1",
+ "affinity": [
+  20
+ ],
+ "physical_cores": 1,
+ "cpu_count": 40,
+ "cpu_model": "Intel(R) Xeon(R) Gold 6230 CPU @ 2.10GHz",
+ "os_threads_after_first_jit": 15,
+ "host": "bhpc-c5-u7-23.rc.int.colorado.edu",
+ "slurm_job": "28663515",
+ "counts": {
+  "calls": 46564,
+  "lanes": 4657300,
+  "lanes_inside_cube": 2281122,
+  "lanes_needed": 1625140,
+  "logZ": 47.938357785280665,
+  "mean_expansions": 0.4905576923076923,
+  "mean_shrinks": 2.718224358974359,
+  "max_expansions": 4,
+  "max_shrinks": 22
+ },
+ "variants": [
+  {
+   "name": "baseline",
+   "wall": 608.4580844509765,
+   "cpu": 607.198085303,
+   "logZ": 47.938357785280665,
+   "compile": 13.468694602983305
+  },
+  {
+   "name": "tabulated",
+   "wall": 87.14163558301516,
+   "cpu": 86.4542271979999,
+   "logZ": 46.48233590755864,
+   "compile": 12.528915190981934
+  },
+  {
+   "name": "baseline",
+   "wall": 679.3540883679816,
+   "cpu": 676.540972668,
+   "logZ": 47.938357785280665,
+   "compile": 23.01295608302462
+  },
+  {
+   "name": "tabulated",
+   "wall": 57.76802822900936,
+   "cpu": 57.55849424500002,
+   "logZ": 46.48233590755864,
+   "compile": 12.470128407992888
+  }
+ ]
+}

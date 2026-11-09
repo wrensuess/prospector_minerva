@@ -1,0 +1,43 @@
+Welcome to University of Colorado Boulder Research Computing!
+
+Full documentation is available in our user guide at
+https://www.rc.colorado.edu/support/user-guide. If you have a question
+that's not answered there, contact us at rc-help@colorado.edu.
+
+A number of directories have been created for you already:
+
+* `/home/$USER`, your home directory
+* `/projects/$USER`, your project directory
+  
+Run the command `module avail` to see a list of available software.
+
+To prevent this README from being displayed at login, edit your
+`.bash_profile` or `.login` files.
+===== Thu Oct  8 15:38:18 MDT 2026 on blanca-g4-u26-2.rc.int.colorado.edu, job 28663518
+CPU:  Intel(R) Xeon(R) Gold 5418Y
+nproc: 1; affinity: pid 385441's current affinity list: 35
+jax 0.10.2 blackjax 1.7.1 numpy 2.4.6 scipy 1.17.1
+partition blanca, qos preemptable, restart count 0
+===== numerics tests (reduced size)
+RESULT: PASS
+RESULT: PASS
+RESULT: PASS
+RESULT: PASS
+===== profile --skip-micro --variants baseline tabulated baseline tabulated
+jax 0.10.2, blackjax 1.7.1; host blanca-g4-u26-2.rc.int.colorado.edu, CPU Intel(R) Xeon(R) Gold 5418Y; affinity [35] of 48 CPUs = 1 physical core(s); OS threads after the first jit: 15
+
+== A. counts over the first 60 iterations
+  46564 batched calls (776 per iteration, 14.9 per inner step), 4657300 lanes
+  lanes inside the cube 2281122 (49.0%)
+  lanes the chains needed (2 + expansions + shrinks) 1625140 (34.9% of computed); per chain-step mean expansions 0.49, shrinks 2.72 (max 4, 22)
+
+== B. in-context timing, 60 iterations per variant
+  baseline   wall   612.1 s  cpu/wall 1.00  logZ 47.93835778528247  (compile 29.3 s)
+  tabulated  wall   114.6 s  cpu/wall 1.00  logZ 46.48233590755803  (compile 27.0 s)
+  baseline   wall   576.1 s  cpu/wall 1.00  logZ 47.93835778528247  (compile 30.5 s)
+  tabulated  wall   102.7 s  cpu/wall 1.00  logZ 46.48233590755803  (compile 26.6 s)
+
+  baseline mean 594.1 s; cost of each component inside the step:
+    tabulated   -479.5 s  (5.18x faster than baseline)
+    tabulated   -491.4 s  (5.79x faster than baseline)
+===== Thu Oct  8 16:37:21 MDT 2026 done

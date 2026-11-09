@@ -1,0 +1,37 @@
+jax 0.10.2, blackjax 1.7.1; host bgpu-casa1, CPU Intel(R) Xeon(R) Gold 6230 CPU @ 2.10GHz; affinity [0, 40] of 80 CPUs = 1 physical core(s); OS threads after the first jit: 20
+note: 2 hyperthreads of ONE physical core (--hint=nomultithread on a hyperthreaded node); XLA will use both, as production fits would.
+== C. micro-benchmarks at batch 100 (posterior-region u)
+  full log L(u)                    10154.5 us/call  101.54 us/row cores 1.87
+    prior transform                 8559.8 us/call   85.60 us/row cores 1.98
+      z inverse CDF                   65.6 us/call    0.66 us/row cores 1.00
+      mass inverse CDF (all)        8499.5 us/call   84.99 us/row cores 1.98
+        mass function on grid       8418.8 us/call   84.19 us/row cores 1.87
+        sequential cumsum            302.3 us/call    3.02 us/row cores 3.17
+      expected SFH ratios             91.1 us/call    0.91 us/row cores 1.62
+    network f_net(theta)            1254.4 us/call   12.54 us/row cores 1.57
+    network + likelihood            1278.2 us/call   12.78 us/row cores 2.04
+
+== A. counts over the first 60 iterations
+  46564 batched calls (776 per iteration, 14.9 per inner step), 4657300 lanes
+  lanes inside the cube 2281122 (49.0%)
+  lanes the chains needed (2 + expansions + shrinks) 1625140 (34.9% of computed); per chain-step mean expansions 0.49, shrinks 2.72 (max 4, 22)
+
+== B. in-context timing, 60 iterations per variant
+  baseline   wall   496.2 s  cpu/wall 1.80  logZ 47.938357785282236  (compile 10.9 s)
+  loglike    wall  1033.8 s  cpu/wall 1.62  logZ 47.938357785282236  (compile 18.5 s)
+  prior      wall  1008.8 s  cpu/wall 1.59  logZ 47.938357785282236  (compile 16.5 s)
+  mass       wall  1165.3 s  cpu/wall 1.63  logZ 47.938357785282236  (compile 14.7 s)
+  mass_pdf   wall  1090.1 s  cpu/wall 1.90  logZ 47.938357785282236  (compile 13.9 s)
+  network    wall   665.0 s  cpu/wall 1.82  logZ 47.938357785282236  (compile 12.9 s)
+  fix_twopoint wall  1104.7 s  cpu/wall 1.97  logZ 47.938357785282236  (compile 13.6 s)
+  fix_tables wall   864.9 s  cpu/wall 1.95  logZ 47.938357785282236  (compile 12.5 s)
+  baseline   wall   762.9 s  cpu/wall 1.80  logZ 47.938357785282236  (compile 18.3 s)
+
+  baseline mean 629.6 s; cost of each component inside the step:
+    loglike      404.3 s  ( 64.2% of baseline),  8682.4 us per batched call
+    prior        379.2 s  ( 60.2% of baseline),  8144.7 us per batched call
+    mass         535.7 s  ( 85.1% of baseline), 11504.4 us per batched call
+    mass_pdf     460.6 s  ( 73.2% of baseline),  9890.9 us per batched call
+    network       35.5 s  (  5.6% of baseline),   762.0 us per batched call
+    fix_twopoint  +475.1 s  (0.57x faster than baseline)
+    fix_tables  +235.3 s  (0.73x faster than baseline)

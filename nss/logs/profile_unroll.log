@@ -1,0 +1,5 @@
+unroll 10: cumsum bitwise identical to unroll=1: True
+unroll 50: cumsum bitwise identical to unroll=1: True
+unroll  10: wall  146.6 s cpu/wall 1.88 logZ 47.93835778528128 compile 3.1 s
+unroll  50: wall  152.7 s cpu/wall 1.86 logZ 47.93835778528128 compile 3.6 s
+unroll   1: wall  132.6 s cpu/wall 1.77 logZ 47.93835778528128 compile 3.2 s

@@ -1,0 +1,41 @@
+Welcome to University of Colorado Boulder Research Computing!
+
+Full documentation is available in our user guide at
+https://www.rc.colorado.edu/support/user-guide. If you have a question
+that's not answered there, contact us at rc-help@colorado.edu.
+
+A number of directories have been created for you already:
+
+* `/home/$USER`, your home directory
+* `/projects/$USER`, your project directory
+  
+Run the command `module avail` to see a list of available software.
+
+To prevent this README from being displayed at login, edit your
+`.bash_profile` or `.login` files.
+===== Thu Oct  8 11:41:13 MDT 2026 on bgpu-g6-u34, job 28652089
+CPU:  AMD EPYC 9354 32-Core Processor
+nproc: 1; affinity: pid 810804's current affinity list: 61
+jax 0.10.2 blackjax 1.7.1 numpy 2.4.6 scipy 1.17.1
+partition blanca, qos preemptable, restart count 0
+===== numerics tests (reduced size)
+RESULT: PASS
+RESULT: PASS
+===== profile --skip-micro --variants baseline fix_twopoint fix_tables baseline
+jax 0.10.2, blackjax 1.7.1; host bgpu-g6-u34, CPU AMD EPYC 9354 32-Core Processor; affinity [61] of 64 CPUs = 1 physical core(s); OS threads after the first jit: 15
+
+== A. counts over the first 60 iterations
+  46564 batched calls (776 per iteration, 14.9 per inner step), 4657300 lanes
+  lanes inside the cube 2281122 (49.0%)
+  lanes the chains needed (2 + expansions + shrinks) 1625140 (34.9% of computed); per chain-step mean expansions 0.49, shrinks 2.72 (max 4, 22)
+
+== B. in-context timing, 60 iterations per variant
+  baseline   wall   405.3 s  cpu/wall 1.00  logZ 47.938357785280665  (compile 13.8 s)
+  fix_twopoint wall   713.7 s  cpu/wall 1.00  logZ 47.938357785280665  (compile 12.0 s)
+  fix_tables wall   450.7 s  cpu/wall 1.00  logZ 47.938357785280665  (compile 10.5 s)
+  baseline   wall   403.6 s  cpu/wall 1.00  logZ 47.938357785280665  (compile 10.5 s)
+
+  baseline mean 404.5 s; cost of each component inside the step:
+    fix_twopoint  +309.2 s  (0.57x faster than baseline)
+    fix_tables   +46.2 s  (0.90x faster than baseline)
+===== Thu Oct  8 12:29:04 MDT 2026 done

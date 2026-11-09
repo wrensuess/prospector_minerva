@@ -1,0 +1,4 @@
+[mockA_z4.5_dusty] 26 free params, 27 bands, mu=1.000, n_live=1000, num_delete=100, num_inner_steps=52, z_window=None, fix_z=None
+  it     50  logZ    473.14  max logL    675.29  rows    1791031      320 s
+  it    100  logZ    659.76  max logL    690.04  rows    4573080      798 s
+  it    150  logZ    669.87  max logL    693.35  rows    8332500     1579 s

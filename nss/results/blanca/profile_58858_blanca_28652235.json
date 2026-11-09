@@ -1,0 +1,55 @@
+{
+ "n_it": 60,
+ "jax": "0.10.2",
+ "blackjax": "1.7.1",
+ "affinity": [
+  63
+ ],
+ "physical_cores": 1,
+ "cpu_count": 64,
+ "cpu_model": "AMD EPYC 9354 32-Core Processor",
+ "os_threads_after_first_jit": 15,
+ "host": "bgpu-g6-u34",
+ "slurm_job": "28652235",
+ "counts": {
+  "calls": 46564,
+  "lanes": 4657300,
+  "lanes_inside_cube": 2281122,
+  "lanes_needed": 1625140,
+  "logZ": 47.938357785280665,
+  "mean_expansions": 0.4905576923076923,
+  "mean_shrinks": 2.718224358974359,
+  "max_expansions": 4,
+  "max_shrinks": 22
+ },
+ "variants": [
+  {
+   "name": "baseline",
+   "wall": 404.57254472299246,
+   "cpu": 403.339959158,
+   "logZ": 47.938357785280665,
+   "compile": 12.613697274005972
+  },
+  {
+   "name": "fix_twopoint",
+   "wall": 711.8882815299876,
+   "cpu": 709.9730507410001,
+   "logZ": 47.938357785280665,
+   "compile": 11.11701341700973
+  },
+  {
+   "name": "fix_tables",
+   "wall": 450.4737335690006,
+   "cpu": 449.28008371399983,
+   "logZ": 47.938357785280665,
+   "compile": 10.27332731000206
+  },
+  {
+   "name": "baseline",
+   "wall": 403.6669458760007,
+   "cpu": 402.22562067100034,
+   "logZ": 47.938357785280665,
+   "compile": 10.5648521539988
+  }
+ ]
+}

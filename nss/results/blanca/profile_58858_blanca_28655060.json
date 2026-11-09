@@ -1,0 +1,55 @@
+{
+ "n_it": 60,
+ "jax": "0.10.2",
+ "blackjax": "1.7.1",
+ "affinity": [
+  45
+ ],
+ "physical_cores": 1,
+ "cpu_count": 48,
+ "cpu_model": "Intel(R) Xeon(R) Gold 5418Y",
+ "os_threads_after_first_jit": 15,
+ "host": "blanca-g4-u14-3.rc.int.colorado.edu",
+ "slurm_job": "28655060",
+ "counts": {
+  "calls": 46564,
+  "lanes": 4657300,
+  "lanes_inside_cube": 2281122,
+  "lanes_needed": 1625140,
+  "logZ": 47.93835778528247,
+  "mean_expansions": 0.4905576923076923,
+  "mean_shrinks": 2.718224358974359,
+  "max_expansions": 4,
+  "max_shrinks": 22
+ },
+ "variants": [
+  {
+   "name": "baseline",
+   "wall": 501.76792668500275,
+   "cpu": 500.659202744,
+   "logZ": 47.93835778528247,
+   "compile": 14.704534863994922
+  },
+  {
+   "name": "fix_twopoint",
+   "wall": 857.6764603069896,
+   "cpu": 855.9612319080002,
+   "logZ": 47.93835778528247,
+   "compile": 15.967021122996812
+  },
+  {
+   "name": "fix_tables",
+   "wall": 554.0716581550078,
+   "cpu": 552.9120522119999,
+   "logZ": 47.93835778528247,
+   "compile": 14.708019965997664
+  },
+  {
+   "name": "baseline",
+   "wall": 508.1606989779975,
+   "cpu": 507.03023503199984,
+   "logZ": 47.93835778528247,
+   "compile": 14.777618212989182
+  }
+ ]
+}

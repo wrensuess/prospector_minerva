@@ -1,0 +1,6 @@
+[mockB_z2.8_dusty] 26 free params, 27 bands, mu=1.000, n_live=1000, num_delete=100, num_inner_steps=52, z_window=None, fix_z=None
+  it     50  logZ    543.91  max logL    696.08  rows    1790269      319 s
+  it    100  logZ    681.36  max logL    697.30  rows    4387464      764 s
+  it    150  logZ    684.24  max logL    698.75  rows    7451201     1377 s
+[mockB_z2.8_dusty] done: logZ 684.30 +- 0.10, max logL 699.01 (chi2 5.6), ESS 5361, 7928857 model rows in 131969 calls, wall 1493 s (1465 s in numpy model)
+[mockB_z2.8_dusty] z weight by bin: {'0.5-1': 0.0015526842178369225, '1-1.5': 0.09022486715706451, '1.5-2': 0.4226260999996688, '2-2.5': 0.2558729587064914, '2.5-3': 0.2192497031818884, '3-3.5': 0.010131639095477705, '3.5-4': 0.0002887104786359783}; z at max logL 2.767
