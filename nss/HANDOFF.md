@@ -37,6 +37,14 @@ export EFSPS_PARENT=$PWD/efsps-photfit   # every script finds efsps-photfit (and
 `requirements_nss.txt` pins jax/jaxlib 0.10.2, **blackjax 1.7.1** (1.2.x has no `blackjax.ns`),
 numpy 2.4.6, scipy 1.17.1, astropy 8.0.1, h5py 3.16.0. Python 3.11.
 
+**Intel Mac:** the pip recipe above fails, because PyPI has no Intel-macOS jaxlib after 0.4.38
+and blackjax >= 1.4 needs jaxlib >= 0.9 (blackjax 1.3, the last to install, has no
+`blackjax.ns`). conda-forge still builds them, so use a conda env with the same pins
+(validated 2026-11-09: all numerics tests pass, matching the Apple-silicon logs):
+```bash
+conda create -y -p ~/envs/nss -c conda-forge --override-channels python=3.11 jax=0.10.2 jaxlib=0.10.2 blackjax=1.7.1 numpy=2.4.6 scipy=1.17.1 astropy=8.0.1 h5py=3.16.0
+```
+
 Quick check (minutes, from `nss/`): `python test_tabulated_mass_prior.py`,
 `python test_jax_loglike.py --n 2000 --n-fixed 200`, `python test_jax_prior.py --n 5000 --n-fixed 500`.
 Each must end `RESULT: PASS`. Then a 1-second NSS smoke run:
@@ -54,7 +62,10 @@ For MINERVA galaxies, copy `minerva_uds_test9.fits` from the private folder into
 | `jax_model.py` | `JaxLogLike`: prior transform + w256 emulator + efsps Gaussian likelihood, pure JAX. |
 | `photometry.py` | One reader for UNCOVER and MINERVA SUPER catalogues (FITS) and efsps CSV. mu = 1 if no `mu` column; drops F098M (no emulator band); masks fluxes < -5 sigma (as prospector does). |
 | `nss_efsps.py` | Original numpy-callback NSS prototype; also `build()` (FitModel from photometry, emulator path). |
-| `nss_jax.py` | **The runner**: NSS with the pure-JAX likelihood. Summary JSON records settings, photometry handling, emulator md5. |
+| `nss_jax.py` | **The runner**: NSS with the pure-JAX likelihood. Summary JSON records settings, photometry handling, emulator md5. Starts from the best n_live of 1e6 prior draws by default (`--n-prior-start`; 0 = standard start); see §5. |
+| `test_prior_start.py` | Known-answer toys (10-d, logZ = 0, two-mode bottlenecks) for the prior start's evidence bookkeeping and mode loss. |
+| `prior_start_check.py` | Offline diagnostic: share of the best n_live of N prior draws near a target redshift, for N = 1e3..1e7 (finds a galaxy's volume bottleneck without sampling). |
+| `analyze_prior_start.py` | Prior-start vs standard runs on the agreed criteria (found rate, logZ, median shifts, iterations/time). |
 | `test_jax_prior.py`, `test_jax_loglike.py`, `test_tabulated_mass_prior.py` | Numerics tests vs numpy, by redshift bin, `--catalog/--id/--mass-prior`. Run before trusting any change. |
 | `profile_nss.py` | Where the time goes inside the real NSS step (component doubling, lane counts, variants). |
 | `analyze_inner_steps.py` | Convergence analysis of 20-seed runs (logZ scatter vs quoted error, parameter-median scatter, shift vs a reference setting). |
@@ -90,9 +101,44 @@ EPYC 7713P 45). ~230-365 iterations per fit at 1000 live points. At the median C
   galaxy has two genuine redshift solutions that runs weight inconsistently.
 - Per-galaxy numbers are in the private folder (`PRIVATE_STATUS.md`).
 
+**Update 2026-11-09: prior start (fixes the redshift discovery failures; now the default)**
+- Cause, found with `prior_start_check.py`: the failing galaxy's correct solution holds only
+  ~0.4% of the constrained prior volume over a stretch early in the run (~4 of 1000 live
+  points), so runs lose it by chance. The share recovers later (7% by 1e7 prior draws). The
+  other test galaxies never fall below ~1% and never failed. The starting points do not
+  decide the outcome: the same initial set succeeds at some inner-step settings and fails at
+  others.
+- Fix (`nss_jax.py --n-prior-start N`, default 1e6): draw N prior points, delete the worst
+  N - n_live without replacement (no MCMC; this compresses ln(N/n_live) nats almost for free),
+  run NSS from the best n_live. This is nested sampling with a live set that shrinks from N to
+  n_live, so it is valid. The handover volume is X_h ~ Beta(n_live + 1, N - n_live), sampled
+  per Monte Carlo draw; the NSS phase uses blackjax's weights scaled by X_h.
+- Toys (`test_prior_start.py`, `logs/test_prior_start_toys.log`): logZ unbiased at every
+  start. Lost mode 15/30 -> 1/30 and 28/30 -> 3/30 at 1e7. 30-50% fewer iterations.
+- Blanca, 9 MINERVA galaxies x 20 seeds, 130 inner steps, 1e6 and 1e7:
+  - the failing galaxy found its redshift in 20/20 (standard 11/20);
+  - no harm elsewhere: wrong-z runs unchanged or fewer; logZ within 2 combined SE at 1e6;
+    median-shift tests at the chance rate, none surviving Bonferroni;
+  - 20-30% fewer iterations at the same cost per iteration. The 1e6 draws take ~30 s on one
+    core; 1e7 takes 3-6 min, so it saves less overall. Hence 1e6.
+  - Details: `PRIVATE_STATUS.md`.
+- **Not fixed:** in single-solution galaxies, logZ scatter between seeds is still 1-5x the
+  quoted error and parameter medians still move between seeds. Also not fixed: the
+  inconsistent weights of two genuine solutions. Both are now the main open problems.
+
 ## 6. Next steps, in order
 
-1. **Clustering kernel** (approved by Wren; z-windows were considered and rejected).
+0. **(New, 2026-11-09) Single-solution convergence**, now the main robustness gap. Diagnose
+   before buying more inner steps (which is what costs time). Candidates: curved degeneracies
+   (age-dust-metallicity) that one linear covariance shape handles badly; deleting 100 of 1000
+   per iteration; inner chains that do not decorrelate from their start points. Also the speed
+   lever: blackjax's lockstep waste (only ~35% of likelihood lanes are used).
+1. **Clustering kernel: SET ASIDE 2026-11-09.** It doesn't address the failures above: the
+   redshift losses happen before the live points separate into clusters (now fixed by the
+   prior start), and single-solution fits have one cluster. NSS is essentially PolyChord's
+   algorithm, so running PolyChord with clustering on/off is the cheap way to test clustering
+   if it's ever wanted. Its one likely benefit is PolyChord-style allocation by cluster volume,
+   for the inconsistent weights of two genuine solutions. Original plan, for reference:
    PolyChord-style (Handley+2015, arXiv:1506.00171 Sec. 5.3): cluster live points with
    mutual k-nearest neighbours (k increased from 2 until the partition stops changing);
    each new point's slice chain uses its *starting* point's cluster covariance for the
@@ -102,7 +148,8 @@ EPYC 7713P 45). ~230-365 iterations per fit at 1000 live points. At the median C
    chain its own `covariance_factor`); no blackjax changes needed. Validate first on toy
    problems with known answers (single Gaussian; separated multi-mode Gaussians in 26-d with
    unequal weights) over many seeds: evidence and mode weights must be right; measure overhead.
-2. **Test matrix on Blanca**: {global, clustered} x {1000, 2000 live points} at 130 inner
+2. **Test matrix on Blanca** (superseded by the prior-start test above; keep the 1000 vs 2000
+   live-point comparison in mind for the convergence work): {global, clustered} x {1000, 2000 live points} at 130 inner
    steps, 20 seeds, the 9 MINERVA test galaxies (`fullfit_layout.sbatch`, extend it with the
    new option). Agree acceptance criteria with Wren *before* looking: e.g. zero catastrophic
    redshift failures in 20 seeds; logZ scatter <= ~1.5x quoted; parameter-median scatter
@@ -158,6 +205,10 @@ EPYC 7713P 45). ~230-365 iterations per fit at 1000 live points. At the median C
   only gives an Lmod error, so the scripts don't load it).
 - Preemptable: `--account=blanca-casa --partition=blanca --qos=preemptable --requeue`;
   CASA's own nodes: `--partition=blanca-casa`.
+- **Dedicated node bgpu-casa1** (`--partition=blanca-casa --qos=blanca-casa`): 40 physical
+  cores (Gold 6230), ~385 GB, V100. It's never preempted and starts at once when free, and
+  it's shared with the group. Use it for matched-CPU timing comparisons and for jobs that are
+  costly to lose to preemption. Check it's free with `sinfo -p blanca-casa -N -o "%N %C %T"`.
 - **Always `#SBATCH --hint=nomultithread`.** On hyperthreaded nodes (Xeon Gold 6130 etc.) a
   21-task job otherwise gets 11 physical cores, mpirun doesn't bind, fits run ~2x slower.
 - XLA thread flags (`--xla_cpu_multi_thread_eigen=false`, `intra_op_parallelism_threads=1`)
