@@ -76,8 +76,8 @@ production one. So the cost comparison below is between pipelines, not a like-fo
    1–5× its quoted error, and parameter medians move ~0.2 posterior half-widths (worst
    parameter ~0.35).
    - It improves with inner steps but hasn't plateaued by 260.
-   - Wren needs to set the acceptable level. HANDOFF proposed ≤0.1 half-widths; dynesty at
-     nlive 3200 managed ~0.1–0.3.
+   - Acceptance criteria are now set (§5, 2026-11-09). Against them, k=130 sits at R̂ ≈ 1.024
+     (median parameter); dynesty at nlive 3200 managed ~0.1–0.3 half-widths (R̂ ≈ 1.005–1.04).
 2. **Two genuine redshift solutions get inconsistent weights.** 1241601 (z≈2.9) has a second,
    real low-z solution (z≈0.3), and runs weight the two anywhere from 10% to 90%. After two solutions
    separate, each new point is grown from a point in its own solution, so the split of live
@@ -96,6 +96,7 @@ production one. So the cost comparison below is between pipelines, not a like-fo
 | 2026-10-09 | Full NSS runs in redshift windows: rejected (each window costs ~1 full fit). |
 | 2026-11-09 | Clustering kernel set aside. It doesn't address the failures we have: the redshift losses happen before the live points form clusters, and single-solution fits have one cluster. |
 | 2026-11-09 | 10⁶ prior start adopted as the default (`nss_jax.py --n-prior-start`; 0 = standard start). |
+| 2026-11-09 | Convergence acceptance (single-solution galaxies, 20 seeds, judged on the median over galaxies; the worst galaxy is a warning, since 20 seeds measure scatter to ~16%). **Parameters:** Gelman–Rubin R̂ < 1.01 for every parameter (Vehtari+2021), i.e. median scatter between seeds ≤ 0.14 posterior half-widths, since R̂ ≈ √(1+S²). A parameter above 2× that threshold (S > 0.28) is a warning. Use rank-normalized R̂ where draws exist, so broad, skewed or edge-piled posteriors (dust2, dust_index) are judged fairly. **Width:** one run's 16–84 width within 10% of a reference posterior (long run or NUTS, not the pooled seeds). **logZ:** seed scatter ≤ 1.5× quoted to start, ideally lower (implementation error well below statistical); otherwise inflate the quoted error by the measured factor. **Plus:** no catastrophic failures (wrong-z or wrong-solution runs). Goal: generally quite good with no big obvious failure modes, not perfect. |
 | standing | One core per fit; robustness before speed; every test spans redshift, uses real galaxies and reports by z bin; never commit to Joel's or Emilie's repos (fork first). |
 
 ## 6. Next steps, ranked
@@ -110,7 +111,12 @@ Robustness first; the speed gains are estimates until measured on one core.
    - deleting 100 of 1000 live points per iteration;
    - inner chains that don't decorrelate from their start points.
 
-   Needs Wren's acceptance level.
+   Acceptance criteria: §5 (2026-11-09). Plan: (0) criteria, set; (1) mine the existing
+   20-seed summaries; (2) a toy that reproduces the scatter; (3) instrumented diagnosis on two
+   MINERVA galaxies (insertion-index test, chain decorrelation, slice statistics, reference
+   posterior); (4) fixes chosen by the diagnosis; (5) Blanca test matrix and adoption.
+   Brute force is expensive: the scatter falls roughly as k^−0.64, so S ≤ 0.14 needs
+   k ≈ 260 (~42 min per fit) for the median parameter, and more for the worst.
 2. **blackjax lockstep waste: maybe 1.5–2×, medium effort.** The 100 chains run in lockstep,
    and only ~35% of the likelihood evaluations computed are used by any chain. One idea: draw
    several candidate points per slice at once and take the first valid one (plain rejection
@@ -156,7 +162,6 @@ speed, is what gates production.
 - **Joel:** before porting the NSS code into efsps-photfit, fork it under `wrensuess`.
   We depend on commit `6d5ab6d` (v0.2.1), unmodified.
 - **Wren:**
-  - the acceptance level for repeatability (§4, item 1);
   - the AGN prior: being tested by Wren (2026-11-09);
   - whether to push `nss-efsps`.
 

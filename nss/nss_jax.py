@@ -236,10 +236,13 @@ def main():
                         "galaxies; 0 (or any value <= n_live) gives the standard start")
     p.add_argument("--keep-discards", type=int, default=10000,
                    help="discarded prior draws whose positions are kept for the posterior")
+    p.add_argument("--include-miri", action="store_true",
+                   help="fit MIRI bands too. Off by default: MIRI is fitted only when "
+                        "explicitly asked for")
     args = p.parse_args()
     args.n_prior_start = int(args.n_prior_start)
 
-    phot = read_photometry(args.catalog, [args.id])[0]
+    phot = read_photometry(args.catalog, [args.id], include_miri=args.include_miri)[0]
     model = build(phot, args.fix_z, args.z_window)
     if args.mass_prior == "tabulated":
         use_tabulated_mass_prior(model)
@@ -265,7 +268,8 @@ def main():
     summary["emulator"] = {"file": os.path.basename(model.emu.path), "md5": model.emu.md5,
                            "net": C.net_for_md5(model.emu.md5)}
     summary["photometry"] = {k: phot.meta.get(k) for k in ("dropped_bands", "masked_negative",
-                                                         "mu_source", "z_spec")}
+                                                         "mu_source", "z_spec",
+                                                         "excluded_miri", "include_miri")}
     summary["bands_used"] = [b for b, ok in zip(phot.bands, phot.valid) if ok]
     os.makedirs(args.out, exist_ok=True)
     stem = os.path.join(args.out, f"{phot.id}_{args.tag}")
