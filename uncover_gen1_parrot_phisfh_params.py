@@ -1,4 +1,11 @@
 import time, sys, os
+# One fit per core. On Blanca the core comes from the job's CPU binding (sbatch
+# --hint=nomultithread): every thread of the process, numpy's and XLA's included, stays on
+# it. As a fallback where a fit is not bound to one core (e.g. a laptop), keep numpy/BLAS
+# single-threaded. Must be set before numpy is imported; values already in the environment
+# win. (XLA sizes its CPU thread pool from the CPU affinity and needs no setting.)
+for _var in ['OMP_NUM_THREADS', 'MKL_NUM_THREADS', 'OPENBLAS_NUM_THREADS']:
+    os.environ.setdefault(_var, '1')
 import numpy as np
 import numpy.ma as ma
 from astropy.table import Table
@@ -25,9 +32,9 @@ parser = prospect.prospect_args.get_parser()
 parser.add_argument('--catalog', type=str, default="UNCOVER_v5.0.1_LW_SUPER_CATALOG.fits")
 #parser.add_argument('--fitcatalog', type=str, default="fitid_UNCOVER_v5.0.1_LW_SUPER_CATALOG.txt") #w/o load balancer, for v0721
 parser.add_argument('--idx0', type=int, default=0,
-                    help="Range of galaxies to fit, from idx0 to idx1-1; zero-index row number of the catalog.")
+                    help="Range of galaxies to fit, from idx0 to idx1-1; catalog 'id' values (ids not in the catalog are skipped).")
 parser.add_argument('--idx1', type=int, default=1,
-                    help="Range of galaxies to fit, from idx0 to idx1-1; zero-index row number of the catalog.")
+                    help="Range of galaxies to fit, from idx0 to idx1-1; catalog 'id' values (ids not in the catalog are skipped).")
 parser.add_argument('--outdir', type=str, default='chains_parrot/', help="Output folder name.")
 parser.add_argument('--dyn', type=int, default=0, 
                     help="If 0, std run; if 1, quick dynesty run; if 2, debug, max=1100")
@@ -169,18 +176,17 @@ print(args.idx0, args.idx1)
 for _ifit in np.arange(args.idx0, args.idx1, 1):
 
     ### check the id is in fitting catalog (usephoto=1)
-    _can_exist = False
-    try: 
-        ifit = np.where(cat['id']==_ifit)[0][0]
-        objid = cat['id'][ifit]
-        print("\nFitting {}".format(objid))
-        print("------------------\n")
-        run_params['idx'] = ifit # choose a galaxy
-        _can_exist = True
-    except(AssertionError):
-        _can_exist = False
-        badobs_ids_list.append(objid)
-        print('no corresponding id')
+    _match = np.where(cat['id']==_ifit)[0]
+    if len(_match) == 0:
+        badobs_ids_list.append(_ifit)
+        print('no corresponding id: {}'.format(_ifit))
+        continue
+    ifit = _match[0]
+    objid = cat['id'][ifit]
+    print("\nFitting {}".format(objid))
+    print("------------------\n")
+    run_params['idx'] = ifit # choose a galaxy
+    _can_exist = True
 
     ### check fitting of the id is completed or not
     hfile = os.path.join(run_params['outdir'], "id_{0}_mcmc_phisfh.h5".format(objid))
@@ -219,7 +225,7 @@ for _ifit in np.arange(args.idx0, args.idx1, 1):
         ts = time.strftime("%y%b%d-%H.%M", time.localtime())
         #hfile = os.path.join(run_params['outdir'], "id_{0}_mcmc_phisfh.h5".format(objid))
 
-        output = fit_model(obs, model, sps, **run_params)
+        output = fit_model(obs, model, sps, lnprobfn=Emu.lnprobfn, **run_params)
         print('done in {0}s'.format(output["sampling"][1]))
 
         prospect.io.write_results.write_hdf5(hfile, run_params, model, obs,

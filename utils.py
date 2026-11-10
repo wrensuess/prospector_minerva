@@ -10,8 +10,14 @@ from astropy.cosmology import WMAP9 as cosmo
 
 ''' TODO: update paths!'''
 
+# Defaults are the CURC (Blanca) layout. To run elsewhere (e.g. a laptop), set
+# these environment variables instead of editing the paths here:
+#   MINERVA_EMULATOR_DIR: directory containing the parrot .npy file
+#                         (default: piratedir + 'emulator_files/')
+#   MINERVA_PHOTDIR:      directory containing the photometric catalogs
 piratedir='../'
-photdir='../phot_catalog/'
+photdir = os.environ.get('MINERVA_PHOTDIR', '../phot_catalog/')
+emulatordir = os.environ.get('MINERVA_EMULATOR_DIR')
 
 def get_dir(dirtype='cwd', outdir=None):
     
@@ -29,7 +35,7 @@ def get_dir(dirtype='cwd', outdir=None):
                    ]
     # this is where the emulator lives. should be "parrot_v4_obsphot_512n_5l_24s_00z24.npy"               
     elif dirtype == 'pirate':
-        dat_dirs = [outdir + 'emulator_files/'
+        dat_dirs = [emulatordir] if emulatordir else [outdir + 'emulator_files/'
                 ]
     else:
         return None
@@ -84,8 +90,8 @@ def filter_dictionary(filternames=None):
         'f336w':'wfc3_uvis_f336w',
         'f435w':'acs_wfc_f435w',
         'f475w':'wfc3_uvis_f475w',
-        'f606w':'wfc3_uvis_f606w',
-        'f814w':'wfc3_uvis_f814w',
+        'f606w':'acs_wfc_f606w',
+        'f814w':'acs_wfc_f814w',
         'f850lp':'acs_wfc_f850lp',
         # wfc3 / IR
         'f105w':'wfc3_ir_f105w',

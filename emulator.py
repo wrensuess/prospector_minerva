@@ -1,13 +1,78 @@
 '''Modified from PhotoMultiEmulator
 '''
 import os, sys
+from functools import partial
 import numpy as np
 import jax
 
-from prospect.models import ProspectorParams
+from prospect.models import ProspectorParams, priors
+from prospect.models import priors_beta as PZ
+from prospect.fitting import lnprobfn as prospect_lnprobfn
+from prospect.likelihood import lnlike_spec, lnlike_phot
 from utils import get_dir, piratedir
 
 multiemul_file = os.path.join(get_dir(dirtype='pirate', outdir=piratedir), "parrot_v4_obsphot_512n_5l_24s_00z24.npy")
+
+
+def lnprobfn(theta, model=None, obs=None, sps=None, noise=(None, None), nested=False, **extras):
+    '''prospect.fitting.lnprobfn for the emulator models, without its per-call
+    model.set_parameters(theta): the emulator predicts directly from theta and never
+    reads model.params, so propagating the parameter dependencies (~25 us per call) is
+    wasted. Otherwise the same steps in the same order, so the same ln-probability.
+    Falls back to prospect's lnprobfn if noise models are used or if any outlier
+    parameter is free (those are read from model.params). Pass it to fit_model with
+    lnprobfn=...
+    '''
+    _outlier = ('f_outlier_spec', 'nsigma_outlier_spec', 'f_outlier_phot', 'nsigma_outlier_phot')
+    if any(n is not None for n in noise) or any(p in model.free_params for p in _outlier):
+        return prospect_lnprobfn(theta, model=model, obs=obs, sps=sps, noise=noise, nested=nested, **extras)
+
+    # --- Calculate prior probability and exit if not within prior ---
+    lnp_prior = model.prior_product(theta, nested=nested)
+    if not np.isfinite(lnp_prior):
+        return -np.inf
+
+    # --- Generate mean model ---
+    try:
+        spec, phot, x = model.predict(theta, obs, sps=sps, sigma_spec=None)
+    except(ValueError):
+        return -np.inf
+
+    #  --- Mixture Model ---
+    vectors = {}
+    f_outlier_spec = model.params.get('f_outlier_spec', 0.0)
+    if (f_outlier_spec != 0.0):
+        vectors.update({'nsigma_outlier_spec': model.params.get('nsigma_outlier_spec', 10)})
+    f_outlier_phot = model.params.get('f_outlier_phot', 0.0)
+    if (f_outlier_phot != 0.0):
+        vectors.update({'nsigma_outlier_phot': model.params.get('nsigma_outlier_phot', 10)})
+
+    # --- Calculate likelihoods ---
+    lnp_spec = lnlike_spec(spec, obs=obs, f_outlier_spec=f_outlier_spec, spec_noise=None, **vectors)
+    lnp_phot = lnlike_phot(phot, obs=obs, f_outlier_phot=f_outlier_phot, phot_noise=None, **vectors)
+    lnp_eline = getattr(model, '_ln_eline_penalty', 0.0)
+
+    return lnp_prior + lnp_phot + lnp_spec + lnp_eline
+
+
+# Compiled photometry prediction. Running the same JAX operations eagerly costs ~1 ms per
+# call (each operation is dispatched separately); compiled, they run as one XLA program.
+# All parrot sub-networks have the same shapes, so this is traced once per number of
+# contributing sub-networks (1, or 2 in a redshift overlap) and then reused.
+@partial(jax.jit, static_argnames='act')
+def _predict_phot_jit(theta, coefs, nets, act):
+    result = 0.0
+    for coef, (norm, denorm, wght, bias) in zip(coefs, nets):
+        # Normalize layer
+        x = (theta - norm[0]) / norm[1]
+        # Nonlinear layers
+        for i in range(len(wght) - 1):
+            x = act(jax.numpy.dot(wght[i], x) + bias[i])
+        # Linear layer, then denormalize
+        x = jax.numpy.dot(wght[-1], x) + bias[-1]
+        result = result + coef * ((denorm[1] * x) + denorm[0])
+    # AB magnitudes to maggies (see EmulatorBeta.demagify)
+    return jax.numpy.exp(jax.numpy.multiply(result, -0.4) / jax.numpy.log10(jax.numpy.e))
 
 
 class EmulatorBeta(ProspectorParams):
@@ -16,6 +81,9 @@ class EmulatorBeta(ProspectorParams):
 
     def __init__(self, model_params, fp=multiemul_file, obs=None, param_order=None):
         super(EmulatorBeta, self).__init__(model_params, param_order=param_order)
+
+        # prior bounds, used by prior_product
+        self._prior_lo, self._prior_hi = self._free_prior_bounds()
 
         # Load all emulator data.
         self.dat = np.load(fp, allow_pickle=True).all()
@@ -72,24 +140,56 @@ class EmulatorBeta(ProspectorParams):
         new_theta = np.insert(new_theta, self.zred_index, theta[0])
         return new_theta
 
+    # In nested sampling the prior enters through prior_transform, so prospector's
+    # lnprobfn uses prior_product(nested=True) only as a check that theta is inside the
+    # prior (it returns 0 or -inf), but it evaluates the full joint prior to do so on
+    # every likelihood call (~0.3 ms). The check can only fail when a parameter sits on
+    # or beyond a prior bound (in practice: transforms of unit-cube values within ~1e-16
+    # of 0 or 1). So return 0 directly when every parameter is strictly inside its
+    # bounds, and otherwise run the full check as before. The full prior (nested=False,
+    # e.g. in write_hdf5) is unchanged.
+    def prior_product(self, theta, nested=False, **extras):
+        if nested and self._prior_lo is not None:
+            if np.all((theta > self._prior_lo) & (theta < self._prior_hi)):
+                return 0.0
+        return super(EmulatorBeta, self).prior_product(theta, nested=nested, **extras)
+
+    # Lower/upper bounds of every free parameter, for prior_product. None (always run
+    # the full check) if any prior is of a type whose bounds aren't known here.
+    def _free_prior_bounds(self):
+        lo, hi = np.zeros(self.ndim), np.zeros(self.ndim)
+        for k, inds in self.theta_index.items():
+            p = self.config_dict[k]['prior']
+            n = len(range(self.ndim)[inds])
+            if isinstance(p, PZ.PhiSFH):
+                r = p.range # zred, logmass, logzsol, logsfr_ratios
+                b = list(r[:3]) + [r[3]] * (n - 3)
+            elif isinstance(p, (priors.FastUniform, priors.FastTruncatedNormal)):
+                b = [(p.a, p.b)] * n
+            else:
+                return None, None
+            lo[inds], hi[inds] = np.array(b, dtype=float).T
+        return lo, hi
+
     # Determine the relevant angle needed for the sin and cos functions in
     # transition_coef. z0 is the center of an sub-network overlap and deltaz
     # is the full width of the overlap.
     def transition_theta(self, z, z0, deltaz):
-        return (jax.numpy.pi / (2 * deltaz)) * (z - z0 + 0.5*deltaz)
+        return (np.pi / (2 * deltaz)) * (z - z0 + 0.5*deltaz)
 
     # Compute how much each sub-network should contribute to the overall
     # prediction. Equal to 1 where the sub-network is the only one trained,
     # 0 where the sub-emulator is not trained, and between 0 and 1 in overlaps.
+    # (plain numpy: these are scalars, and eager jax calls cost ~10 us each)
     def transition_coef(self, z, z0l, deltazl, z0r, deltazr):
         if (z <= (z0l - 0.5*deltazl)) or (z >= (z0r + 0.5*deltazr)):
             return 0.0
         elif (z >= (z0l + 0.5*deltazl)) and (z <= (z0r - 0.5*deltazr)):
             return 1.0
         elif (z > (z0l - 0.5*deltazl)) and (z < (z0l + 0.5*deltazl)):
-            return jax.numpy.sin(self.transition_theta(z, z0l, deltazl))**2
+            return np.sin(self.transition_theta(z, z0l, deltazl))**2
         else:
-            return jax.numpy.cos(self.transition_theta(z, z0r, deltazr))**2
+            return np.cos(self.transition_theta(z, z0r, deltazr))**2
 
     # Run a forward pass through a sub-network.
     def forward_pass(self, in_vec, net):
@@ -138,21 +238,15 @@ class EmulatorBeta(ProspectorParams):
         # Compute the coefficients to multiply each emulator by.
         coefs = [self.transition_coef(z, *emul_lim) for emul_lim in self.dat["emulator_limits"]]
 
-        # Initialize an array for the photometry prediction.
-        result = jax.numpy.zeros(len(self.sorter))
+        # Only sub-networks with a nonzero coefficient contribute.
+        active = [i for (i, coef) in enumerate(coefs) if coef != 0.0]
+        if len(active) == 0:
+            return self.demagify(jax.numpy.zeros(len(self.sorter)))
 
-        for (i, coef) in enumerate(coefs):
-            # If the coef is zero, sub-network doesn't contribute - skip.
-            if coef == 0.0:
-                continue
-            # Otherwise, it does contribute and we need to evaluate that sub-network.
-            else:
-                result += coef * self.forward_pass(theta, self.nets[i])
-
-        # Convert the emulator's output to maggies (see comments on self.demagify)
-        predict_lin = self.demagify(result)
-
-        return predict_lin
+        # Evaluate them, sum, and convert to maggies, in one compiled call.
+        return _predict_phot_jit(theta, tuple(coefs[i] for i in active),
+                                 tuple(self.nets[i][:4] for i in active),
+                                 act=self.nets[active[0]][4])
 
     # Run self.predict_phot but return the result as a NumPy array
     def predict_phot_np(self, theta_in, **extras):
@@ -231,20 +325,21 @@ class EmulatorDefault(ProspectorParams):
     # transition_coef. z0 is the center of an sub-network overlap and deltaz
     # is the full width of the overlap.
     def transition_theta(self, z, z0, deltaz):
-        return (jax.numpy.pi / (2 * deltaz)) * (z - z0 + 0.5*deltaz)
+        return (np.pi / (2 * deltaz)) * (z - z0 + 0.5*deltaz)
 
     # Compute how much each sub-network should contribute to the overall
     # prediction. Equal to 1 where the sub-network is the only one trained,
     # 0 where the sub-emulator is not trained, and between 0 and 1 in overlaps.
+    # (plain numpy: these are scalars, and eager jax calls cost ~10 us each)
     def transition_coef(self, z, z0l, deltazl, z0r, deltazr):
         if (z <= (z0l - 0.5*deltazl)) or (z >= (z0r + 0.5*deltazr)):
             return 0.0
         elif (z >= (z0l + 0.5*deltazl)) and (z <= (z0r - 0.5*deltazr)):
             return 1.0
         elif (z > (z0l - 0.5*deltazl)) and (z < (z0l + 0.5*deltazl)):
-            return jax.numpy.sin(self.transition_theta(z, z0l, deltazl))**2
+            return np.sin(self.transition_theta(z, z0l, deltazl))**2
         else:
-            return jax.numpy.cos(self.transition_theta(z, z0r, deltazr))**2
+            return np.cos(self.transition_theta(z, z0r, deltazr))**2
 
     # Run a forward pass through a sub-network.
     def forward_pass(self, in_vec, net):
@@ -294,21 +389,15 @@ class EmulatorDefault(ProspectorParams):
         # Compute the coefficients to multiply each emulator by.
         coefs = [self.transition_coef(z, *emul_lim) for emul_lim in self.dat["emulator_limits"]]
 
-        # Initialize an array for the photometry prediction.
-        result = jax.numpy.zeros(len(self.sorter))
+        # Only sub-networks with a nonzero coefficient contribute.
+        active = [i for (i, coef) in enumerate(coefs) if coef != 0.0]
+        if len(active) == 0:
+            return self.demagify(jax.numpy.zeros(len(self.sorter)))
 
-        for (i, coef) in enumerate(coefs):
-            # If the coef is zero, sub-network doesn't contribute - skip.
-            if coef == 0.0:
-                continue
-            # Otherwise, it does contribute and we need to evaluate that sub-network.
-            else:
-                result += coef * self.forward_pass(theta, self.nets[i])
-
-        # Convert the emulator's output to maggies (see comments on self.demagify)
-        predict_lin = self.demagify(result)
-
-        return predict_lin
+        # Evaluate them, sum, and convert to maggies, in one compiled call.
+        return _predict_phot_jit(theta, tuple(coefs[i] for i in active),
+                                 tuple(self.nets[i][:4] for i in active),
+                                 act=self.nets[active[0]][4])
 
     # Run self.predict_phot but return the result as a NumPy array
     def predict_phot_np(self, theta_in, **extras):
