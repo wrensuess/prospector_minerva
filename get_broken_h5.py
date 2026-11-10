@@ -46,8 +46,15 @@ pdb.set_trace()
 
 ### fitting uncompleted
 cat = Table.read(cat_dir+"MINERVA-"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.fits")
-cat["id"]
-
+use_photo = cat['use_phot']
+id_original = cat['id']
+id_fit = id_original[np.where((use_photo==1))]
+print(fittedpathid_all[:100])
+print(id_fit[:100])
+not_fitted = np.unique(np.concatenate([fittedpathid_all,id_fit]))
+print("[Info] fitting incompleted:",len(not_fitted))
+pdb.set_trace()
+                       
 ##########################################################
 ################### for fitting file #####################
 ##########################################################
