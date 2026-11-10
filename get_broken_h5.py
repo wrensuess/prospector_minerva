@@ -53,7 +53,7 @@ id_original = cat['id']
 id_fit = id_original[np.where((use_photo==1))]
 print(fittedpathid_all[:100])
 print(id_fit[:100])
-not_fitted = np.unique(np.concatenate([id_fit,np.array(fittedpathid_all)]))
+not_fitted = np.setdiff1d(id_fit,np.array(fittedpathid_all))
 print("[Info] fitting incompleted:",len(not_fitted))
 pdb.set_trace()
                        
