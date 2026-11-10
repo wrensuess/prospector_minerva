@@ -1,5 +1,5 @@
 import numpy as np
-import glob
+import glob, pdb
 from astropy.table import Table
 import utils as ut_cwd
 
@@ -84,6 +84,7 @@ print("only fitted:",len(only_fitted_all))
 #print(fitid1[:100])
 #np.savetxt(cat_dir+"refitid_MINERVA-"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt",only_fit_all)
 pdb.set_trace()
+
 
 ### no phot object?
 cat = Table.read(cat_dir+"MINERVA-"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.fits")

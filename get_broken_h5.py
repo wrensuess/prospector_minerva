@@ -4,10 +4,10 @@ import numpy as np
 
 ver = "EGS_n2.0_v1.3"
 
-check_dir1 = "/scratch/alpine/ikmi3774/slurm/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS1/"
-check_dir2 = "/scratch/alpine/ikmi3774/slurm/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS2/"
-check_dir3 = "/scratch/alpine/ikmi3774/slurm/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS3/"
-check_dir4 = "/scratch/alpine/ikmi3774/slurm/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS4/"
+check_dir1 = "/pl/active/suess-minerva/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS1/"
+check_dir2 = "/pl/active/suess-minerva/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS2/"
+check_dir3 = "/pl/active/suess-minerva/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS3/"
+check_dir4 = "/pl/active/suess-minerva/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS4/"
 output_name = "chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/"
 
 idlist1 = glob.glob(check_dir1+output_name+"id_*_mcmc_phisfh.h5")
@@ -43,6 +43,10 @@ print(not_in_all)
 
 pdb.set_trace()
 
+
+### fitting uncompleted
+cat = Table.read(cat_dir+"MINERVA-"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.fits")
+cat["id"]
 
 ##########################################################
 ################### for fitting file #####################
