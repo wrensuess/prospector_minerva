@@ -4,6 +4,7 @@ import numpy as np
 from astropy.table import Table
 
 ver = "EGS_n2.0_v1.3"
+cat_dir = "/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/phot_catalog/"
 
 check_dir1 = "/pl/active/suess-minerva/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS1/"
 check_dir2 = "/pl/active/suess-minerva/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS2/"
