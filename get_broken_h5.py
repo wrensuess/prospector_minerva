@@ -55,6 +55,7 @@ print(fittedpathid_all[:100])
 print(id_fit[:100])
 not_fitted = np.setdiff1d(id_fit,np.array(fittedpathid_all))
 print("[Info] fitting incompleted:",len(not_fitted))
+np.savetxt(cat_dir+"refitid2_MINERVA-"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt",not_fitted)
 pdb.set_trace()
                        
 ##########################################################
