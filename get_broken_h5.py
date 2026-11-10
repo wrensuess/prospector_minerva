@@ -1,6 +1,7 @@
 import h5py, glob, pdb
 from tqdm import tqdm
 import numpy as np
+from astropy.table import Table
 
 ver = "EGS_n2.0_v1.3"
 
