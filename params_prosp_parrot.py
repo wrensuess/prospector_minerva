@@ -5,8 +5,10 @@ from prospect.models import priors, transforms
 from prospect.models import priors_beta as PZ
 from priors_beta_fast import PhiSFHFast
 
-def params_parrot_phisfh(obs=None, **extra):
+def params_parrot_phisfh(obs=None, fagn_prior=None, **extra):
     '''mass + metallicity + sfh priors from p-beta
+    fagn_prior: None keeps the log_fagn prior below; otherwise a key of
+    fagn_priors.candidate_priors() (e.g. 'base', 'flat1_s025').
     '''
 
     fit_order = ['nzsfh',
@@ -77,6 +79,10 @@ def params_parrot_phisfh(obs=None, **extra):
     #                            'prior': priors.FastUniform(a=-5.0, b=np.log10(3.0))}
     model_params['log_fagn'] = {'N': 1, 'isfree': True, 'init': -5.0,
                                 'prior': priors.FastUniform(a=-5.01, b=-4.99)}
+    if fagn_prior is not None:
+        from fagn_priors import candidate_priors
+        model_params['log_fagn'] = {'N': 1, 'isfree': True, 'init': -3.0,
+                                    'prior': candidate_priors()[fagn_prior][1]}
     ### fixed, not good?
     #model_params['log_fagn'] = {'N': 1, 'isfree': False, 'init': -5.0,
     #                            'prior': priors.FastUniform(a=-5.0, b=np.log10(3.0))}
@@ -113,9 +119,11 @@ def params_parrot_phisfh(obs=None, **extra):
     return (model_params, fit_order)
 
 
-def params_parrot_phisfhfixzred(obs=None, **extra):
+def params_parrot_phisfhfixzred(obs=None, fagn_prior=None, **extra):
     '''mass + metallicity + sfh priors from p-beta
     redshift fixed to obs['zspec']
+    fagn_prior: None keeps the log_fagn prior below; otherwise a key of
+    fagn_priors.candidate_priors().
     '''
 
     fit_order = ['nzsfh',
@@ -184,6 +192,10 @@ def params_parrot_phisfhfixzred(obs=None, **extra):
     # --- AGN dust ---
     model_params['log_fagn'] = {'N': 1, 'isfree': True, 'init': -7.0e-5,
                                 'prior': priors.FastUniform(a=-5.0, b=np.log10(3.0))}
+    if fagn_prior is not None:
+        from fagn_priors import candidate_priors
+        model_params['log_fagn'] = {'N': 1, 'isfree': True, 'init': -3.0,
+                                    'prior': candidate_priors()[fagn_prior][1]}
 
     model_params['log_agn_tau'] = {'N': 1, 'isfree': True, 'init': np.log10(20.0),
                                    'prior': priors.FastUniform(a=np.log10(5.0), b=np.log10(150.0))}

@@ -38,6 +38,12 @@ parser.add_argument('--idx1', type=int, default=1,
 parser.add_argument('--outdir', type=str, default='chains_parrot/', help="Output folder name.")
 parser.add_argument('--dyn', type=int, default=0, 
                     help="If 0, std run; if 1, quick dynesty run; if 2, debug, max=1100")
+parser.add_argument('--fagn_prior', type=str, default=None,
+                    help="log_fagn prior from fagn_priors.candidate_priors(); default keeps params_prosp_parrot's.")
+parser.add_argument('--tag', type=str, default='',
+                    help="Suffix for the output file name, e.g. '_flat1_s025_rep0'.")
+parser.add_argument('--fixz', action='store_true',
+                    help="Fix the redshift to the catalog z_spec (params_parrot_phisfhfixzred).")
 args = parser.parse_args()
 catalog_file = args.catalog
 #fit_file = args.fitcatalog #w/o load balancer
@@ -158,7 +164,9 @@ def load_obs(idx=None, err_floor=0.05, **extras):
 def build_model(obs=None, emulfp=multiemul_file, **extras):
 
     import params_prosp_parrot as pfile
-    model_params, fit_order = pfile.params_parrot_phisfh(obs=obs)
+    # fixz_this is decided per galaxy in the fit loop: --fixz set AND a usable z_spec
+    params_fn = pfile.params_parrot_phisfhfixzred if extras.get('fixz_this') else pfile.params_parrot_phisfh
+    model_params, fit_order = params_fn(obs=obs, fagn_prior=extras.get('fagn_prior'))
 
     return Emu.EmulatorBeta(model_params, fp=emulfp, obs=obs, param_order=fit_order)
 
@@ -189,7 +197,7 @@ for _ifit in np.arange(args.idx0, args.idx1, 1):
     _can_exist = True
 
     ### check fitting of the id is completed or not
-    hfile = os.path.join(run_params['outdir'], "id_{0}_mcmc_phisfh.h5".format(objid))
+    hfile = os.path.join(run_params['outdir'], "id_{0}_mcmc_phisfh{1}.h5".format(objid, args.tag))
     _notyet_fit = False
     if _can_exist:
         if os.path.exists(hfile):
@@ -215,6 +223,16 @@ for _ifit in np.arange(args.idx0, args.idx1, 1):
         obs['ra'] = cat[ifit]['ra']; obs['dec'] = cat[ifit]['dec']
         ra = obs['ra']*u.deg
         dec = obs['dec']*u.deg
+        # Without --fixz every galaxy is fit at free z, z_spec or not. With --fixz, z is fixed
+        # to the z_spec column, except galaxies with no usable z_spec (missing, masked, NaN,
+        # -99 or any value <= 0), which are fit at free z.
+        _zspec = float(np.ma.filled(np.ma.asarray(cat[ifit]['z_spec'], dtype=float), np.nan))
+        run_params['fixz_this'] = bool(args.fixz and np.isfinite(_zspec) and _zspec > 0)
+        if run_params['fixz_this']:
+            obs['zspec'] = _zspec
+            print('redshift fixed to z_spec = {}'.format(_zspec))
+        elif args.fixz:
+            print('no z_spec for {} (catalog value {}): fitting at free redshift'.format(objid, cat[ifit]['z_spec']))
 
         model = build_model(obs=obs, **run_params)
         sps = load_sps(**run_params)

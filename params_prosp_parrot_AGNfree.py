@@ -3,6 +3,19 @@ import numpy as np
 from astropy.cosmology import WMAP9 as cosmo
 from prospect.models import priors, transforms
 from prospect.models import priors_beta as PZ
+from fagn_priors import FastFlatGaussTail
+
+
+def log_fagn_param():
+    '''Production log_fagn prior (adopted 2026-11-10): flat in log_fagn on [-5, -1], then a
+    half-Gaussian tail of width 0.25 dex above -1, truncated at log10(3). This is
+    fagn_priors.candidate_priors()['flat1_s025']. It replaces U(-5, log10 3), which let
+    Prospector put bright galaxies at low z with fagn > 0.1 instead of at z_spec (the UDS
+    "AGN trap"); in a refit of 49 trap galaxies it fixed ~half and broke 1 of 39 bright
+    right-z controls. Harsher tails (sig 0.1) fixed no more and broke a real AGN.
+    '''
+    return {'N': 1, 'isfree': True, 'init': -3.0,
+            'prior': FastFlatGaussTail(a=-5.0, b=np.log10(3.0), x0=-1.0, sig=0.25)}
 
 def params_parrot_phisfh(obs=None, **extra):
     '''mass + metallicity + sfh priors from p-beta
@@ -72,8 +85,7 @@ def params_parrot_phisfh(obs=None, **extra):
                                 'prior': priors.FastUniform(a=-2.0, b=0.5)}
 
     # --- AGN dust ---
-    model_params['log_fagn'] = {'N': 1, 'isfree': True, 'init': -7.0e-5,
-                                'prior': priors.FastUniform(a=-5.0, b=np.log10(3.0))}
+    model_params['log_fagn'] = log_fagn_param()
     #model_params['log_fagn'] = {'N': 1, 'isfree': True, 'init': -5.0,
     #                            'prior': priors.FastUniform(a=-5.01, b=-4.99)}
     ### fixed, not good?
@@ -181,8 +193,7 @@ def params_parrot_phisfhfixzred(obs=None, **extra):
                                 'prior': priors.FastUniform(a=-2.0, b=0.5)}
 
     # --- AGN dust ---
-    model_params['log_fagn'] = {'N': 1, 'isfree': True, 'init': -7.0e-5,
-                                'prior': priors.FastUniform(a=-5.0, b=np.log10(3.0))}
+    model_params['log_fagn'] = log_fagn_param()
 
     model_params['log_agn_tau'] = {'N': 1, 'isfree': True, 'init': np.log10(20.0),
                                    'prior': priors.FastUniform(a=np.log10(5.0), b=np.log10(150.0))}
@@ -273,8 +284,7 @@ def params_parrot_alpha(obs=None, **extra):
                                 'prior': priors.FastUniform(a=-2.0, b=0.5)}
 
     # --- AGN dust ---
-    model_params['log_fagn'] = {'N': 1, 'isfree': True, 'init': -7.0e-5,
-                                'prior': priors.FastUniform(a=-5.0, b=np.log10(3.0))}
+    model_params['log_fagn'] = log_fagn_param()
 
     model_params['log_agn_tau'] = {'N': 1, 'isfree': True, 'init': np.log10(20.0),
                                    'prior': priors.FastUniform(a=np.log10(5.0), b=np.log10(150.0))}
