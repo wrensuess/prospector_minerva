@@ -155,10 +155,13 @@ if __name__ == '__main__':
         with open(taskfile, mode="w") as f:
             for k in range(len(ids_fit_injobarray)):
                 if AGNfree=='yes':
+                    print("[info] fAGN free run")
                     _cmd = 'python uncover_gen1_parrot_phisfh_params_AGNfree.py --catalog {} --outdir {} --dyn {} --idx0 {} --idx1 {}'.format(catalog, chaindir, fast_dyn, int(ids_fit_injobarray[k]), int(ids_fit_injobarray[k]+1))
                 elif AGNfree=='no':
+                    print("[info] fAGN fixed to 1e-5 run")
                     _cmd = 'python uncover_gen1_parrot_phisfh_params.py --catalog {} --outdir {} --dyn {} --idx0 {} --idx1 {}'.format(catalog, chaindir, fast_dyn, int(ids_fit_injobarray[k]), int(ids_fit_injobarray[k]+1))
                 elif AGNfree=='test':
+                    print("[info] AGN prior test run")
                     _cmd = 'python uncover_gen1_parrot_phisfh_params_AGNprior.py --catalog {} --outdir {} --dyn {} --idx0 {} --idx1 {}'.format(catalog, chaindir, fast_dyn, int(ids_fit_injobarray[k]), int(ids_fit_injobarray[k]+1))
                 else:
                     print("+++ no appropriate AGNfree parameter +++")
