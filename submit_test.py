@@ -1,4 +1,4 @@
-import os, sys, time, pdb
+ import os, sys, time, pdb
 import numpy as np
 from astropy.table import Table
 
@@ -88,11 +88,11 @@ if __name__ == '__main__':
     ### variables
     outdir = '/scratch/alpine/ikmi3774/slurm/'
     catdir = '../phot_catalog/'
-    field = 'COSMOS'
-    ver = 'n3.0_v1.0'
+    field = 'UDS'
+    ver = 'n3.0_v1.2'
     vermiri = 'n3.0_m3.1_v1.2.1'
     wmiri = 'no'
-    AGNfree = 'yes'
+    AGNfree = 'test' ### test, yes, no
     spsver = 'spsbeta'
     fast_dyn = 0 #0:std run, 1:brief run, 2:debug
 
@@ -101,18 +101,18 @@ if __name__ == '__main__':
     #cujobname = 'massive10000_fagn1e5'
     #cujobname = 'outliers_fagn1e5'
     #cujobname = 'goodpz_fagn1e5'
-    cujobname = 'AGNfree'
+    cujobname = 'AGNprior'
     cathead = 'speczid'
-    chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}_speczobj_AGNfree'.format(field, ver, spsver)
-    logdir = outdir+'log_'+field+"_"+ver+"_speczobj_AGNfree"
-    taskdir = outdir+'task_lists_'+field+"_"+ver+"_speczobj_AGNfree"
+    chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}_speczobj_AGNprior'.format(field, ver, spsver)
+    logdir = outdir+'log_'+field+"_"+ver+"_speczobj_AGNprior"
+    taskdir = outdir+'task_lists_'+field+"_"+ver+"_speczobj_AGNprior"
 
     acc = 'amilian' ### 'priority' or 'preempt' or 'amilian'
     env = 'prosp'
     #env = 'prosp_oldjax_nompi'
     #env = '/projects/kasu8993/software/anaconda/envs/prosp_oldjax'
     #env = '/projects/kasu8993/software/anaconda/envs/prosp'
-    njobs = 900 #number of job array, max=1000
+    njobs = 1000 #number of job array, max=1000
     wtime = int(24) #int(24*7) # time
 
     ################################## step 1. sed fit ####################################

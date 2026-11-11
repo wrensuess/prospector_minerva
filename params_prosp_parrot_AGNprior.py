@@ -3,6 +3,67 @@ import numpy as np
 from astropy.cosmology import WMAP9 as cosmo
 from prospect.models import priors, transforms
 from prospect.models import priors_beta as PZ
+from scipy.special import erfc
+from scipy.integrate import cumulative_trapezoid
+
+class SmoothAGNFracPrior:
+    def __init__(self, mini=-5.0, maxi=0.0,
+                 center=-0.3, sigma=0.1):
+
+        self.mini = mini
+        self.maxi = maxi
+        self.center = center
+        self.sigma = sigma
+        self.flat_end = center - 3.0 * sigma
+
+        # Normalized CDF for unit_transform and sampling
+        self.grid = np.linspace(mini, maxi, 10001)
+        pdf = self._weight(self.grid)
+
+        self.norm = np.trapz(pdf, self.grid)
+
+        cdf = cumulative_trapezoid(
+            pdf, self.grid, initial=0.0
+        ) / self.norm
+
+        self.cdf = cdf
+
+    def _weight(self, x):
+        x = np.asarray(x)
+
+        w = 0.5 * erfc(
+            (x - self.center) / (np.sqrt(2) * self.sigma)
+        )
+
+        w = np.where(x <= self.flat_end, 1.0, w)
+        w = np.where((x < self.mini) | (x >= self.maxi),
+                     0.0, w)
+        return w
+
+    def __call__(self, x, **kwargs):
+        return self.logpdf(x)
+
+    def logpdf(self, x):
+        w = self._weight(x)
+        with np.errstate(divide="ignore"):
+            return np.log(w) - np.log(self.norm)
+
+    def unit_transform(self, u):
+        return np.interp(u, self.cdf, self.grid)
+
+    def sample(self, nsample=None, **kwargs):
+        if nsample is None:
+            u = np.random.uniform()
+        else:
+            u = np.random.uniform(size=nsample)
+
+        return self.unit_transform(u)
+
+    def bounds(self, **kwargs):
+        return (self.mini, self.maxi)
+
+    def range(self, **kwargs):
+        return (self.mini, self.maxi)
 
 def params_parrot_phisfh(obs=None, **extra):
     '''mass + metallicity + sfh priors from p-beta
@@ -72,13 +133,16 @@ def params_parrot_phisfh(obs=None, **extra):
                                 'prior': priors.FastUniform(a=-2.0, b=0.5)}
 
     # --- AGN dust ---
-    model_params['log_fagn'] = {'N': 1, 'isfree': True, 'init': -7.0e-5,
-                                'prior': priors.FastUniform(a=-5.0, b=np.log10(3.0))}
+    #model_params['log_fagn'] = {'N': 1, 'isfree': True, 'init': -7.0e-5,
+    #                            'prior': priors.FastUniform(a=-5.0, b=np.log10(3.0))}
     #model_params['log_fagn'] = {'N': 1, 'isfree': True, 'init': -5.0,
     #                            'prior': priors.FastUniform(a=-5.01, b=-4.99)}
     ### fixed, not good?
     #model_params['log_fagn'] = {'N': 1, 'isfree': False, 'init': -5.0,
     #                            'prior': priors.FastUniform(a=-5.0, b=np.log10(3.0))}
+    ### truncated 
+    model_params['log_fagn'] = {'N': 1, 'isfree': True, 'init': -1.0,
+                                'prior': SmoothAGNFracPrior(mini=-5.0,maxi=0.0,center=-0.3,sigma=0.1)}
 
     model_params['log_agn_tau'] = {'N': 1, 'isfree': True, 'init': np.log10(20.0),
                                    'prior': priors.FastUniform(a=np.log10(5.0), b=np.log10(150.0))}
