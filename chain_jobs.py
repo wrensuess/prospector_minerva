@@ -77,11 +77,12 @@ def get_unfit_number(chaindir,catpath_check):
 
 field = "EGS"
 ver = "n2.0_v1.3"
-cathead = "fitid1" #name of catalog for the first attempt, fitid or refitid 
-cathead_ori = "fitid1" #name of reference catalog to check fitting is completed
+cathead = "refitid2" #name of catalog for the first attempt, fitid or refitid 
+cathead_ori = "refitid2" #name of reference catalog to check fitting is completed
 
 spsver = 'spsbeta' #not set as a variable, need to edit submit_loop.py
-outdir = '/scratch/alpine/ikmi3774/slurm/EGS1/'
+#outdir = '/scratch/alpine/ikmi3774/slurm/EGS1/'
+outdir = '/pl/active/suess-minerva/chains_parrot_EGS_n2.0_v1.3_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS5/'
 catdir = '/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/phot_catalog/'
 catpath = catdir+cathead+"_MINERVA-"+field+"_"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt"
 catpath_check = catdir+cathead_ori+"_MINERVA-"+field+"_"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt"
