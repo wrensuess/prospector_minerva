@@ -88,6 +88,7 @@ catpath = catdir+cathead+"_MINERVA-"+field+"_"+ver+"_ACS+WEBB_Kf444w_SUPER_CATAL
 catpath_check = catdir+cathead_ori+"_MINERVA-"+field+"_"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt"
 chaindir = outdir+'chains_parrot_{}_{}_ACS+WEBB_Kf444w_SUPER_{}/'.format(field, ver, spsver)
 
+'''
 if "refitid" in cathead:
     refitids = np.loadtxt(catpath)
     print(refitids)
@@ -95,6 +96,7 @@ if "refitid" in cathead:
     for j in range(0,len(refitids)):
         print("rm "+chaindir+"id_"+str(int(refitids[j]))+"_mcmc_phisfh.h5")
         os.system("rm "+chaindir+"id_"+str(int(refitids[j]))+"_mcmc_phisfh.h5")
+'''
 
 #subprocess.run(["python", "submit_loop.py", cathead, field, ver, outdir, catdir], check=True)
 subprocess.Popen(["python", "submit_loop.py", cathead, field, ver, outdir, catdir])
