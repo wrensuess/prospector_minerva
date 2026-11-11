@@ -8,13 +8,16 @@
 #   CATALOG     catalogue path, relative to nss_test/ or absolute   (default uncover_test.csv)
 #               UNCOVER or MINERVA FITS, or efsps CSV (photometry.read_photometry)
 #   ID          object id                                           (default 58858)
-#   INNER       NSS slice steps per new point (num_inner_steps)      (default 52 = 2 x 26 dims)
+#   INNER       NSS slice steps per new point (num_inner_steps)      (default 32, chosen 2026-11-11)
 #   NLIVE       live points                                         (default 1000)
-#   MASS_PRIOR  exact or tabulated (tabulated_mass_prior.py)        (default exact)
+#   MASS_PRIOR  exact or tabulated (tabulated_mass_prior.py)        (default tabulated)
 #   NPRIOR      prior start: begin from the best NLIVE of this many prior draws
 #               (nss_jax.py --n-prior-start)                        (default 1e6; 0 = standard start)
 #   SEEDS       seeds to run, as "first last"                       (default "0 19")
-#   e.g. sbatch --export=ALL,CATALOG=minerva_uds_test9.fits,ID=1212906,INNER=104,MASS_PRIOR=tabulated fullfit_layout.sbatch
+#   MASSCOORD   marginal (mass integrated out of the likelihood, mass_marginal.py; needs
+#               MASS_PRIOR=tabulated) or cdf (logmass through its prior inverse CDF, the
+#               earlier standard) (nss_jax.py --mass-coord)          (default marginal)
+#   e.g. sbatch --export=ALL,CATALOG=minerva_uds_test9.fits,ID=1212906 fullfit_layout.sbatch   (production defaults)
 #
 # Core binding (measured on Blanca by the prospector-minerva session, 2026-10-08, OpenMPI
 # 4.1.1): on nodes without hyperthreading, mpirun binds each lb worker to its own core. On
@@ -32,7 +35,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=21
 #SBATCH --hint=nomultithread
-#SBATCH --mem=30G
+#SBATCH --mem=48G                  # 20 fits x up to 2.3 GB peak RSS each (measured 2026-11-11); 30G ran out
 #SBATCH --job-name=nss_fullfit_layout
 #SBATCH --output=%x_%j.out
 #SBATCH --error=%x_%j.err
@@ -44,31 +47,36 @@ NSS_ENV=/projects/$USER/software/anaconda/envs/nss
 
 module purge   # (slurm/blanca is loaded on the LOGIN node before sbatch; inside a job it only gives an Lmod error)
 module load loadbalance
-module load anaconda
-source activate "$NSS_ENV"
+# the env's own python, not `module load anaconda` + `source activate`: on 2026-11-09 node
+# blanca-g6-u6 had no anaconda module and every task of a job failed within a second there
+if [ ! -x "$NSS_ENV/bin/python" ]; then echo "no python in $NSS_ENV on $(hostname)"; exit 1; fi
+export PATH=$NSS_ENV/bin:$PATH
+if [ -z "$CURC_LB_BIN" ]; then echo "no loadbalance module on $(hostname)"; exit 1; fi
 export SLURM_EXPORT_ENV=ALL
 export JAX_PLATFORMS=cpu
 export OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1
 
 CATALOG=${CATALOG:-uncover_test.csv}
 ID=${ID:-58858}
-INNER=${INNER:-52}
+INNER=${INNER:-32}
 NLIVE=${NLIVE:-1000}
-MASS_PRIOR=${MASS_PRIOR:-exact}
+MASS_PRIOR=${MASS_PRIOR:-tabulated}
 NPRIOR=${NPRIOR:-1e6}
 SEEDS=${SEEDS:-0 19}
+MASSCOORD=${MASSCOORD:-marginal}
 if [ "$NPRIOR" = "0" ]; then PS_TAG=""; else PS_TAG=_ps${NPRIOR}; fi
+if [ "$MASSCOORD" = "cdf" ]; then MC_TAG=""; else MC_TAG=_mm; fi
 PS_OPT="--n-prior-start $NPRIOR"
-OUT=$NSS_ROOT/results/blanca_layout_${SLURM_JOB_ID}_${ID}_k${INNER}_L${NLIVE}_${MASS_PRIOR}${PS_TAG}
+OUT=$NSS_ROOT/results/blanca_layout_${SLURM_JOB_ID}_${ID}_k${INNER}_L${NLIVE}_${MASS_PRIOR}${PS_TAG}${MC_TAG}
 mkdir -p "$OUT"
 TASKS=$OUT/taskfile.txt
 echo "===== $(date) on $(hostname), job $SLURM_JOB_ID, restart ${SLURM_RESTART_COUNT:-0}, BIND='${BIND:-}'"
-echo "galaxy $ID from $CATALOG; NLIVE=$NLIVE, INNER=$INNER, MASS_PRIOR=$MASS_PRIOR, NPRIOR=$NPRIOR, seeds $SEEDS"
+echo "galaxy $ID from $CATALOG; NLIVE=$NLIVE, INNER=$INNER, MASS_PRIOR=$MASS_PRIOR, NPRIOR=$NPRIOR, MASSCOORD=$MASSCOORD, seeds $SEEDS"
 echo "CPU: $(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2); node CPUs $(nproc --all); job allowed $(nproc)"
 
 cd "$NSS_ROOT" || exit 1
 for s in $(seq $SEEDS); do
-    echo "cd $NSS_ROOT && { python -u -c 'import os; a = sorted(os.sched_getaffinity(0)); c = {open(f\"/sys/devices/system/cpu/cpu{i}/topology/thread_siblings_list\").read().strip() for i in a}; print(\"seed $s affinity\", a, \"=\", len(c), \"physical core(s)\", flush=True)'; /usr/bin/time -v python -u nss_jax.py --catalog $CATALOG --id $ID --tag seed$s --seed $s --n-live $NLIVE --num-delete 100 --num-inner-steps $INNER --mass-prior $MASS_PRIOR $PS_OPT --out $OUT; } > $OUT/seed$s.log 2>&1"
+    echo "cd $NSS_ROOT && { python -u -c 'import os; a = sorted(os.sched_getaffinity(0)); c = {open(f\"/sys/devices/system/cpu/cpu{i}/topology/thread_siblings_list\").read().strip() for i in a}; print(\"seed $s affinity\", a, \"=\", len(c), \"physical core(s)\", flush=True)'; /usr/bin/time -v python -u nss_jax.py --catalog $CATALOG --id $ID --tag seed$s --seed $s --n-live $NLIVE --num-delete 100 --num-inner-steps $INNER --mass-prior $MASS_PRIOR $PS_OPT --mass-coord $MASSCOORD --out $OUT; } > $OUT/seed$s.log 2>&1"
 done > "$TASKS"
 
 $CURC_LB_BIN/mpirun ${BIND:-} lb "$TASKS"

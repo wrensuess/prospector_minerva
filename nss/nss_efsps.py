@@ -133,7 +133,9 @@ def run_nss(model, n_live, num_delete, num_inner_steps, seed, termination=-3.0,
 
 
 def summarise(model, res, phot, args, tag):
-    theta = model.prior_transform(res["u"])
+    # sampling coordinates other than the standard cube (nss_jax --mass-coord marginal)
+    # come with their own 26-d theta, including a posterior draw of logmass per sample
+    theta = res["theta"] if "theta" in res else model.prior_transform(res["u"])
     w = res["w"]
     keep = w > 1e-8 * w.max()
     names = model.free

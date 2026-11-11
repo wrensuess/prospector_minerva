@@ -5,8 +5,9 @@
 #
 #   EFSPS_PARENT=~/path/to/efsps-photfit bash nss/blanca/make_bundle.sh [OUT]
 #                                                   -> OUT (default ~/nss_blanca_bundle.tar.gz)
-# The private MINERVA test catalogue (minerva_uds_test9.fits; NOT in the public repo) is
-# included if it sits in nss/ (copy it there from the private handoff folder first).
+# The private MINERVA test catalogues (minerva_*.fits subsets, e.g. minerva_uds_test9.fits,
+# minerva_cosmos_bimodal12.fits; NOT in the public repo) are included if they sit in nss/
+# (copy them there from the private handoff folder first).
 set -euo pipefail
 NSS=$(cd "$(dirname "$0")/.." && pwd)
 EFSPS=${EFSPS_PARENT:?set EFSPS_PARENT to your efsps-photfit clone}
@@ -21,10 +22,13 @@ mkdir -p "$STAGE/nss_test/results"
 ( cd "$NSS" && cp *.py uncover_test.csv "$STAGE/nss_test/" && cp -R blanca "$STAGE/nss_test/" \
   && cp results/58858_free_L1000.npz results/58858_free_L1000.json \
         results/58858_jax_free_L1000.npz results/58858_jax_free_L1000.json "$STAGE/nss_test/results/" )
-if [ -f "$NSS/minerva_uds_test9.fits" ]; then
-    cp "$NSS/minerva_uds_test9.fits" "$STAGE/nss_test/"
+shopt -s nullglob
+subsets=("$NSS"/minerva_*.fits)
+if [ ${#subsets[@]} -gt 0 ]; then
+    cp "${subsets[@]}" "$STAGE/nss_test/"
+    echo "MINERVA subsets in the bundle: $(cd "$NSS" && ls minerva_*.fits | tr '\n' ' ')" >&2
 else
-    echo "note: minerva_uds_test9.fits not in $NSS; the MINERVA test galaxies will not be in the bundle" >&2
+    echo "note: no minerva_*.fits in $NSS; the MINERVA test galaxies will not be in the bundle" >&2
 fi
 rsync -a --exclude '.git' --exclude '__pycache__' --exclude '*.pyc' --exclude '.DS_Store' \
     "$EFSPS/" "$STAGE/efsps-photfit/"

@@ -115,19 +115,50 @@ def prior_start(loglike_batch, d, n_live, n_total, key, batch=20000, keep_discar
 
 def run_nss_jax(model, n_live, num_delete, num_inner_steps, seed, termination=-3.0,
                 max_seconds=np.inf, log_every=50, n_prior_start=None, prior_batch=20000,
-                keep_discards=10000):
-    return run_nss_core(JaxLogLike(model), model.n_dim, n_live, num_delete, num_inner_steps,
-                        seed, termination, max_seconds, log_every, n_prior_start,
-                        prior_batch, keep_discards)
+                keep_discards=10000, mass_coord="cdf"):
+    if mass_coord == "cdf":
+        return run_nss_core(JaxLogLike(model), model.n_dim, n_live, num_delete,
+                            num_inner_steps, seed, termination, max_seconds, log_every,
+                            n_prior_start, prior_batch, keep_discards)
+    if mass_coord != "marginal":
+        raise ValueError(f"unknown mass coordinate {mass_coord!r}")
+    # mass integrated out of the likelihood (mass_marginal.py): 25 sampled parameters;
+    # prior draws in the standard 26-d cube, mapped to the sampled coordinates
+    from mass_marginal import MassMarginal
+    mm = MassMarginal(model)
+    res = run_nss_core(mm.loglike, mm.n_dim, n_live, num_delete, num_inner_steps, seed,
+                       termination, max_seconds, log_every, n_prior_start, prior_batch,
+                       keep_discards, logprior=mm.logprior, d_u=model.n_dim,
+                       loglike_u=lambda u: mm.loglike(mm._x_from_u(u)[0]),
+                       to_x=lambda U: mm.x_from_u(U)[0])
+    # the mass posterior: one draw of logmass from L(m, x) q(m; x) per sample
+    x = jnp.asarray(res["u"])
+    draw = jax.jit(jax.vmap(mm.sample_logmass))
+    keys = jax.random.split(jax.random.fold_in(jax.random.PRNGKey(seed), 7), x.shape[0])
+    m = np.concatenate([np.asarray(draw(keys[i:i + 5000], x[i:i + 5000]))
+                        for i in range(0, x.shape[0], 5000)])
+    res["theta"] = np.concatenate([np.asarray(mm.batch_theta(x[i:i + 5000], jnp.asarray(m[i:i + 5000])))
+                                   for i in range(0, x.shape[0], 5000)])
+    res["logmass_draws"] = m
+    res["mass_marginal"] = mm
+    return res
 
 
 def run_nss_core(loglike, d, n_live, num_delete, num_inner_steps, seed, termination=-3.0,
                  max_seconds=np.inf, log_every=50, n_prior_start=None, prior_batch=20000,
-                 keep_discards=10000):
-    """NSS on the unit cube for a single-row log-likelihood u -> log L (pure JAX)."""
+                 keep_discards=10000, logprior=None, d_u=None, loglike_u=None, to_x=None):
+    """NSS on the unit cube for a single-row log-likelihood u -> log L (pure JAX).
 
-    def logprior(u):
-        return jnp.where(jnp.all((u >= 0.0) & (u <= 1.0)), 0.0, -jnp.inf)
+    Other sampling coordinates (mass_marginal.MassMarginal): logprior is their prior
+    log-density; prior draws (standard start and prior start) are made in the standard
+    d_u-dimensional cube, ranked with loglike_u, and mapped with to_x. With all four left
+    at None this is the standard run, unchanged."""
+    if logprior is None:
+        def logprior(u):
+            return jnp.where(jnp.all((u >= 0.0) & (u <= 1.0)), 0.0, -jnp.inf)
+    other = to_x is not None
+    d_u = d if d_u is None else d_u
+    loglike_u = loglike if loglike_u is None else loglike_u
 
     algo = blackjax.nss(logprior_fn=logprior, loglikelihood_fn=loglike,
                         num_inner_steps=num_inner_steps, num_delete=num_delete)
@@ -136,11 +167,14 @@ def run_nss_core(loglike, d, n_live, num_delete, num_inner_steps, seed, terminat
     ps = None
     t_c = time.time()
     if n_prior_start is not None and n_prior_start > n_live:
-        batch_fn = jax.jit(jax.vmap(loglike)).lower(
-            jnp.zeros((prior_batch, d), jnp.float64)).compile()
+        batch_fn = jax.jit(jax.vmap(loglike_u)).lower(
+            jnp.zeros((prior_batch, d_u), jnp.float64)).compile()
         compile_prior_s = time.time() - t_c
-        ps = prior_start(batch_fn, d, n_live, int(n_prior_start), k0, prior_batch,
+        ps = prior_start(batch_fn, d_u, n_live, int(n_prior_start), k0, prior_batch,
                          keep_discards)
+        if other:
+            ps["live_u"] = to_x(ps["live_u"])
+            ps["kept_u"] = to_x(ps["kept_u"]) if len(ps["kept_u"]) else np.empty((0, d))
         print(f"  prior start: {ps['n_total']} draws in {ps['eval_s']:.1f} s; threshold "
               f"log L {ps['threshold']:.2f}; E[log X] at handover {ps['logx_expected']:.3f}",
               flush=True)
@@ -148,7 +182,9 @@ def run_nss_core(loglike, d, n_live, num_delete, num_inner_steps, seed, terminat
         live0 = jnp.asarray(ps["live_u"])
     else:
         compile_prior_s = 0.0
-        live0 = jax.random.uniform(k0, (n_live, d), dtype=jnp.float64)
+        live0 = jax.random.uniform(k0, (n_live, d_u), dtype=jnp.float64)
+        if other:
+            live0 = jnp.asarray(to_x(np.asarray(live0)))
     state = jax.jit(algo.init)(live0)
     step = jax.jit(algo.step).lower(key, state).compile()
     compile_s = time.time() - t_c + compile_prior_s
@@ -158,7 +194,10 @@ def run_nss_core(loglike, d, n_live, num_delete, num_inner_steps, seed, terminat
     while not (state.integrator.logZ_live - state.integrator.logZ < termination):
         key, sub = jax.random.split(key)
         state, info = step(sub, state)
-        dead.append(info)
+        # keep only the dead particles: info.update_info holds every slice step's brackets
+        # for every chain (~2 MB per iteration at 52 steps), which nothing uses, and which
+        # pushed a 20-fit layout job past its memory limit (Blanca job 29439310, 1152437)
+        dead.append(info._replace(update_info=None))
         it += 1
         if it % log_every == 0:
             print(f"  it {it:6d}  logZ {float(state.integrator.logZ):9.2f}  "
@@ -170,7 +209,7 @@ def run_nss_core(loglike, d, n_live, num_delete, num_inner_steps, seed, terminat
     jax.block_until_ready(state)
     wall = time.time() - t0
 
-    final = finalise(state, dead)
+    final = finalise(state, dead, update_info=False)
     key, kw = jax.random.split(key)
     logw = np.asarray(log_weights(kw, final, shape=100))
     u_out = np.asarray(final.particles.position)
@@ -220,22 +259,31 @@ def main():
     p.add_argument("--id", required=True)
     p.add_argument("--out", default="results")
     p.add_argument("--tag", default="jax")
-    p.add_argument("--n-live", type=int, default=500)
-    p.add_argument("--num-delete", type=int, default=50)
-    p.add_argument("--num-inner-steps", type=int, default=None)
+    # defaults = the production setting validated on Blanca (STATUS.md section 5)
+    p.add_argument("--n-live", type=int, default=1000)
+    p.add_argument("--num-delete", type=int, default=100)
+    p.add_argument("--num-inner-steps", type=int, default=None,
+                   help="slice steps per new point. Default 32 with --mass-coord marginal "
+                        "(chosen 2026-11-11 from 20-seed Blanca tests at 16-78 on 21 galaxies), "
+                        "130 with --mass-coord cdf (the earlier standard)")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--termination", type=float, default=-3.0)
     p.add_argument("--fix-z", type=float, default=None)
     p.add_argument("--z-window", type=float, nargs=2, default=None)
     p.add_argument("--max-seconds", type=float, default=np.inf)
-    p.add_argument("--mass-prior", choices=["exact", "tabulated"], default="exact",
-                   help="tabulated: tabulated_mass_prior.py (no mass function per call)")
+    p.add_argument("--mass-prior", choices=["exact", "tabulated"], default="tabulated",
+                   help="tabulated (default): tabulated_mass_prior.py, no mass function per call; "
+                        "exact: the mass function evaluated per call")
     p.add_argument("--n-prior-start", type=float, default=1e6,
                    help="start from the best n_live of this many prior draws (see module doc). "
                         "Default 1e6, adopted 2026-11-09 after the Blanca test on 9 MINERVA "
                         "galaxies; 0 (or any value <= n_live) gives the standard start")
     p.add_argument("--keep-discards", type=int, default=10000,
                    help="discarded prior draws whose positions are kept for the posterior")
+    p.add_argument("--mass-coord", choices=["cdf", "marginal"], default="marginal",
+                   help="marginal (default, adopted 2026-11-11): integrate mass out of the "
+                        "likelihood (mass_marginal.py; needs --mass-prior tabulated); cdf: sample "
+                        "logmass through its prior inverse CDF (the earlier standard)")
     p.add_argument("--include-miri", action="store_true",
                    help="fit MIRI bands too. Off by default: MIRI is fitted only when "
                         "explicitly asked for")
@@ -247,21 +295,26 @@ def main():
     if args.mass_prior == "tabulated":
         use_tabulated_mass_prior(model)
     if args.num_inner_steps is None:
-        args.num_inner_steps = 2 * model.n_dim
+        args.num_inner_steps = 32 if args.mass_coord == "marginal" else 130
     print(f"[{phot.id}] JAX model: {model.n_dim} free params, {int(model.valid.sum())} bands, "
           f"n_live={args.n_live}, num_delete={args.num_delete}, "
           f"num_inner_steps={args.num_inner_steps}, seed={args.seed}, mass prior {args.mass_prior}, "
-          f"prior start {args.n_prior_start}, "
+          f"prior start {args.n_prior_start}, mass coordinate {args.mass_coord}, "
           f"emulator {C.net_for_md5(model.emu.md5)} ({model.emu.md5})",
           flush=True)
+    if args.mass_coord == "marginal" and args.mass_prior != "tabulated":
+        raise SystemExit("--mass-coord marginal needs --mass-prior tabulated")
     res = run_nss_jax(model, args.n_live, args.num_delete, args.num_inner_steps, args.seed,
                       args.termination, args.max_seconds, n_prior_start=args.n_prior_start,
-                      keep_discards=args.keep_discards)
+                      keep_discards=args.keep_discards, mass_coord=args.mass_coord)
     summary, theta = summarise(model, res, phot, args, args.tag)
     summary["settings"]["n_prior_start"] = args.n_prior_start
     if "prior_start" in res:
         summary["prior_start"] = res["prior_start"]
-    summary["likelihood"] = "pure JAX (jax_model.JaxLogLike)"
+    summary["likelihood"] = ("pure JAX (jax_model.JaxLogLike)" if args.mass_coord == "cdf" else
+                             "pure JAX, mass integrated out (mass_marginal.MassMarginal); "
+                             "logl/max_logL are the mass-marginal L', logZ is the same evidence")
+    summary["mass_coord"] = args.mass_coord
     summary["compile_s"] = res["compile_s"]
     summary["mass_prior"] = args.mass_prior
     summary["catalog"] = os.path.abspath(args.catalog)
