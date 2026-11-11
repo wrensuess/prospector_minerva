@@ -323,7 +323,9 @@ class JaxPriorTransform:
                         in_axes=1)(self._ratio_table)
 
     # the transform -------------------------------------------------------------------
-    def __call__(self, u):
+    def __call__(self, u, logmass=None):
+        """u -> theta. With logmass given (linear_mass.py), it replaces the mass inverse CDF
+        and u[logmass] is ignored; with logmass=None (default) nothing changes."""
         th = jnp.zeros(self.n_dim, dtype=u.dtype)
         col = self.col
         if self._z_fixed is None:
@@ -331,7 +333,7 @@ class JaxPriorTransform:
             th = th.at[col["zred"]].set(z)
         else:
             z = jnp.asarray(self._z_fixed, dtype=u.dtype)
-        m = self.mass_ppf(u[col["logmass"]], z)
+        m = self.mass_ppf(u[col["logmass"]], z) if logmass is None else logmass
         th = th.at[col["logmass"]].set(m)
         if self._met is not None:
             lo, hi = self._met
