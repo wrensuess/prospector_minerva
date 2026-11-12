@@ -426,6 +426,7 @@ production one. So the cost comparison below is between pipelines, not a like-fo
 | 2026-11-09 | Clustering kernel set aside. It doesn't address the failures we have: the redshift losses happen before the live points form clusters, and single-solution fits have one cluster. |
 | 2026-11-09 | 10⁶ prior start adopted as the default (`nss_jax.py --n-prior-start`; 0 = standard start). |
 | 2026-11-11 | **Mass integrated out of the likelihood** (`mass_marginal.py`, `--mass-coord marginal`) adopted as the default. Mathematically the same prior, implemented differently; this is allowed when it speeds sampling (Wren). The only approximation, the tabulated expected SFH ratios, was approved ("you should tabulate it"). Mass is still in the model: it sets the SFH-ratio and metallicity priors and enters the redshift prior, and is drawn back for every posterior sample. |
+| 2026-11-11 | **Soft-ceiling dust2 prior, mass only, adopted as the NSS default** (Wren): today's flat dust2 prior below a ceiling of A_V = 1 mag at log M < 8, rising to 4 (no change) at log M 9; σ 0.2 penalty above. Only removes the low-z dusty-dwarf trap; no measurable effect on 35 non-trap test galaxies (§6 item 5b). |
 | 2026-11-11 | **32 inner steps** as the default for mass-marginal NSS (Wren). 20-seed Blanca tests at 16/25/32/52/78 on 21 galaxies: 32 is the smallest setting where the hard galaxies still follow the 1/√k scatter law; 25 is 17% cheaper with a worse tail, 16 breaks (R̂ up to 1.075). The strict "R̂ < 1.01 for every parameter" is missed in 6 of 21 galaxies (worst 1.029), but per-seed posteriors and SFHs agree by eye, the standard Wren applies. `nss_jax.py` and `fullfit_layout.sbatch` defaults are now n_live 1000, num_delete 100, 32 steps, tabulated prior, mass integrated out. |
 | 2026-11-11 | Results come back from Blanca by `rsync` pulled from the Mac, never `tar czf` on the login node. |
 | 2026-11-09 | Convergence acceptance (single-solution galaxies, 20 seeds, judged on the median over galaxies; the worst galaxy is a warning, since 20 seeds measure scatter to ~16%). **Parameters:** Gelman–Rubin R̂ < 1.01 for every parameter (Vehtari+2021), i.e. median scatter between seeds ≤ 0.14 posterior half-widths, since R̂ ≈ √(1+S²). A parameter above 2× that threshold (S > 0.28) is a warning. Use rank-normalized R̂ where draws exist, so broad, skewed or edge-piled posteriors (dust2, dust_index) are judged fairly. **Width:** one run's 16–84 width within 10% of a reference posterior (long run or NUTS, not the pooled seeds). **logZ:** seed scatter ≤ 1.5× quoted to start, ideally lower (implementation error well below statistical); otherwise inflate the quoted error by the measured factor. **Plus:** no catastrophic failures (wrong-z or wrong-solution runs). Goal: generally quite good with no big obvious failure modes, not perfect. |
@@ -459,7 +460,14 @@ most important first.
 
 **B. Model decisions (with Wren, Ikki and Joel)**
 
-5. **AGN prior. DECIDED 2026-11-11; TO IMPLEMENT here.** Wren adopted "flat1_s025" as the
+5. **AGN prior. DECIDED 2026-11-11; IMPLEMENTED here 2026-11-11 (uncommitted).**
+   `nss_priors.py`; `nss_efsps.build()` applies it by default (`nss_jax.py --fagn-prior`,
+   default `flat1_s025`; summaries record `fagn_prior`). Tests: `test_nss_priors.py` PASS (ppf
+   vs numerical inverse ≤ 4e-9 dex, vs the prospector `FastFlatGaussTail` ≤ 5e-12 dex for
+   u < 1−1e-6, NumPy vs JAX 9e-16 dex, P(fagn > 0.1) = 0.0726); all numerics suites PASS with
+   it (prior and loglike, exact and tabulated, on 58858 and 1212906; mass-marginal on
+   1197855). The tail is written in complement form, so it doesn't lose precision at u → 1.
+   Still to do: rerun the AGN test set in `photometry.py`. Wren adopted "flat1_s025" as the
    production prior:
    - x = log10 fagn on [−5, log10 3] (same range as efsps now);
    - flat for x ≤ −1, then a half-Gaussian tail with σ = 0.25 dex;
@@ -478,12 +486,98 @@ most important first.
    - It fixed 22/40 bright ones in both repeats and broke 1/39 controls.
    - Harsher tails (σ 0.1) fixed no more and broke a real AGN (UDS 1241214).
 
-   To do here:
-   - add a prior kind (NumPy + JAX ppf and logpdf) in `jax_prior.py`;
-   - point `fagn` at it (efsps-photfit `config.py` ParamSpec "fagn": fork it first, or
-     override on the nss side);
-   - test the ppf;
-   - rerun the AGN test set in `photometry.py`.
+5b. **Dust prior against the low-z dwarf trap. ADOPTED 2026-11-11 and the NSS default (uncommitted).** Production
+   puts z_spec > 5.5 galaxies at z ≈ 0.2 as dusty (dust2 1.2–3.4), old, log M 6–7.7 dwarfs.
+   Candidate fix: a dust2 prior conditional on mass and SFR₁₀₀, after Nagaraj+22 (ApJ 932, 54)
+   Fig. 7, calibrated on secure-z production fits, applied inside the mass integral
+   (`mass_marginal.py`). A 48-galaxy test set (dwarf traps, dusty quiescent, SMG-like, real low-z dwarfs,
+   controls); plan, sample and figures are private (`../dust_prior/`). Note: efsps's dust2 prior
+   is uniform on [0, 4] and its mass floor is 10⁷; production uses TruncNormal(0.3, 1) and 10⁶.
+   Most production trap solutions sit below 10⁷, so NSS behaviour on them must be measured first.
+   Variants to test (Wren, 2026-11-11): dust2 given mass only, SFR only, and mass + SFR; no
+   redshift dependence for now. Wren wants the prior as close to flat as possible, so the form is
+   a soft ceiling: today's flat prior × a half-Gaussian penalty only above d_max(M, SFR), with
+   d_max 0.8 at low mass / low SFR, ramping to 4 (no prior) by log M 10 / log SFR 0.
+   **Implemented 2026-11-11 (uncommitted):** `dust_prior.py`; `MassMarginal(dust_prior=...)` adds
+   ln w inside the mass integral (SFR₁₀₀ = 10^m · f(ratios, z), ported from efsps
+   `sfh_quantities`); `nss_jax.py --dust-prior {none,mass,sfr,mass_sfr}` (default none),
+   `--save-draws N`. `test_dust_prior.py` PASS: SFR₁₀₀ JAX vs efsps ≤ 7e-13 dex, ln w JAX vs
+   NumPy ≤ 6e-14, no-penalty ceiling bitwise identical to no prior, error the penalty adds to the
+   mass integral ≤ 3e-7 nats. ln C = −1.08 / −0.88 / −0.83 (mass / sfr / mass_sfr): the ceiling
+   removes 53–72% of the prior volume (most prior mass is at low mass), a constant offset in logZ.
+   Blanca test: 48 galaxies × {none, mass, sfr, mass_sfr} × 3 seeds (`blanca/dust_tasks.txt`,
+   `blanca/tasklist_layout.sbatch`, array 0–28, fast nodes, results/dust48/).
+   **Results (2026-11-11, 576/576 fits OK; private: `dust_prior/analyze_dust48.py`, `dust48_*.csv`,
+   `dust48_results.png`):**
+   - Without a dust prior NSS already escapes much of the trap: 6 of the 11 z > 5.5 galaxies that
+     production put at z < 0.6 get ≥ 0.9 weight at z_spec (mean 0.69); production had 0.
+   - Mean weight at z_spec for the 11, none / mass / sfr / mass_sfr: 0.69 / **0.88** / 0.83 / 0.82.
+     Mass only is best: 1184059 0.19 → 0.81 (0.44 with an SFR term), 1201575 0.21 → 1.00
+     (0.77–0.82), 1187083 (z 3.2) 0.73 → 0.93 (0.74–0.77). The SFR ramp lets low-mass dusty
+     solutions with log SFR −1 to 0 through (1184059's z ≈ 1.1, log M 7.6, dust2 1.4 solution).
+   - No collateral in any variant: the 35 non-trap galaxies (real low-z dwarfs incl. the dustiest,
+     dusty quiescent, SMG-like, controls) keep their z weights, and their posterior medians move
+     ≤ 0.2 half-widths (median 0.01–0.05), inside the seed scatter (0.05–0.08). Reported logZ is
+     unchanged for them (w = 1 where their posterior is).
+   - Not fixed, and not the dust prior's job: 2132888 leaves z 0.24 but lands at z ≈ 5.3, not 7.12
+     (Hα ↔ [OIII]); 1210695 goes to a massive dusty z ≈ 2 solution; SMG-like 1088165 (z 4.09) and
+     2243143 (3.16) split weight with z ≈ 2.6–2.7 solutions in every setting.
+   - Wall time unchanged (median 302–341 s per fit across settings).
+   **Adopted setting (Wren, 2026-11-11):** mass only; ceiling A_V = 1 mag (dust2 0.92) below
+   log M 8, rising linearly to 4 (no change) at log M 9; tail σ 0.2; today's flat prior everywhere
+   below the ceiling. Wren narrowed the ramp from 8–10 to 8–9 because real dusty galaxies exist at
+   10^8–10 and the goal is only the trap. Chosen by reweighting the no-prior posteriors (checked
+   against the 8–10 refits to ±0.05): mean trap weight at z_spec 0.79 (0.65 without; 0.82 for
+   the tested 8–10, 0.80 ceiling 0.8); the cost of 1 mag vs 0.8 is 1184059 (0.75 → 0.58). No
+   non-trap galaxy affected (≤ 0.1% of any right-z posterior pays > 0.5 nat). `dust_prior.CEILING`;
+   `nss_jax.py --dust-prior` now defaults to `mass` (`none` to turn it off; the cdf mass coordinate
+   needs `none`); `fullfit_layout.sbatch` has `DUST` (default mass). ln C = −0.89. Tests PASS
+   (`test_dust_prior.py`, `test_mass_marginal.py`; private logs `test_dust_prior_1197855_adopted.log`).
+   Not yet run on Blanca at the adopted setting. **Validation prepared 2026-11-11** (bundle md5
+   20e6087c…): (1) the 48 test galaxies at the adopted setting, 3 seeds (144 fits,
+   `blanca/dust48_adopted_tasks.txt`, RUN dust48_adopted, CHUNK 72, array 0–1); (2) every secure
+   spec-z galaxy the prior could affect, UDS + COSMOS, with and without the prior, seed 0: 195 at
+   z_spec < 1 with production log M < 9.5, 417 at z_spec > 5.5, 61 at z_spec 3–5.5 that production
+   put at z < 1 and log M < 8 (673 galaxies, 1346 fits, `minerva_{uds,cosmos}_specval.fits`
+   (private), `blanca/specval_tasks.txt`, RUN specval, CHUNK 100, array 0–13). `nss_jax.py
+   --no-full-npz` skips the 14 MB sample file (tasklist_layout default). Pass criteria: z_spec > 5.5
+   at z < 1 essentially gone with the prior (any left explained by another failure);
+   ≥ 99% of the low-z galaxies change weight at z_spec by < 0.05, none by > 0.1; the z 3–5.5 group
+   reported, not judged. With one seed, check galaxies that move against the no-prior draws
+   reweighted by w (no seed noise), and rerun movers with more seeds if needed.
+   **Validation results (2026-11-11; 1490/1490 fits OK; private `dust_prior/analyze_validation.py`,
+   `.log`, `validation_specval.csv`, `validation_specval.png`):**
+   - The 48 at the adopted setting (3 seeds): mean trap weight at z_spec 0.65 → 0.81 (reweighting
+     predicted 0.79; 1184059 refit 0.75 vs predicted 0.58, the rest within 0.03). The 35 non-traps:
+     z_spec weight changes ≤ 0.01; log M and dust2 medians move ≤ 0.2 half-widths (seed floor 0.06–0.08).
+   - **PASS, z_spec > 5.5 (417):** majority weight at z < 1 goes 33 → 11 (production: 33). The 11 left
+     have z ≈ 0.8, log M 7.1–7.7 solutions with dust2 0.4–1.0 (one 1.4 at 10^8.7): not the dusty dwarf.
+     Five galaxies lose > 0.1 at z_spec, but to neighbouring high-z solutions, with none of their
+     no-prior draws penalised and no change under reweighting: one-seed sampler noise (2171172:
+     0.95 → 0.24, weight moved above z_spec), not the prior.
+   - **PASS, real z < 1, log M < 9.5 (195):** every galaxy changes its weight at z_spec by < 0.05
+     (max 0.041); the prior's own effect (reweighting) is ≤ 0.017.
+   - z 3–5.5 trapped by production (61): majority at z_spec 16 → 18; mostly not a dust problem.
+   - **New, separate issue:** on z_spec > 5.5 NSS trails production and eazy at the faint end
+     (majority weight at the right z, adopted: 0.88 / 0.74 / 0.59 / 0.32 for F444W < 26 / 26–27 /
+     27–28 / > 28; production 0.85 / 0.85 / 0.81 / 0.62; eazy 0.94 / 0.90 / 0.87 / 0.82). The lost
+     weight is mostly at z 1–3 (18.5% of all weight; 73 galaxies with > 50% there): solutions at median
+     z 1.4, log M 7.8, dust2 0.5, log SFR −1.1 — Lyman/Balmer break confusion, not dust. Related to
+     item 6 (high-z priors), not yet diagnosed.
+     - **The priors explain only part of it** (`dust_prior/reweight_zmass_prior.py`, private). NSS and
+       production do NOT share redshift and mass priors: production `PhiSFH` has z uniform on
+       [0.001, 20] and Leja+20 frozen above z = 3 (`const_phi=True`) over 10⁶–10^12.5; NSS (efsps
+       NZSFH) has the Prospector-β number-density p(z) and Tacchella+18 above z ≈ 4 over 10⁷–10^12.5.
+       NSS's priors favour a z 1.4, log M 7.8 solution over a z 6–8, log M 9 one by 1.7–4 nats more.
+       Reweighting the NSS posteriors to production's z, mass and dust2 priors raises the z > 5.5
+       majority-right fraction 0.65 → 0.73 (F444W < 26 / 26–27 / 27–28 / > 28: 0.93 / 0.82 / 0.68 /
+       0.40, against production 0.85 / 0.85 / 0.81 / 0.62). The rest of the faint-end gap is
+       unexplained (candidates, untested: the model itself — E-FSPS with free nebular parameters vs
+       Parrot — and dynesty locking onto one solution in production).
+   - Wall time per fit median 5.8 min (90% 8.5) on the fast types.
+   Side note for item A1: at 1197855 prior draws the existing mass-integral error reached
+   2.1e-2 nats in this test (60 draws), above the 6e-3 recorded earlier. **Later:** a q_PAH prior tied to
+   metallicity or mass (the trap puts PAH 3.3 µm on [OIII]/Hα), tested separately.
 6. **High-z mass prior.** High-z spec-z solutions lose weight mainly to the mass-function
    prior at z ≈ 6 (then dust2 and p(z)); production dynesty hides this by locking onto single
    solutions.
@@ -532,12 +626,61 @@ most important first.
 
 **C. Production engineering**
 
-7. **Bring memory down.** Peak RSS is ~1.7 GB per fit (max 2.3 GB) at every step count, so a
-   20-fit job needs ~45 GB (`fullfit_layout.sbatch` now asks for 48G; 30G ran out). Dropping
-   the stored slice brackets (`update_info`) didn't change the peak, so something else sets
-   it: probably the 10⁶-draw prior start, the JAX compile, or the kept discards
-   (`--keep-discards 10000`). Profile memory over a fit, then e.g. evaluate the prior start in
-   chunks. Target well under 1 GB per fit.
+7. **Bring memory down. PROFILED 2026-11-11** (Blanca job 29475943, Gold 5418Y, 16 fits of
+   1212906 and 1152437 at the defaults; kit `blanca/memprof/`; outputs private,
+   `nss_private_handoff/results/memprof/`). Peak RSS ~1.6–2.0 GB per fit, but the data the
+   fit actually holds is only 0.15–0.35 GB (0.6 GB at the end). The rest:
+   - **The JAX/XLA compile of the NSS step** (~28 s, also ~6–8% of fit time): ~0.85 GB in use
+     at its peak, which sets a per-fit floor of ~1.25 GB private memory. Compiling the
+     prior-start batch function adds ~0.35 GB transiently.
+   - **glibc keeps what the compiles free:** ~0.8 GB held free for the rest of the fit.
+   - **End of the run** (`log_weights`, mass draws, theta): the large arrays grow the heap
+     on top of that, +0.3–0.5 GB. This is the per-fit peak in every base run, and it scales
+     with iterations.
+   - Not the cause: the prior start's 20,000-row batches (0.93 GB transient, below the compile
+     peak; 5,000-row batches save nothing on Linux), the kept discards (2 MB), the 10⁶ log L
+     values (8 MB), `update_info` at k=32 (0.1 MB per iteration). Shared libraries: 0.16 GB,
+     counted once per node.
+   - glibc settings (`MALLOC_ARENA_MAX=2`, fixed 1 MiB mmap threshold, 32 MiB trim threshold)
+     remove the end spike: per-fit peak 1.85 → 1.54 GB (`time -v`), outputs bitwise identical,
+     but fits are ~5% slower (+1 to +12%, paired).
+   - Job level: the memory cgroup peaked at 20.4 GB for 16 fits (1.27 GB per fit), set by the
+     simultaneous compiles at job start. 20 seeds of one galaxy also finish together, so their
+     end spikes stack (this is what ran past 30G).
+   - **FIXED 2026-11-11 (uncommitted): `malloc_tools.py`**, called from
+     `nss_jax.run_nss_core`: malloc_trim after the prior start and after the step compile;
+     large allocations mmapped after the NSS loop. glibc only; `NSS_MALLOC_TUNING=0` turns
+     it off; summaries record `malloc_tuning` and `xla_flags`.
+     - **Blanca job 29478805** (Gold 5418Y; 1212906 and 1152437 × seeds 0, 1; same node and
+       seeds as the reference without the fix; dust prior `mass`, the new default):
+       - **outputs bitwise identical in 4/4 fits;**
+       - time per iteration ×1.000 (0.993–1.006);
+       - peak private memory 1.69 → 1.31 GB, `time -v` 1.81 → 1.43 GB;
+       - during the NSS loop 1.32 → 0.72 GB; end of run 1.69 → 1.13 GB.
+     - The per-fit peak is now the step compile (1.31 GB), at job start, when all fits
+       compile at once. So a 20-fit job needs ~27 GB: `fullfit_layout.sbatch` and
+       `tasklist_layout.sbatch` now ask for `--mem=32G` (was 48G). Measured on the fast types
+       only; the other CPU types are being checked with the same kit (one job per type).
+   - **XLA flags (same job, each on top of the fix):**
+     - codegen split count 1, 256-bit vectors, no expensive LLVM passes: bitwise identical,
+       no change in memory or speed (the Mac's 30% slowdown for no-expensive-passes doesn't
+       happen on Linux).
+     - AVX2 cap: 1e-13-level differences, no memory change.
+     - **Legacy fusion emitters (`--xla_cpu_use_fusion_emitters=false`):** halves the step
+       compile's memory. Peak 1.31 → 0.87 GB private (`time -v` 0.99 GB); compile 19% faster.
+       Results differ at the 1e-13 level (same iterations and logZ; percentiles move ~1e-13
+       half-widths). But each iteration is ~6% slower (+1 to +10%; on the placements where
+       other fits ran ~10% fast, it is still no faster than the reference), so likely ~9%.
+       Not adopted: at 500k fits that costs more than the memory is worth, unless memory
+       turns out to be the binding constraint.
+     - Timing noise: fits on some cores of the same node ran ~10% faster (prior start 55 vs
+       95 s), so paired ratios are good to ~±5%.
+   - Under 1 GB without a slowdown: a persistent compilation cache with the photometry passed
+     as arguments rather than constants (with item 10). It would also save the ~28 s compile
+     per fit (~6–8% of fit time).
+   - **In production use (dust-prior validation, 2026-11-11, 1490 fits on the fast node types,
+     malloc tuning on):** no failures; peak RSS per fit median 1.42 GB, max 1.55, against median
+     1.71 / max 2.07 in the earlier dust48 run without it (different galaxies, not paired).
 8. **Update postprocessing** (Wren will take this on in a separate thread). Turn NSS fit
    outputs into the catalogue products `postprocess_parrot.py` makes now (percentiles, SFHs,
    stellar mass, sSFR, UVJ):
@@ -576,9 +719,9 @@ most important first.
     steps and compare. It's the only way to catch, in production, galaxies harder than the 21
     tested.
 15. **An end-to-end test on ~1000 galaxies** through fit, postprocessing and catalogue.
-16. **Commit and push.** None of the convergence work is committed yet: mass_marginal.py and
-    its tests, the analysis and plot scripts, the runner and job-script changes, this file.
-    Wren decides when, and whether to push `nss-efsps`.
+16. ~~Commit and push.~~ Done 2026-11-11: the convergence work and the mass-marginal default
+    are committed and pushed to `origin/nss-efsps` on wrensuess/prospector_minerva (public),
+    up to `d94c518`.
 
 **D. Optional speed-ups (not blocking)**
 
@@ -610,8 +753,13 @@ against production's ~600k. Items 17 and 18 might take it to ~25–40k.
 - **Joel:** before porting the NSS code into efsps-photfit, fork it under `wrensuess`.
   We depend on commit `6d5ab6d` (v0.2.1), unmodified.
 - **Wren:**
-  - the AGN prior: adopted 2026-11-11 (flat1_s025, §6 item 5); not yet implemented in NSS;
-  - whether to push `nss-efsps`.
+  - the AGN prior: adopted 2026-11-11 (flat1_s025, §6 item 5); implemented in NSS and committed
+    2026-11-12, together with the adopted dust prior (§6 item 5b);
+  - **a later discussion of model + priors (Wren, 2026-11-12):** why NSS trails production on faint
+    z > 5.5 galaxies (§6 item 5b, "New, separate issue"). NSS and production differ in redshift,
+    mass and dust2 priors and in the model (E-FSPS with free nebular physics vs Parrot), not only the
+    sampler; the priors explain about a third of the faint-end gap. A clean best-χ² comparison of
+    the two solutions per galaxy was proposed but not run.
 
 ## 8. Where things live
 

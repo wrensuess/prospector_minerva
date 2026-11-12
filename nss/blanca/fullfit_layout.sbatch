@@ -17,6 +17,8 @@
 #   MASSCOORD   marginal (mass integrated out of the likelihood, mass_marginal.py; needs
 #               MASS_PRIOR=tabulated) or cdf (logmass through its prior inverse CDF, the
 #               earlier standard) (nss_jax.py --mass-coord)          (default marginal)
+#   DUST        soft-ceiling dust2 prior (nss_jax.py --dust-prior): mass (adopted 2026-11-11), none,
+#               sfr or mass_sfr                                     (default mass; needs MASSCOORD=marginal)
 #   e.g. sbatch --export=ALL,CATALOG=minerva_uds_test9.fits,ID=1212906 fullfit_layout.sbatch   (production defaults)
 #
 # Core binding (measured on Blanca by the prospector-minerva session, 2026-10-08, OpenMPI
@@ -35,7 +37,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=21
 #SBATCH --hint=nomultithread
-#SBATCH --mem=48G                  # 20 fits x up to 2.3 GB peak RSS each (measured 2026-11-11); 30G ran out
+#SBATCH --mem=32G                  # 20 fits x 1.31 GB peak private memory with malloc_tools.py (the step compile, all fits at once): ~27 GB (memprof job 29478805, 2026-11-11)
 #SBATCH --job-name=nss_fullfit_layout
 #SBATCH --output=%x_%j.out
 #SBATCH --error=%x_%j.err
@@ -64,19 +66,20 @@ MASS_PRIOR=${MASS_PRIOR:-tabulated}
 NPRIOR=${NPRIOR:-1e6}
 SEEDS=${SEEDS:-0 19}
 MASSCOORD=${MASSCOORD:-marginal}
+DUST=${DUST:-mass}
 if [ "$NPRIOR" = "0" ]; then PS_TAG=""; else PS_TAG=_ps${NPRIOR}; fi
 if [ "$MASSCOORD" = "cdf" ]; then MC_TAG=""; else MC_TAG=_mm; fi
 PS_OPT="--n-prior-start $NPRIOR"
-OUT=$NSS_ROOT/results/blanca_layout_${SLURM_JOB_ID}_${ID}_k${INNER}_L${NLIVE}_${MASS_PRIOR}${PS_TAG}${MC_TAG}
+OUT=$NSS_ROOT/results/blanca_layout_${SLURM_JOB_ID}_${ID}_k${INNER}_L${NLIVE}_${MASS_PRIOR}${PS_TAG}${MC_TAG}_dust${DUST}
 mkdir -p "$OUT"
 TASKS=$OUT/taskfile.txt
 echo "===== $(date) on $(hostname), job $SLURM_JOB_ID, restart ${SLURM_RESTART_COUNT:-0}, BIND='${BIND:-}'"
-echo "galaxy $ID from $CATALOG; NLIVE=$NLIVE, INNER=$INNER, MASS_PRIOR=$MASS_PRIOR, NPRIOR=$NPRIOR, MASSCOORD=$MASSCOORD, seeds $SEEDS"
+echo "galaxy $ID from $CATALOG; NLIVE=$NLIVE, INNER=$INNER, MASS_PRIOR=$MASS_PRIOR, NPRIOR=$NPRIOR, MASSCOORD=$MASSCOORD, DUST=$DUST, seeds $SEEDS"
 echo "CPU: $(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2); node CPUs $(nproc --all); job allowed $(nproc)"
 
 cd "$NSS_ROOT" || exit 1
 for s in $(seq $SEEDS); do
-    echo "cd $NSS_ROOT && { python -u -c 'import os; a = sorted(os.sched_getaffinity(0)); c = {open(f\"/sys/devices/system/cpu/cpu{i}/topology/thread_siblings_list\").read().strip() for i in a}; print(\"seed $s affinity\", a, \"=\", len(c), \"physical core(s)\", flush=True)'; /usr/bin/time -v python -u nss_jax.py --catalog $CATALOG --id $ID --tag seed$s --seed $s --n-live $NLIVE --num-delete 100 --num-inner-steps $INNER --mass-prior $MASS_PRIOR $PS_OPT --mass-coord $MASSCOORD --out $OUT; } > $OUT/seed$s.log 2>&1"
+    echo "cd $NSS_ROOT && { python -u -c 'import os; a = sorted(os.sched_getaffinity(0)); c = {open(f\"/sys/devices/system/cpu/cpu{i}/topology/thread_siblings_list\").read().strip() for i in a}; print(\"seed $s affinity\", a, \"=\", len(c), \"physical core(s)\", flush=True)'; /usr/bin/time -v python -u nss_jax.py --catalog $CATALOG --id $ID --tag seed$s --seed $s --n-live $NLIVE --num-delete 100 --num-inner-steps $INNER --mass-prior $MASS_PRIOR $PS_OPT --mass-coord $MASSCOORD --dust-prior $DUST --out $OUT; } > $OUT/seed$s.log 2>&1"
 done > "$TASKS"
 
 $CURC_LB_BIN/mpirun ${BIND:-} lb "$TASKS"

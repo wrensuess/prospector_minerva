@@ -1,0 +1,125 @@
+58858: 26 free params, 20 valid bands, mu 1.5791, mass prior: exact
+
+== 1. free z, 2000 random u
+  z bin               N  median logL  max|dlogL|   max rel  bitwise
+   0.04-0.15         21   -1.992e+04     1.1e-09   4.8e-14     0.0%
+   0.15-0.50         96        -1527     5.9e-10   4.1e-13     2.1%
+   0.50-1.00        186        -2229     4.6e-10   1.7e-13     9.1%
+   1.00-2.00        406        -2453     2.0e-10   2.6e-13    25.1%
+   2.00-2.90        238        -2513     2.0e-10   1.7e-13    27.7%
+   2.90-3.10         51        -2512     2.0e-12   3.7e-15    31.4%
+   3.10-3.90        224        -2534     3.2e-11   2.0e-14    35.3%
+   3.90-4.10         77        -2548     6.7e-11   1.2e-14    29.9%
+   4.10-6.00        481        -2551     3.6e-11   1.8e-14    36.8%
+   6.00-8.00        184        -2556     2.7e-12   1.5e-15    41.3%
+   8.00-10.00        34        -2559     9.1e-13   3.7e-16    26.5%
+  10.00-12.00         2        -2549     4.5e-13   1.8e-16     0.0%
+  max rel 4.1e-13 (tol 1e-08), same -inf set True: ok
+
+== 2. u of the 31600 NSS dead points of 58858
+  z bin               N  median logL  max|dlogL|   max rel  bitwise
+   0.04-0.15        308         -137     3.0e-10   4.2e-12     1.3%
+   0.15-0.50       1908       -27.15     2.3e-10   9.0e-12     0.6%
+   0.50-1.00       4122        160.5     4.0e-10   1.3e-11     1.0%
+   1.00-2.00       2183       -574.8     2.3e-10   1.1e-11     7.4%
+   2.00-2.90       1286          183     1.5e-10   1.6e-11     7.6%
+   2.90-3.10        152       -905.8     2.1e-11   7.5e-13    19.7%
+   3.10-3.90      14206        481.7     2.0e-11   8.9e-13     3.3%
+   3.90-4.10       5999        438.8     2.8e-11   4.6e-13     1.9%
+   4.10-6.00       1272        288.9     4.3e-11   3.9e-12    20.5%
+   6.00-8.00        142        -2554     5.8e-11   2.8e-14    77.5%
+   8.00-10.00        22        -2560     0.0e+00   0.0e+00   100.0%
+  max rel 1.6e-11 (tol 1e-08), same -inf set True: ok
+  vs log L stored by the numpy-callback run: max|d| numpy-now 1.7e+04, jax 1.7e+04
+
+== 3. fixed z=0.01, 200 random u
+  z bin               N  median logL  max|dlogL|   max rel  bitwise
+   0.01-0.04        200   -9.241e+04     8.0e-10   9.7e-15    19.5%
+  max rel 9.7e-15 (tol 1e-08), same -inf set True: ok
+
+== 3. fixed z=0.1, 200 random u
+  z bin               N  median logL  max|dlogL|   max rel  bitwise
+   0.04-0.15        200   -1.222e+04     6.7e-10   2.4e-13     7.0%
+  max rel 2.4e-13 (tol 1e-08), same -inf set True: ok
+
+== 3. fixed z=0.15, 200 random u
+  z bin               N  median logL  max|dlogL|   max rel  bitwise
+   0.15-0.50        200        -3789     3.9e-10   1.6e-12     2.0%
+  max rel 1.6e-12 (tol 1e-08), same -inf set True: ok
+
+== 3. fixed z=0.5, 200 random u
+  z bin               N  median logL  max|dlogL|   max rel  bitwise
+   0.50-1.00        200        -2103     2.8e-10   5.9e-13     5.0%
+  max rel 5.9e-13 (tol 1e-08), same -inf set True: ok
+
+== 3. fixed z=1.0, 200 random u
+  z bin               N  median logL  max|dlogL|   max rel  bitwise
+   1.00-2.00        200        -2351     4.1e-10   6.7e-14    16.5%
+  max rel 6.7e-14 (tol 1e-08), same -inf set True: ok
+
+== 3. fixed z=2.0, 200 random u
+  z bin               N  median logL  max|dlogL|   max rel  bitwise
+   2.00-2.90        200        -2477     4.4e-10   3.8e-14    34.5%
+  max rel 3.8e-14 (tol 1e-08), same -inf set True: ok
+
+== 3. fixed z=3.0, 200 random u
+  z bin               N  median logL  max|dlogL|   max rel  bitwise
+   2.90-3.10        200        -2517     6.7e-11   4.9e-14    36.0%
+  max rel 4.9e-14 (tol 1e-08), same -inf set True: ok
+
+== 3. fixed z=3.5, 200 random u
+  z bin               N  median logL  max|dlogL|   max rel  bitwise
+   3.10-3.90        200        -2534     4.5e-11   1.6e-14    44.0%
+  max rel 1.6e-14 (tol 1e-08), same -inf set True: ok
+
+== 3. fixed z=3.88, 200 random u
+  z bin               N  median logL  max|dlogL|   max rel  bitwise
+   3.10-3.90        200        -2544     4.1e-12   2.3e-15    50.5%
+  max rel 2.3e-15 (tol 1e-08), same -inf set True: ok
+
+== 3. fixed z=4.0, 200 random u
+  z bin               N  median logL  max|dlogL|   max rel  bitwise
+   3.90-4.10        200        -2545     1.6e-10   4.9e-15    42.5%
+  max rel 4.9e-15 (tol 1e-08), same -inf set True: ok
+
+== 3. fixed z=5.0, 200 random u
+  z bin               N  median logL  max|dlogL|   max rel  bitwise
+   4.10-6.00        200        -2553     1.1e-10   2.6e-14    51.0%
+  max rel 2.6e-14 (tol 1e-08), same -inf set True: ok
+
+== 3. fixed z=7.0, 200 random u
+  z bin               N  median logL  max|dlogL|   max rel  bitwise
+   6.00-8.00        200        -2557     2.3e-12   9.8e-16    56.0%
+  max rel 9.8e-16 (tol 1e-08), same -inf set True: ok
+
+== 3. fixed z=10.0, 200 random u
+  z bin               N  median logL  max|dlogL|   max rel  bitwise
+  10.00-12.00       200        -2560     3.2e-12   1.6e-15    60.0%
+  max rel 1.6e-15 (tol 1e-08), same -inf set True: ok
+
+== 3. fixed z=12.0, 200 random u
+  z bin               N  median logL  max|dlogL|   max rel  bitwise
+  12.00-15.00       200        -2560     9.1e-13   3.6e-16    46.0%
+  max rel 3.6e-16 (tol 1e-08), same -inf set True: ok
+
+== 3. fixed z=15.0, 200 random u
+  z bin               N  median logL  max|dlogL|   max rel  bitwise
+  12.00-15.00       200        -2560     9.1e-13   3.6e-16    59.0%
+  max rel 3.6e-16 (tol 1e-08), same -inf set True: ok
+
+== 4. outside / on the cube
+  4000 rows just outside one face: all -inf: ok
+
+== 4. rows on the cube's faces/corners (u in {0, 0.5, 1})
+  z bin               N  median logL  max|dlogL|   max rel  bitwise
+   0.04-0.15       1313    -8.43e+04     1.7e-09   1.3e-12    15.0%
+   2.90-3.10       1286        -2555     2.1e-10   8.4e-14    33.5%
+  12.00-15.00      1401        -2560     1.3e-10   1.4e-14    30.0%
+  max rel 1.3e-12 (tol 1e-08), same -inf set True: ok
+
+== 5. timing (jitted vmap, CPU)
+  batch    100:  25.66 us/row (of which prior transform 46.30)
+  batch   1000:  12.28 us/row (of which prior transform 48.80)
+  batch  10000:  12.74 us/row (of which prior transform 33.20)
+
+RESULT: PASS

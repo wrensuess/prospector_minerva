@@ -44,6 +44,7 @@ from efsps_photfit import config as C
 from photometry import read_photometry
 from jax_model import JaxLogLike
 from tabulated_mass_prior import use_tabulated_mass_prior
+import malloc_tools
 
 
 class _NoCounts:
@@ -115,7 +116,9 @@ def prior_start(loglike_batch, d, n_live, n_total, key, batch=20000, keep_discar
 
 def run_nss_jax(model, n_live, num_delete, num_inner_steps, seed, termination=-3.0,
                 max_seconds=np.inf, log_every=50, n_prior_start=None, prior_batch=20000,
-                keep_discards=10000, mass_coord="cdf"):
+                keep_discards=10000, mass_coord="cdf", dust_prior=None):
+    if dust_prior is not None and mass_coord != "marginal":
+        raise ValueError("the dust prior is implemented for --mass-coord marginal only")
     if mass_coord == "cdf":
         return run_nss_core(JaxLogLike(model), model.n_dim, n_live, num_delete,
                             num_inner_steps, seed, termination, max_seconds, log_every,
@@ -125,7 +128,7 @@ def run_nss_jax(model, n_live, num_delete, num_inner_steps, seed, termination=-3
     # mass integrated out of the likelihood (mass_marginal.py): 25 sampled parameters;
     # prior draws in the standard 26-d cube, mapped to the sampled coordinates
     from mass_marginal import MassMarginal
-    mm = MassMarginal(model)
+    mm = MassMarginal(model, dust_prior=dust_prior)
     res = run_nss_core(mm.loglike, mm.n_dim, n_live, num_delete, num_inner_steps, seed,
                        termination, max_seconds, log_every, n_prior_start, prior_batch,
                        keep_discards, logprior=mm.logprior, d_u=model.n_dim,
@@ -175,6 +178,7 @@ def run_nss_core(loglike, d, n_live, num_delete, num_inner_steps, seed, terminat
         if other:
             ps["live_u"] = to_x(ps["live_u"])
             ps["kept_u"] = to_x(ps["kept_u"]) if len(ps["kept_u"]) else np.empty((0, d))
+        malloc_tools.release_free_memory()       # memory only (malloc_tools.py)
         print(f"  prior start: {ps['n_total']} draws in {ps['eval_s']:.1f} s; threshold "
               f"log L {ps['threshold']:.2f}; E[log X] at handover {ps['logx_expected']:.3f}",
               flush=True)
@@ -188,6 +192,8 @@ def run_nss_core(loglike, d, n_live, num_delete, num_inner_steps, seed, terminat
     state = jax.jit(algo.init)(live0)
     step = jax.jit(algo.step).lower(key, state).compile()
     compile_s = time.time() - t_c + compile_prior_s
+    # the compile's ~0.8 GB, freed but kept by glibc (memory only; malloc_tools.py)
+    malloc_tools.release_free_memory()
 
     dead, it, t0 = [], 0, time.time()
     timed_out = False
@@ -208,6 +214,9 @@ def run_nss_core(loglike, d, n_live, num_delete, num_inner_steps, seed, terminat
             break
     jax.block_until_ready(state)
     wall = time.time() - t0
+    # the arrays after the loop (log_weights, mass draws, theta) get their own mmaps, which go
+    # back to the system when freed, instead of growing the heap (memory only; malloc_tools.py)
+    malloc_tools.mmap_large_allocations()
 
     final = finalise(state, dead, update_info=False)
     key, kw = jax.random.split(key)
@@ -284,6 +293,22 @@ def main():
                    help="marginal (default, adopted 2026-11-11): integrate mass out of the "
                         "likelihood (mass_marginal.py; needs --mass-prior tabulated); cdf: sample "
                         "logmass through its prior inverse CDF (the earlier standard)")
+    p.add_argument("--fagn-prior", choices=["flat1_s025", "loguniform"], default="flat1_s025",
+                   help="flat1_s025 (default, production since 2026-11-11; nss_priors.py): flat "
+                        "in log10 fagn to -1, then a 0.25-dex half-Gaussian tail; loguniform: "
+                        "efsps's original log-uniform on [1e-5, 3]")
+    p.add_argument("--dust-prior", choices=["none", "mass", "sfr", "mass_sfr"], default="mass",
+                   help="soft-ceiling dust2 prior (dust_prior.py) against the low-z dusty-dwarf "
+                        "trap: today's flat dust2 prior below a ceiling, a half-Gaussian penalty "
+                        "(sigma 0.2) above. Default mass (adopted 2026-11-11): ceiling A_V = 1 mag "
+                        "below log M 8, rising to 4 (no change) at log M 9. none = no dust prior. "
+                        "Needs --mass-coord marginal")
+    p.add_argument("--no-full-npz", action="store_true",
+                   help="don't write <id>_<tag>.npz (all weighted samples, ~14 MB); use with "
+                        "--save-draws for large test runs where only the draws are copied back")
+    p.add_argument("--save-draws", type=int, default=0,
+                   help="also write <id>_<tag>_draws.npz: this many equal-weight posterior draws "
+                        "of theta (float32), for small transfers from Blanca (0 = off)")
     p.add_argument("--include-miri", action="store_true",
                    help="fit MIRI bands too. Off by default: MIRI is fitted only when "
                         "explicitly asked for")
@@ -291,7 +316,7 @@ def main():
     args.n_prior_start = int(args.n_prior_start)
 
     phot = read_photometry(args.catalog, [args.id], include_miri=args.include_miri)[0]
-    model = build(phot, args.fix_z, args.z_window)
+    model = build(phot, args.fix_z, args.z_window, fagn_prior=args.fagn_prior)
     if args.mass_prior == "tabulated":
         use_tabulated_mass_prior(model)
     if args.num_inner_steps is None:
@@ -300,13 +325,16 @@ def main():
           f"n_live={args.n_live}, num_delete={args.num_delete}, "
           f"num_inner_steps={args.num_inner_steps}, seed={args.seed}, mass prior {args.mass_prior}, "
           f"prior start {args.n_prior_start}, mass coordinate {args.mass_coord}, "
+          f"fagn prior {args.fagn_prior}, dust prior {args.dust_prior}, "
           f"emulator {C.net_for_md5(model.emu.md5)} ({model.emu.md5})",
           flush=True)
     if args.mass_coord == "marginal" and args.mass_prior != "tabulated":
         raise SystemExit("--mass-coord marginal needs --mass-prior tabulated")
     res = run_nss_jax(model, args.n_live, args.num_delete, args.num_inner_steps, args.seed,
                       args.termination, args.max_seconds, n_prior_start=args.n_prior_start,
-                      keep_discards=args.keep_discards, mass_coord=args.mass_coord)
+                      keep_discards=args.keep_discards, mass_coord=args.mass_coord,
+                      dust_prior=None if args.dust_prior == "none" else args.dust_prior)
+    # (with --mass-coord cdf, pass --dust-prior none: the dust prior lives in the mass integral)
     summary, theta = summarise(model, res, phot, args, args.tag)
     summary["settings"]["n_prior_start"] = args.n_prior_start
     if "prior_start" in res:
@@ -317,6 +345,14 @@ def main():
     summary["mass_coord"] = args.mass_coord
     summary["compile_s"] = res["compile_s"]
     summary["mass_prior"] = args.mass_prior
+    summary["malloc_tuning"] = malloc_tools.ENABLED
+    summary["xla_flags"] = os.environ.get("XLA_FLAGS", "")
+    summary["fagn_prior"] = args.fagn_prior
+    summary["dust_prior"] = args.dust_prior
+    if args.dust_prior != "none":
+        summary["dust_prior_cfg"] = res["mass_marginal"].dust_cfg
+    summary["nss_prior_overrides"] = {k: [v[0], list(v[1])]
+                                      for k, v in model.nss_prior_overrides.items()}
     summary["catalog"] = os.path.abspath(args.catalog)
     summary["emulator"] = {"file": os.path.basename(model.emu.path), "md5": model.emu.md5,
                            "net": C.net_for_md5(model.emu.md5)}
@@ -326,8 +362,15 @@ def main():
     summary["bands_used"] = [b for b, ok in zip(phot.bands, phot.valid) if ok]
     os.makedirs(args.out, exist_ok=True)
     stem = os.path.join(args.out, f"{phot.id}_{args.tag}")
-    np.savez_compressed(stem + ".npz", u=res["u"], theta=theta, logl=res["logl"], w=res["w"],
-                        logz_draws=res["logz_draws"], names=np.array(model.free))
+    if not args.no_full_npz:
+        np.savez_compressed(stem + ".npz", u=res["u"], theta=theta, logl=res["logl"], w=res["w"],
+                            logz_draws=res["logz_draws"], names=np.array(model.free))
+    if args.save_draws > 0:
+        w = res["w"] / res["w"].sum()
+        pick = np.random.default_rng(args.seed).choice(w.size, args.save_draws, p=w)
+        np.savez_compressed(stem + "_draws.npz", draws=theta[pick].astype(np.float32),
+                            names=np.array(model.free), logZ=summary["logZ"],
+                            logZ_err=summary["logZ_err"])
     with open(stem + ".json", "w") as fh:
         json.dump(summary, fh, indent=1)
     s = summary

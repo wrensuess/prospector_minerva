@@ -73,6 +73,20 @@ def loguniform_ppf(u, lo, hi):
     return jnp.clip(jnp.exp(np.log(lo) + u * (np.log(hi) - np.log(lo))), lo, hi)
 
 
+def simple_ppf(kind, x, lo, hi, args):
+    """The 1-D prior transforms, shared by JaxPriorTransform and mass_marginal."""
+    if kind == "uniform":
+        return uniform_ppf(x, lo, hi)
+    if kind == "loguniform":
+        return loguniform_ppf(x, lo, hi)
+    if kind == "truncnormal":
+        return truncnorm_ppf(x, args[0], args[1], lo, hi)
+    if kind == "logflat_gausstail":
+        from nss_priors import ppf_value_jax
+        return ppf_value_jax(kind, args, x, lo, hi)
+    raise ValueError(f"no transform for prior kind {kind!r}")
+
+
 def _invert_cell(target, cum, pdf, x, h):
     """Shared tail of inverse_cdf_piecewise_linear (priors.py:184-193) for ONE density:
     i = number of cum[1:] <= target, then the stable quadratic root in cell i."""
@@ -237,16 +251,19 @@ class JaxPriorTransform:
         self._log_zeff = jnp.asarray(er.log_zeff)
         self._ratio_table = jnp.asarray(er.table)          # (n_zeff, 9)
 
-        # the 1-D priors
+        # the 1-D priors; NSS-side overrides (nss_priors.apply_nss_priors) replace the
+        # config row's kind and args
+        over = getattr(model, "nss_prior_overrides", {})
         self._simple = []
         for name in model.free:
             r = model.rows[name]
             if r.kind.startswith("nzsfh"):
                 continue
             lo, hi = model.bounds[name]
-            if r.kind not in ("uniform", "loguniform", "truncnormal"):
-                raise ValueError(f"{name}: no transform for prior kind {r.kind!r}")
-            self._simple.append((col[name], r.kind, float(lo), float(hi), tuple(r.args)))
+            kind, args = over.get(name, (r.kind, tuple(r.args)))
+            if kind not in ("uniform", "loguniform", "truncnormal", "logflat_gausstail"):
+                raise ValueError(f"{name}: no transform for prior kind {kind!r}")
+            self._simple.append((col[name], kind, float(lo), float(hi), tuple(args)))
 
         self.batch = jax.jit(jax.vmap(self.__call__))
 
@@ -348,12 +365,5 @@ class JaxPriorTransform:
             th = th.at[self._ratio_cols].set(jnp.clip(expect + off, self._ratio_lo,
                                                       self._ratio_hi))
         for c, kind, lo, hi, args in self._simple:
-            x = u[c]
-            if kind == "uniform":
-                v = uniform_ppf(x, lo, hi)
-            elif kind == "loguniform":
-                v = loguniform_ppf(x, lo, hi)
-            else:
-                v = truncnorm_ppf(x, args[0], args[1], lo, hi)
-            th = th.at[c].set(v)
+            th = th.at[c].set(simple_ppf(kind, u[c], lo, hi, args))
         return th

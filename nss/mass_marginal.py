@@ -35,6 +35,12 @@ L(m, x) q(m; x) for each posterior sample (sample_logmass).
     mm.x_from_u(u)                        # standard 26-d prior draws -> (x, logmass)
     mm.theta(x, logmass)                  # -> 26-d theta
     mm.sample_logmass(key, x)             # one posterior draw of logmass given x
+
+Optional dust prior (dust_prior.py, MassMarginal(model, dust_prior="mass_sfr")): the soft-ceiling
+factor w(dust2; m, SFR_100(m)) multiplies L q inside the mass integral (it depends on m through
+the ceiling and through SFR_100 = 10^m x f(ratios, z)). It is part of the likelihood, so the
+prior draws and log g are unchanged; logZ includes the global constant ln C = ln E_pi[w].
+dust_prior=None (default) leaves every computation exactly as before.
 """
 import jax
 import jax.numpy as jnp
@@ -43,7 +49,7 @@ from jax.scipy.special import ndtr
 
 from efsps_photfit.emulator import ARSINH_A, ARSINH_B, REF_LOGMASS
 from jax_model import JaxLogLike
-from jax_prior import truncated_t2_ppf, truncnorm_ppf, uniform_ppf, loguniform_ppf
+from jax_prior import truncated_t2_ppf, truncnorm_ppf, uniform_ppf, loguniform_ppf, simple_ppf
 
 N_COARSE = 111          # 0.05 dex over the 5.5-dex prior range: the prior integral g(x), and
                         # the expected SFH ratios (interpolated to the fine grid)
@@ -54,7 +60,7 @@ N_S_TABLE = 20001       # expected-ratio table in the shifted age s (~1.4 dex: ~
 
 
 class MassMarginal:
-    def __init__(self, model, n_coarse=N_COARSE, n_fine=N_FINE):
+    def __init__(self, model, n_coarse=N_COARSE, n_fine=N_FINE, dust_prior=None, dust_cfg=None):
         self.ll = JaxLogLike(model)
         pt = self.pt = self.ll.pt
         if not pt._m_tab:
@@ -95,6 +101,18 @@ class MassMarginal:
         self._log_t2_norm = float(np.log(self.ts ** 2)
                                   - np.log(self.hw / np.sqrt(2 * self.ts ** 2 + self.hw ** 2)))
         self._build_ratio_table()
+        # optional soft-ceiling dust prior (dust_prior.py)
+        self.dust_prior = dust_prior
+        if dust_prior is not None:
+            import dust_prior as DPR
+            if dust_prior not in DPR.KINDS:
+                raise ValueError(f"dust_prior must be one of {DPR.KINDS} or None")
+            if "dust2" not in col:
+                raise ValueError("the dust prior needs a free dust2")
+            self.dust_cfg = dict(DPR.CEILING, **(dust_cfg or {}))
+            self.c_dust2 = col["dust2"]
+            self.c_r_all = np.array([col[n] for n in model.ratio_names])   # all 9, in order
+            self._dpr = DPR
         self.batch_loglike = jax.jit(jax.vmap(self.loglike))
         self.batch_logprior = jax.jit(jax.vmap(self.logprior))
         self.batch_both = jax.jit(jax.vmap(self.logprior_and_loglike))
@@ -166,14 +184,7 @@ class MassMarginal:
         th = th.at[self.c_zsol].set(self.zsol(x))
         th = th.at[self.c_r].set(jnp.clip(self.y(x), self.r_lo, self.r_hi))
         for k, c, kind, lo, hi, args in self.simple:
-            v = x[k]
-            if kind == "uniform":
-                val = uniform_ppf(v, lo, hi)
-            elif kind == "loguniform":
-                val = loguniform_ppf(v, lo, hi)
-            else:
-                val = truncnorm_ppf(v, args[0], args[1], lo, hi)
-            th = th.at[c].set(val)
+            th = th.at[c].set(simple_ppf(kind, x[k], lo, hi, args))
         return th
 
     def _x_from_u(self, u):
@@ -295,7 +306,17 @@ class MassMarginal:
         var = ll._var_obs[None, :] + (sig0[None, :] * scale) ** 2
         r2 = (ll._fv[None, :] - f[None, :] * scale) ** 2 / var
         l_f = -0.5 * jnp.sum(r2 + jnp.log(2.0 * np.pi * var), axis=1)
-        return mf, wf, l_f + self._log_q_given(xc, z, mf, exp_f)
+        tot = l_f + self._log_q_given(xc, z, mf, exp_f)
+        if self.dust_prior is not None:
+            tot = tot + self.dust_lnw(th, z, mf)
+        return mf, wf, tot
+
+    def dust_lnw(self, th, z, m):
+        """ln w of the soft-ceiling dust prior on a vector of masses m, at theta th (any
+        logmass; the SFH ratios, dust2 and z are mass-independent given x)."""
+        D = self._dpr
+        lsf = D.log10_sfr100_per_mass_jax(self.pt.age(z), th[self.c_r_all])
+        return D.lnw_jax(th[self.c_dust2], self.dust_prior, m, m + lsf, self.dust_cfg)
 
     def logprior_and_loglike(self, x):
         inside = jnp.all((x >= 0.0) & (x <= 1.0))

@@ -38,6 +38,7 @@ from efsps_photfit.emulator import PhotEmulator, EmulatorRefusal
 from efsps_photfit.model import FitModel, table_for_run
 from jax_prior import JaxPriorTransform
 from tabulated_mass_prior import use_tabulated_mass_prior
+from nss_priors import apply_nss_priors, DEFAULT_FAGN_PRIOR, FAGN_PRIORS
 
 EMULATOR = os.path.join(PARENT, "efsps_photfit/data/v4_n22000000_w256_d5_s0_parrot.npy")
 Z_EDGES = [0.01, 0.04, 0.15, 0.5, 1.0, 2.0, 2.9, 3.1, 3.9, 4.1, 6.0, 8.0, 10.0, 12.0, 15.0001]
@@ -46,6 +47,7 @@ TOL_LOGL = 1e-6       # max |delta log L|
 
 FAILS = []
 MASS_PRIOR = "exact"   # or "tabulated" (tabulated_mass_prior.py); set by --mass-prior
+FAGN_PRIOR = DEFAULT_FAGN_PRIOR   # nss_priors.py; set by --fagn-prior
 
 
 def check(ok, what):
@@ -61,6 +63,7 @@ def build(phot, fix_z=None, z_window=None, emu_cache={}):
                                       expected_md5=list(C.KNOWN_EMULATOR_MD5))
     table = table_for_run(C.PARAMETER_TABLE, fix_z, z_window)
     m = FitModel(emu_cache[key], phot.bands, phot.flux, phot.err, phot.mu, table=table)
+    apply_nss_priors(m, FAGN_PRIOR)
     return use_tabulated_mass_prior(m) if MASS_PRIOR == "tabulated" else m
 
 
@@ -212,9 +215,12 @@ def main():
     ap.add_argument("--mass-prior", choices=["exact", "tabulated"], default="exact")
     ap.add_argument("--catalog", default=os.path.join(HERE, "uncover_test.csv"))
     ap.add_argument("--id", default="58858")
+    ap.add_argument("--fagn-prior", choices=sorted(FAGN_PRIORS), default=DEFAULT_FAGN_PRIOR)
     args = ap.parse_args()
-    global MASS_PRIOR
+    global MASS_PRIOR, FAGN_PRIOR
     MASS_PRIOR = args.mass_prior
+    FAGN_PRIOR = args.fagn_prior
+    print(f"fagn prior: {FAGN_PRIOR}")
     rng = np.random.default_rng(args.seed)
 
     phot = read_photometry(args.catalog, [args.id])[0]
@@ -312,6 +318,7 @@ def main():
     # ---- 4b. the other mass function (const_phi=True: Leja+20 only) ------------------
     mc = FitModel(model.emu, phot.bands, phot.flux, phot.err, phot.mu,
                   nzsfh=dict(C.NZSFH, const_phi=True))
+    apply_nss_priors(mc, FAGN_PRIOR)
     if MASS_PRIOR == "tabulated":
         use_tabulated_mass_prior(mc)
     uc = rng.random((args.n_fixed * 5, mc.n_dim))
