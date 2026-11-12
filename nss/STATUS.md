@@ -659,8 +659,16 @@ most important first.
        - during the NSS loop 1.32 → 0.72 GB; end of run 1.69 → 1.13 GB.
      - The per-fit peak is now the step compile (1.31 GB), at job start, when all fits
        compile at once. So a 20-fit job needs ~27 GB: `fullfit_layout.sbatch` and
-       `tasklist_layout.sbatch` now ask for `--mem=32G` (was 48G). Measured on the fast types
-       only; the other CPU types are being checked with the same kit (one job per type).
+       `tasklist_layout.sbatch` now ask for `--mem=32G` (was 48G).
+     - **Every CPU type checked** (jobs 29479115–29479120, 2026-11-11; fix vs no fix, same
+       galaxies and seeds, 8 fits per node). On all six types: outputs bitwise identical
+       (4/4 each), time per iteration unchanged (medians ×0.98–1.007), and the peak is the
+       step compile. Median peak private memory with the fix (without):
+       Gold 6130 1.30 (1.80), Gold 6230 1.20 (1.58), Gold 6342 1.30 (1.83),
+       E5-2680 v4 1.32 (1.86), EPYC 7452 1.23 (1.81), EPYC 7413 1.37 (1.73) GB.
+       The highest single fit: 1.37 GB (EPYC 7413; `time -v` 1.49). The AVX2-only chips
+       compile to no more memory than the AVX-512 ones. 20 × 1.37 = 27.4 GB, so 32G holds on
+       every type (~4.5 GB headroom).
    - **XLA flags (same job, each on top of the fix):**
      - codegen split count 1, 256-bit vectors, no expensive LLVM passes: bitwise identical,
        no change in memory or speed (the Mac's 30% slowdown for no-expensive-passes doesn't
@@ -710,11 +718,22 @@ most important first.
 11. **Checkpointing:** a preempted job currently restarts all 20 of its fits.
 12. **Redshift-mode flags and provenance** in the outputs: solutions found and their weights,
     code and emulator versions, settings.
-13. **CPU types.** Mass-marginal timings exist only for EPYC 9354 and Gold 5418Y. Time the
-    slower types, and test the Gold 6130 slowness (51 ms against 31 ms for the Gold 6150;
-    clock speed explains only 1.3× of the 1.6×): an AVX2 cap
-    (`XLA_FLAGS=--xla_cpu_max_isa=AVX2`) and the hyperthreading setup. This serves the "no
-    slow node types" goal; until then keep the fast-node constraint.
+13. **CPU types.** **First timings, 2026-11-11** (the memprof jobs above; production
+    defaults, one core per fit, but only 8 fits on each node, so a full node may be slower).
+    Median ms per NSS iteration, and the ratio to Gold 5418Y (job 29478805):
+    Gold 5418Y 2211 (1.00), EPYC 7413 2273 (1.03), Gold 6342 2437 (1.10),
+    EPYC 7452 2952 (1.34), Gold 6230 3003 (1.36), Gold 6130 3790 (1.71),
+    E5-2680 v4 4085 (1.85). The prior start scales about the same way (53–104 s).
+    EPYC 9354 not in this set. **Allowed now (2026-11-12, Wren):** EPYC 9354, Gold 5418Y,
+    plus EPYC 7413 and Gold 6342 (within ~10% of the fast types). **EPYC 7452 and Gold 6230
+    (~1.35×) are also decent: for large runs they can and should be included** (more
+    nodes beats per-fit speed); not yet in the default constraint. Gold 6130 and
+    E5-2680 v4 (1.7–1.85×) stay out. Still to do:
+    - time a full node (21 tasks) per type;
+    - the Gold 6130 slowness: 1.26× the Gold 6230 here at the same clock (earlier, 51 ms
+      against 31 ms per call for the Gold 6150, where clock speed explains only 1.3× of the
+      1.6×). Test an AVX2 cap (`XLA_FLAGS=--xla_cpu_max_isa=AVX2`) and the hyperthreading
+      setup. This serves the "no slow node types" goal.
 14. **A production spot check:** refit a random ~1% of galaxies with a second seed at 52
     steps and compare. It's the only way to catch, in production, galaxies harder than the 21
     tested.

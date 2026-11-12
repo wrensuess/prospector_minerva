@@ -37,7 +37,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=21
 #SBATCH --hint=nomultithread
-#SBATCH --mem=32G                  # 20 fits x 1.31 GB peak private memory with malloc_tools.py (the step compile, all fits at once): ~27 GB (memprof job 29478805, 2026-11-11)
+#SBATCH --mem=32G                  # 20 fits x 1.37 GB peak private memory with malloc_tools.py (the step compile, all fits at once; worst CPU type, EPYC 7413): ~27.4 GB (memprof jobs 29478805, 29479115-20, 2026-11-11)
 #SBATCH --job-name=nss_fullfit_layout
 #SBATCH --output=%x_%j.out
 #SBATCH --error=%x_%j.err
