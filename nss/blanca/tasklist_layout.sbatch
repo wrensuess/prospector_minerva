@@ -25,7 +25,14 @@
 #SBATCH --partition=blanca
 #SBATCH --qos=preemptable
 #SBATCH --requeue
-#SBATCH --constraint="epyc9354|gold5418y|5418y"
+#SBATCH --constraint="epyc9354|gold5418y|5418y|milan|icelake"
+# CPU types within ~10% of the fastest per NSS iteration (STATUS.md section 6 item 13). On Blanca,
+# `milan` is only the two EPYC 7413 nodes (the EPYC 7713 nodes carry epyc7713/epyc7713p instead);
+# `icelake` is three Gold 6342 nodes plus one untimed 32-core node.
+# For large runs also allow EPYC 7452 and Gold 6230 (~1.35x slower, many more nodes): add
+# |rome|cascadelake on the command line, --constraint="epyc9354|gold5418y|5418y|milan|icelake|rome|cascadelake".
+# Those tags also cover some untimed models (the 128- and 256-core Rome nodes, the non-40-core
+# Cascade Lake nodes, which may include the Gold 6254).
 #SBATCH --time=02:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks=21

@@ -727,7 +727,10 @@ most important first.
     EPYC 9354 not in this set. **Allowed now (2026-11-12, Wren):** EPYC 9354, Gold 5418Y,
     plus EPYC 7413 and Gold 6342 (within ~10% of the fast types). **EPYC 7452 and Gold 6230
     (~1.35×) are also decent: for large runs they can and should be included** (more
-    nodes beats per-fit speed); not yet in the default constraint. Gold 6130 and
+    nodes beats per-fit speed); not in the default constraint, add `|rome|cascadelake`.
+    Blanca tags: `milan` is only the two EPYC 7413 nodes (EPYC 7713 nodes are tagged
+    `epyc7713`/`epyc7713p`); `icelake` is three Gold 6342 nodes and one untimed 32-core node.
+    `tasklist_layout.sbatch` now uses `epyc9354|gold5418y|5418y|milan|icelake`. Gold 6130 and
     E5-2680 v4 (1.7–1.85×) stay out. Still to do:
     - time a full node (21 tasks) per type;
     - the Gold 6130 slowness: 1.26× the Gold 6230 here at the same clock (earlier, 51 ms
