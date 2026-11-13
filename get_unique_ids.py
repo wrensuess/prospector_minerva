@@ -96,7 +96,7 @@ filter_dict = ut_cwd.filter_dictionary(all_filts)
 filts = list(filter_dict.keys())
 
 n_nophot = []
-for objid in id_list:
+for objid in tqdm(id_list):
     match = np.where(cat["id"] == objid)[0]
     if len(match) == 0:
         print(f"{objid}: ID not found")
@@ -105,7 +105,7 @@ for objid in id_list:
     flux = np.array([np.ma.filled(cat[f"f_{f}"][idx], np.nan) for f in filts], dtype=float)
     err = np.array([np.ma.filled(cat[f"e_{f}"][idx], np.nan) for f in filts], dtype=float)
     n_valid = np.sum(np.isfinite(flux) & np.isfinite(err) & (err > 0))
-    print(f"{objid}: {'NO PHOT' if n_valid == 0 else 'OK'} ({n_valid} bands)")
+    #print(f"{objid}: {'NO PHOT' if n_valid == 0 else 'OK'} ({n_valid} bands)")
     
     if n_valid == 0:
         n_nophot.append(objid)
