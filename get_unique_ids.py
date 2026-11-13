@@ -2,6 +2,7 @@ import numpy as np
 import glob, pdb
 from astropy.table import Table
 import utils as ut_cwd
+from tqdm import tqdm
 
 ver = "COSMOS_n3.0_v1.0"
 ver = "EGS_n2.0_v1.3"
