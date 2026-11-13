@@ -540,6 +540,12 @@ most important first.
          Masses from `sample_logmass` against the brute-force distribution at fixed x: KS
          0.008–0.024 (4000 draws; 95% noise 0.021). All other sections unchanged and PASS;
          `test_dust_prior.py` and `test_nss_priors.py` PASS.
+       - Low z (added 2026-11-13): PASS on 2204022 (COSMOS, z_spec 0.123, dwarf) and 1215494
+         (UDS, z_spec 0.143, dusty), from the dust48 set. Faint at S/N 5 / 3: integral within
+         1.2e-3 / 3.4e-3 nats, where the window alone would be off by up to 2–15 nats (at S/N
+         3 a median 51% and 97% of the integral lies outside it); sampled masses KS
+         0.007–0.022. 1215494 also has 36 peaks at the 12.5 bound outside the deep tail
+         (≤ 6.7e-3 nats), a case the other galaxies don't reach.
        - Bright galaxies unchanged: a whole fit of 1197855 gives logZ 537.37 ± 0.08 and the same
          z weights as before, to 13 digits.
        - Cost: 0–7% per row against the previous code (8-process proxy: batch 100 114–118 vs

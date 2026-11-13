@@ -1,0 +1,28 @@
+[photometry] minerva_cosmos_dust21.fits: no emulator band for ['f275wu', 'f336wu', 'f098m']; dropped.
+[photometry] minerva_cosmos_dust21.fits: MIRI bands ['f770w', 'f1000w', 'f1280w', 'f1500w', 'f1800w', 'f2100w'] excluded (fit them only if explicitly asked: include_miri=True / --include-miri).
+[2204022] mass integrated out: 25 sampled parameters; coarse grid 111 x 0.0500 dex, fine grid 41
+  [PASS] same theta from u and (x, m): max |dtheta| = 3.9e-16 (SFH ratios 3.6e-06: the expected-ratio table); x inside the cube: True
+  [PASS] finite marginal prior at prior draws: 0 of 5000 non-finite
+  [PASS] tabulated expected ratios vs the current chain: max |d| = 3.5e-06 dex over 2010 z x 557 masses (incl. the kinks at logM 9 and 12 and the z_eff clamps)
+  [PASS] p(Z | m) = 1 / (dZ/du): max relative error 7.4e-08
+  [PASS] p(Z | m) integrates to 1: 1.0e-11
+  [PASS] ratio offset density = 1 / (do/du): max relative error 4.9e-06
+  [PASS] ratio offset density integrates to 1: 4.4e-14
+      5 points with the mass prior below e^-100 of its peak at the likelihood peak (deep tail): max |d| 0.96 nats (reported, not tested)
+  [PASS] log g vs brute force (prior draws): max |d| 7.7e-04 nats, median 2.7e-04
+  [PASS] log L' vs brute force (prior draws, within 1000 nats of the best): 5 points: max |d| 2.9e-04 nats, median 2.7e-04; log L' range -422.7..420.1
+      95 points more than 1000 nats below the best (brute log L' -3819..-623): fast value finite for 95, max |d| there 9.6e-01
+  [PASS] fast -inf only far below the best (prior draws): 0 points with fast -inf, brute log L' up to nan
+  [PASS] log L' vs refined brute force (L q peaking at a prior bound): 9 points (9 at m_lo) of 9 in 20000 prior draws: max |d| 7.2e-03 nats, median 7.2e-03; log L' -11693..262
+[photometry] minerva_cosmos_dust21.fits: no emulator band for ['f275wu', 'f336wu', 'f098m']; dropped.
+[photometry] minerva_cosmos_dust21.fits: MIRI bands ['f770w', 'f1000w', 'f1280w', 'f1500w', 'f1800w', 'f2100w'] excluded (fit them only if explicitly asked: include_miri=True / --include-miri).
+  [PASS] log L' vs refined brute force (faint: total S/N 5.0, errors x276): 100 posterior points: max |d| 1.2e-03 nats, median 2.5e-04. Integral outside the window: median 0.00, max 0.88; the window alone would be off by up to 2.12 nats (median 1.5e-03)
+  [PASS] sampled logmass vs brute force (faint, S/N 5.0): KS distance at the 4 points with the most integral outside the window: 0.022, 0.007, 0.012, 0.018 (4000 draws each; 95% noise 0.021)
+[photometry] minerva_cosmos_dust21.fits: no emulator band for ['f275wu', 'f336wu', 'f098m']; dropped.
+[photometry] minerva_cosmos_dust21.fits: MIRI bands ['f770w', 'f1000w', 'f1280w', 'f1500w', 'f1800w', 'f2100w'] excluded (fit them only if explicitly asked: include_miri=True / --include-miri).
+  [PASS] log L' vs refined brute force (faint: total S/N 3.0, errors x462): 100 posterior points: max |d| 3.4e-03 nats, median 2.6e-04. Integral outside the window: median 0.51, max 1.00; the window alone would be off by up to 12.74 nats (median 7.2e-01)
+  [PASS] sampled logmass vs brute force (faint, S/N 3.0): KS distance at the 4 points with the most integral outside the window: 0.011, 0.010, 0.010, 0.012 (4000 draws each; 95% noise 0.021)
+      batch   100: standard    14.5 us/row, mass-marginal (prior + like)    29.7 us/row, ratio 2.1x  (multi-threaded Mac)
+      batch  1000: standard     5.9 us/row, mass-marginal (prior + like)    18.2 us/row, ratio 3.1x  (multi-threaded Mac)
+
+RESULT: PASS
