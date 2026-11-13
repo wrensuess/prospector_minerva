@@ -1,0 +1,24 @@
+[photometry] minerva_uds_test9.fits: no emulator band for ['f098m']; dropped.
+1. log10 SFR_100 / M_formed: JAX vs efsps numpy
+  [PASS] SFR_100 per mass: max |d| dex z 0.0-0.1: 1.4e-14; z 0.1-0.5: 1.4e-14; z 0.5-2: 7.2e-13; z 2-5: 1.8e-14; z 5-15.1: 2.2e-13
+2. ln w: JAX vs numpy
+  [PASS] ln w mass: max |d| 5.7e-14; penalised fraction of these points 0.331
+  [PASS] ln w sfr: max |d| 5.7e-14; penalised fraction of these points 0.408
+  [PASS] ln w mass_sfr: max |d| 5.7e-14; penalised fraction of these points 0.176
+3. ceiling at the top of the range == no dust prior
+  [PASS] no-penalty mass bitwise: max |d| 0.0e+00
+  [PASS] no-penalty sfr bitwise: max |d| 0.0e+00
+  [PASS] no-penalty mass_sfr bitwise: max |d| 0.0e+00
+4. mass integral with the penalty vs brute force
+  [PASS] mass, prior draws: 35 points within 1000 nats; error ADDED by the penalty max 0.0e+00 nats (existing integral error without it, max 5.8e-04, 1 deep-tail points excluded: max 2.1e-02); penalty applied (median, min) 0.00, 0.00
+  [PASS] mass, trap-like: 25 points within 1000 nats; error ADDED by the penalty max 1.1e-07 nats (existing integral error without it, max 3.8e-04, 0 deep-tail points excluded: max nan); penalty applied (median, min) -5.35, -30.53
+  [PASS] sfr, prior draws: 35 points within 1000 nats; error ADDED by the penalty max 4.2e-07 nats (existing integral error without it, max 5.8e-04, 1 deep-tail points excluded: max 2.1e-02); penalty applied (median, min) 0.00, -0.84
+  [PASS] sfr, trap-like: 25 points within 1000 nats; error ADDED by the penalty max 7.7e-08 nats (existing integral error without it, max 3.8e-04, 0 deep-tail points excluded: max nan); penalty applied (median, min) -12.53, -30.53
+  [PASS] mass_sfr, prior draws: 35 points within 1000 nats; error ADDED by the penalty max 0.0e+00 nats (existing integral error without it, max 5.8e-04, 1 deep-tail points excluded: max 2.1e-02); penalty applied (median, min) 0.00, 0.00
+  [PASS] mass_sfr, trap-like: 25 points within 1000 nats; error ADDED by the penalty max 1.1e-07 nats (existing integral error without it, max 3.8e-04, 0 deep-tail points excluded: max nan); penalty applied (median, min) -4.07, -30.53
+5. ln C = ln E_prior[w] (global constant in logZ), from standard prior draws
+   mass      ln C = -0.8924 (+-0.0026); prior volume penalised > 2 nats 0.557, any 0.648
+   sfr       ln C = -0.8252 (+-0.0024); prior volume penalised > 2 nats 0.529, any 0.618
+   mass_sfr  ln C = -0.7408 (+-0.0023); prior volume penalised > 2 nats 0.492, any 0.578
+
+RESULT: PASS

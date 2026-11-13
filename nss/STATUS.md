@@ -1,6 +1,6 @@
 # MINERVA SED fitting: project status report
 
-**As of 2026-11-11.** This is the whole-project picture: both fitting paths, what they cost,
+**As of 2026-11-12.** This is the whole-project picture: both fitting paths, what they cost,
 how robust they are, and what to do next. For setup, the code map and pitfalls, read
 [`HANDOFF.md`](HANDOFF.md). Update this file when the picture changes, and keep the date
 current.
@@ -217,9 +217,10 @@ production one. So the cost comparison below is between pipelines, not a like-fo
            - Mass integral: analytic peak (the flux is linear in 10^m), 41 points over
              ±8σ, Newton-shifted for the prior's slope. Accurate to ≤ 4e-4 nats at real live
              points and ≤ 6e-3 at prior draws within 1000 nats of the best.
-           - **Open:** where the mass prior at the likelihood peak is < e^-100 of its
-             maximum (deep mass-function tail), errors reach several nats. The cause is not
-             found yet; two fixes tried, neither helped.
+           - Where the mass prior at the likelihood peak is < e^-100 of its maximum (deep
+             mass-function tail), errors reach several nats; no real posterior affected. For
+             faint galaxies (total S/N ≲ 5) the integral missed most of its mass; fixed
+             2026-11-13. Both in §6, item A1.
            - Cost ≈ 3× the standard likelihood per call (Mac, multi-threaded; one core still
              to measure).
          - **Mixing with mass integrated out** (diagnose_nss.py --mass-coord marginal; k=130):
@@ -440,9 +441,123 @@ most important first.
 
 **A. Correctness checks still open (before production)**
 
-1. **Deep-tail integral error in `mass_marginal.py`.** The mass integral is off by up to
-   several nats at points where the mass prior at the likelihood peak is below e^−100 of its
-   maximum. No test-galaxy posterior is affected, but find the cause before production.
+1. **Mass-integral accuracy in `mass_marginal.py`. FIXED 2026-11-13 for faint galaxies and
+   for peaks below logM 7; the deep-tail aliasing stays (no posterior affected).** Summary:
+   the integral was badly wrong for faint galaxies (total S/N ≲ 5; posterior logM shifted
+   by up to 0.75 dex), fixed below at ~0–7% per row. The original A1 report was about points
+   where the mass prior at the likelihood peak is below e^−100 of its maximum. Three causes
+   there, all in `_fine()`:
+   - *The fine grid aliases against the prior's kinks.* The tabulated mass prior is piecewise
+     linear, with a kink every 0.01 dex. A uniform trapezoid is very accurate on a smooth peak
+     but not across kinks, and the error grows with the prior's log slope at the peak. At 2000
+     prior draws of 1197855: ≤ 6.6e-3 nats where log q at the peak is above −100, up to 0.32
+     below that. 161 fine points give 0.04 and 401 give 2e-3; putting the prior's nodes into
+     the grid makes it worse (0.49).
+   - *The likelihood peak lies outside the prior's support.* When the Newton-shifted centre is
+     below 7.0, the window is clipped to a sliver at the bound and the integral comes out up
+     to 6 nats low. When the peak lies above where q ends (above 12.5, or where the high-mass
+     prior underflows to zero or a ratio constraint ends q, at 9.7–12.5), the window sits
+     where q = 0: −inf (32 of 2000 draws) or −17 nats. The true integral then comes from low
+     masses, where the model flux is negligible, L is flat, and the rising mass function
+     peaks L q at 7.0. All of these draws are more than 1000 nats below the best one.
+   - *Very poor fits* (log L′ below about −500): the emulator variance grows with the
+     amplitude, so the analytic peak is off by 8–12σ. Errors reach 20–37 nats at such
+     draws of 1192179 and 1174326 (log L′ −1793 and −3637), all far below the best.
+   - The 2.1e-2 nats in the dust-prior test (side note under item 5) is not a regression:
+     section 4 of `test_dust_prior.py` lacks the tail cut that `test_mass_marginal.py` uses.
+     The dust prior adds no error. The comment in `test_mass_marginal.py` that blames its own
+     brute force for the tail errors is wrong.
+   - **Real posteriors are not affected.** Tested on dust48 ('none', seed 0, 48 galaxies ×
+     4000 draws):
+     - Method: the draws were inverted to x, and the fast integral was compared with a
+       converged reference at every risky draw (7698: within 0.01 dex of a bound, window at a
+       bound, peak at the window edge) and at 200 random draws per galaxy. The posteriors were
+       then reweighted by the difference.
+     - Worst error: 1.9e-4 nats at random draws and 0.014 at risky ones.
+     - Effect on the posteriors: |ΔlogZ| ≤ 8e-5, weight at z_ref and at z < 1 changes by
+       ≤ 2e-5, logM median and 16th percentile by ≤ 5e-4 and 1.5e-3 dex.
+     - No hidden failures: no window collapses (the narrowest at a floor draw is 0.03 dex),
+       and no draws pile up at exactly 10^7 across all 576 dust48 fits (7 of 2.3M draws
+       within 1e-5 dex of it, against ≈ 8 expected). The worst fit has χ² = 106, far from the
+       poor-fit regime.
+     - Not covered: specval and the dust-prior settings. The dust prior adds no integral
+       error, so these should behave the same.
+   - **What the fixes cost.** Fit time grows almost in proportion to the per-row cost: Mac fits
+     of 1197855 with 41 / 161 / 401 fine points took 220 / 407 / 976 s, with the same logZ
+     and z weights. So 161 points ≈ 1.85× a fit and 401 ≈ 4.4×. A window from the exact
+     log(L q), which would fix all three causes, costs ~1.8–3.9× per row and still needs
+     tuning. Log-linear interpolation of the prior costs nothing but changes the model.
+   - **Edge guard with an analytic slope: IMPLEMENTED 2026-11-12 (uncommitted)** in
+     `mass_marginal.py` (`_fine()`, `EDGE_NATS = 12`). When the centre
+     lies outside [7, 12.5], the window starts at the bound and spans 12 nats of log(L q).
+     The slope comes from the closed form of d log L/dm, which matches a finite difference
+     to 4e-8, plus the end-cell slope of log q from the coarse grid.
+     - Every draw whose centre is inside [7, 12.5] is bit-identical to before.
+     - Floor (7.0), at prior draws of 5 test galaxies (z 0.44–6.1) where L and L q both peak
+       there: before, 3.5–6.8 nats low (median); now 0.007–0.010 nats, all of them.
+     - Top (12.5): the prior there is at e^−400 and falls ~9 nats per 0.01-dex cell, so the
+       aliasing (first cause) dominates. Median error 7.8 → 0.03 nats and points off by more
+       than 1 nat 36 → 1 (1192179). The guard is better at 58 of 71 points there, but the
+       worst gets worse (0.26 → 1.2 nats): its window is sometimes wider, so it aliases more.
+     - Cost: +0.25% flops; the timing is within noise.
+     - It does not fix the case where q ends below the likelihood peak (still −inf, far below
+       the best).
+     - Tests (logs `logs/test_*_lowsnr*.log`, run on the final code): `test_mass_marginal.py` PASS on 1174326,
+       1212906, 1192179, 1197855 and 1152437. Its new section 3b compares the integral with a
+       brute force refined toward both bounds, wherever L and L q both peak at a bound; the
+       deep tail is reported, not tested, as in section 3. `test_dust_prior.py` (now with the
+       tail cut) and `test_nss_priors.py` PASS; both need `PYTHONPATH=$EFSPS_PARENT`, since
+       they import `photometry` before `nss_efsps`.
+   - **Faint galaxies (total S/N ≲ 5): found 2026-11-12, FIXED 2026-11-13.** At fixed x, L(m) has a
+     plateau at low mass, where the model flux is negligible, only ~(S/N)²/2 nats below its
+     peak. The mass function rises toward low mass, so at low S/N most of ∫L q comes from
+     7–9, while the fine window sits around the L peak and misses it. The integral then comes
+     out low (this predates the guard; the old code is the same or worse).
+     - Test: photometry of 1113001, 1197855 and 1174326 scaled to logM 12, errors inflated.
+       Points drawn from the posterior, total S/N = sqrt(Σ f²/σ²) with the error floor:
+       - S/N ≥ 7: ≤ 1e-3 nats, posterior logM unchanged.
+       - S/N ≈ 5: a few points off by 10–66 nats.
+       - S/N 2.2–3.7: median 0.8–3.3 nats off, max 8–73; posterior logM median shifted
+         0.3–0.75 dex, 16th percentile up to 1.2 dex.
+     - Why the tests never saw it: specval and dust48 all have total S/N ≥ 10.6 (1st
+       percentile). The comparison catalogue goes down to S/N ≈ 3 (Wren).
+     - **Fix (in `mass_marginal.py`):** the integral is now the fine window (41 masses around
+       the L peak, as before) plus the rest of [7, 12.5] on the 111 coarse masses, ending at
+       the window's own end values. q is already on the coarse masses (for log g). There the
+       model flux is far from the peak, so the emulator-error term in the variance is dropped
+       and log L = logl0 + A S_fy − A² S_ff / 2 (A = 10^(m−10) μ; S_fy, S_ff: two band sums
+       `_fine` already computes; logl0 per galaxy): a few multiplies per mass. Exact as A → 0,
+       where faint galaxies' integrals live. Each coarse cell is integrated as exp(linear in
+       m), exact for a steep fall-off (needed for the first cell past an edge-guarded window,
+       which spans only 12 nats; a plain trapezoid there added up to 0.03 nats) and the same
+       as the trapezoid on the flat plateau. `sample_logmass` draws a cell from the window and
+       the rest together.
+       - Tests (`test_mass_marginal.py` section 3c; logs `logs/test_*_lowsnr*.log`): each test
+         galaxy's errors inflated to total S/N 5 and 3, 100 points where that posterior lies.
+         On 1174326, 1212906, 1192179, 1197855 and 1152437 (z 0.44–6.1): integral within
+         1.6e-3 nats of a refined brute force (one point 6.7e-3); the window alone would be off
+         by up to 3–37 nats, and at S/N 3 typically 30–80% of the integral lies outside it.
+         Masses from `sample_logmass` against the brute-force distribution at fixed x: KS
+         0.008–0.024 (4000 draws; 95% noise 0.021). All other sections unchanged and PASS;
+         `test_dust_prior.py` and `test_nss_priors.py` PASS.
+       - Bright galaxies unchanged: a whole fit of 1197855 gives logZ 537.37 ± 0.08 and the same
+         z weights as before, to 13 digits.
+       - Cost: 0–7% per row against the previous code (8-process proxy: batch 100 114–118 vs
+         111–119 µs; batch 20000 124–131 vs 116–121 µs).
+       - Why a first, exact-L version cost 1.4–2.5×: per row, the emulator is ~30–45 µs and the
+         per-mass work of the integral ~75 µs. The exact L at a mass loops over all 28 bands
+         (a division and a log each), so L at 56–111 more masses doubled that work. Flop
+         counts hid this: the emulator's matrix products are most of the flops but the
+         cheapest per flop.
+       - Side effect, deep tail only (reported, not tested): the very-poor-fit errors
+         change, 37 → 9 nats on 1174326 and 20 → 22 on 1192179, far below the best fit.
+     - Also fixed: the guard's window could start below 7.0 when the peak is above 12.5 and
+       very broad (needs per-x width > ~0.34 dex, S/N ≈ 2); it is now clipped to [7, 12.5].
+   - **Next:** none needed before production. Optionally, count clipped windows in the summary
+     JSON, and check a few real faint galaxies from the comparison catalogue (S/N ~3) once
+     they're fit. Leave the aliasing alone:
+     no posterior is affected, and fixing it costs +85% fit time or more. Scripts and results:
+     `nss_private_handoff/a1_mass_integral/`.
 2. **A high-precision reference for a few galaxies** (e.g. mass-marginal, 260 steps, more live
    points). It settles two things at once:
    - the logZ offsets: 1192179, 1197855, 1241601 and 2276122 come out 0.15–0.6 nats higher
@@ -576,7 +691,8 @@ most important first.
        Parrot — and dynesty locking onto one solution in production).
    - Wall time per fit median 5.8 min (90% 8.5) on the fast types.
    Side note for item A1: at 1197855 prior draws the existing mass-integral error reached
-   2.1e-2 nats in this test (60 draws), above the 6e-3 recorded earlier. **Later:** a q_PAH prior tied to
+   2.1e-2 nats in this test (60 draws), above the 6e-3 recorded earlier. Not a regression:
+   this test lacks the tail cut (item A1). **Later:** a q_PAH prior tied to
    metallicity or mass (the trap puts PAH 3.3 µm on [OIII]/Hα), tested separately.
 6. **High-z mass prior.** High-z spec-z solutions lose weight mainly to the mass-function
    prior at z ≈ 6 (then dust2 and p(z)); production dynesty hides this by locking onto single

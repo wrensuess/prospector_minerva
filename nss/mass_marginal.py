@@ -25,9 +25,12 @@ For each x:
     log like    = log integral L(m, x) q(m; x) dm - log g(x)
 L(m, x) needs the emulator once: logmass is not an emulator input (it predicts flux per
 1e10 Msun), so only the flux scale 10^(m - REF) changes with m. The m integrals use a
-coarse grid over the whole prior range (prior integral, and where the likelihood peaks),
-then a fine grid around the peak for the likelihood integral (trapezoid; test_mass_marginal.py
-measures the error against brute force). The mass posterior is recovered by drawing m from
+coarse grid over the whole prior range (the prior integral), and for the likelihood integral
+a fine grid (the "window") around the likelihood's peak in mass, plus the coarse grid for the
+rest of the range (trapezoid; test_mass_marginal.py measures the error against brute force).
+The rest matters for faint galaxies: as m drops the model flux goes to zero and L levels off
+only ~(S/N)^2/2 nats below its peak, while the mass function rises, so at total S/N <~ 5 most
+of the integral can lie below the window. The mass posterior is recovered by drawing m from
 L(m, x) q(m; x) for each posterior sample (sample_logmass).
 
     mm = MassMarginal(model)              # model with the tabulated mass prior
@@ -56,6 +59,8 @@ N_COARSE = 111          # 0.05 dex over the 5.5-dex prior range: the prior integ
 N_FINE = 41             # the likelihood integral, over +-N_SIG sigma around the peak in mass
 N_SIG = 8.0
 MIN_HALF = 0.02         # dex; the fine grid never spans less than +-MIN_HALF
+EDGE_NATS = 12.0        # peak beyond a prior bound: the fine grid spans this drop of log(L q)
+                        # from the bound (trapezoid bias ~0.0075 nats; truncation < e^-12)
 N_S_TABLE = 20001       # expected-ratio table in the shifted age s (~1.4 dex: ~7e-5 dex steps)
 
 
@@ -94,6 +99,11 @@ class MassMarginal:
             raise ValueError("expects the mass prior on a uniform grid starting at its lower bound")
         self.mc = jnp.linspace(self.m_lo, self.m_hi, n_coarse)
         self.wc = self._trap_w(self.mc)
+        # outside the window, log L as a quadratic in the amplitude A (see _fine): its constant,
+        # and A on the coarse grid
+        fv, vo = np.asarray(self.ll._fv), np.asarray(self.ll._var_obs)
+        self._logl0 = float(-0.5 * np.sum(fv ** 2 / vo + np.log(2.0 * np.pi * vo)))
+        self._A_c = jnp.asarray(10.0 ** (np.asarray(self.mc) - REF_LOGMASS) * self.ll.mu)
         self.n_fine = int(n_fine)
         self.log_jac = float(np.log(self.zsol_hi - self.zsol_lo)
                              + np.sum(np.log(np.asarray(self.y_hi - self.y_lo))))
@@ -273,12 +283,26 @@ class MassMarginal:
         """log(L q) on a fine grid of n_fine masses over +-N_SIG sigma around the likelihood's
         peak in mass, found analytically: the model flux is linear in A = 10^(m - REF) mu,
         so A is the weighted least-squares amplitude (two passes, the emulator variance
-        evaluated at the first estimate) and sigma_A comes from its Fisher information."""
+        evaluated at the first estimate) and sigma_A comes from its Fisher information.
+        If the (Newton-shifted) peak lies beyond m_lo or m_hi, the window instead starts at that
+        bound and spans EDGE_NATS of log(L q), from its slope there: d log L/dm in closed form,
+        d log q/dm from the coarse grid's end cell. (Clipping the +-N_SIG window to the bound
+        would leave a sliver: the integral came out up to 6 nats low; STATUS.md item A1.)
+
+        Also returns the rest of [m_lo, m_hi] outside the window, (m, log(L q)) on the coarse
+        grid below and above it, ending at the window's own end values (integrated by _cells). There
+        log L is a quadratic in A: the model flux there is far from the peak, mostly far below
+        the noise, so the emulator's variance term is dropped and
+            log L = logl0 + A S_fy - A^2 S_ff / 2,  S_fy = sum f d / v, S_ff = sum f^2 / v
+        (the same band sums as A0 below). Exact as A -> 0, where faint galaxies' integrals live;
+        above the window it decays faster than the exact L, where L q is negligible anyway."""
         ll = self.ll
         th = self.theta(xc, jnp.asarray(REF_LOGMASS, dtype=xc.dtype))
         f = ll.f_net(th)[ll._valid]
         sig0 = (ll._sigma_mag / ARSINH_A) * jnp.sqrt(f ** 2 + 4.0 * ARSINH_B ** 2)
-        A0 = jnp.sum(f * ll._fv / ll._var_obs) / jnp.sum(f ** 2 / ll._var_obs)
+        S_fy = jnp.sum(f * ll._fv / ll._var_obs)
+        S_ff = jnp.sum(f ** 2 / ll._var_obs)
+        A0 = S_fy / S_ff
         var1 = ll._var_obs + (sig0 * jnp.abs(A0)) ** 2
         info = jnp.sum(f ** 2 / var1)
         A1 = jnp.sum(f * ll._fv / var1) / info
@@ -297,7 +321,17 @@ class MassMarginal:
         half = jnp.maximum(N_SIG * s_m + jnp.abs(shift), MIN_HALF)
         a = jnp.where(ok, jnp.clip(centre - half, self.m_lo, self.m_hi), self.m_lo)
         b = jnp.where(ok, jnp.clip(centre + half, self.m_lo, self.m_hi), self.m_hi)
-        b = jnp.maximum(b, a + 1e-6)
+        # peak beyond a bound: the integrand falls from the bound at rate k = |d log(L q)/dm|
+        lo_out, hi_out = ok & (centre < self.m_lo), ok & (centre > self.m_hi)
+        s_e = 10.0 ** (jnp.where(lo_out, self.m_lo, self.m_hi) - REF_LOGMASS) * ll.mu
+        v_e = ll._var_obs + (sig0 * s_e) ** 2
+        r_e = ll._fv - f * s_e
+        dlogl = np.log(10.0) * s_e * jnp.sum(f * r_e / v_e + sig0 ** 2 * s_e * (r_e ** 2 / v_e - 1.0) / v_e)
+        k = jnp.where(lo_out, -1.0, 1.0) * (dlogl + jnp.where(lo_out, slope_c[0], slope_c[-1]))
+        w_edge = jnp.where(k > 0, jnp.clip(EDGE_NATS / jnp.maximum(k, 1e-30), 1e-7, 2.0 * half), 2.0 * half)
+        a = jnp.where(lo_out, self.m_lo, jnp.where(hi_out, jnp.maximum(self.m_hi - w_edge, self.m_lo), a))
+        b = jnp.where(lo_out, jnp.minimum(self.m_lo + w_edge, self.m_hi), jnp.where(hi_out, self.m_hi, b))
+        b = jnp.maximum(b, a + 1e-9)
         mf = a + (b - a) * jnp.linspace(0.0, 1.0, self.n_fine)
         wf = self._trap_w(mf)
         # from the s table at the fine masses themselves (delta_t_dex has kinks at m = 9, 12)
@@ -307,9 +341,34 @@ class MassMarginal:
         r2 = (ll._fv[None, :] - f[None, :] * scale) ** 2 / var
         l_f = -0.5 * jnp.sum(r2 + jnp.log(2.0 * np.pi * var), axis=1)
         tot = l_f + self._log_q_given(xc, z, mf, exp_f)
+        # the rest of the range, on the coarse grid (q is already there from the prior part)
+        tc = lq_c + self._logl0 + self._A_c * S_fy - 0.5 * self._A_c ** 2 * S_ff
         if self.dust_prior is not None:
             tot = tot + self.dust_lnw(th, z, mf)
-        return mf, wf, tot
+            tc = tc + self.dust_lnw(th, z, self.mc)
+        rest = ((jnp.minimum(self.mc, a), jnp.where(self.mc < a, tc, tot[0])),
+                (jnp.maximum(self.mc, b), jnp.where(self.mc > b, tc, tot[-1])))
+        return mf, wf, tot, rest
+
+    @staticmethod
+    def _cells(m, t, exponential=False):
+        """Cells of log-integrand t on nondecreasing nodes m: (left edge, width, log of the
+        cell's integral); zero-width cells get -inf. Trapezoid, or with exponential=True the
+        integral of exp(t linear in m) across the cell, exact for a steep fall-off (the first cell
+        past an edge-guarded window, which spans only EDGE_NATS) and ~the trapezoid where t is
+        flat. A cell with one end at -inf falls back to the trapezoid (q's support ends in it)."""
+        h = m[1:] - m[:-1]
+        pos = h > 0
+        lh = jnp.log(jnp.where(pos, h, 1.0))
+        t0, t1 = t[:-1], t[1:]
+        trap = jnp.logaddexp(t0, t1) - np.log(2.0)
+        if exponential:
+            hi = jnp.maximum(t0, t1)
+            fin = jnp.isfinite(t0) & jnp.isfinite(t1)
+            d = jnp.where(fin, jnp.abs(t0 - t1), 0.0)
+            frac = jnp.where(d > 1e-8, -jnp.expm1(-d) / jnp.where(d > 1e-8, d, 1.0), 1.0 - 0.5 * d)
+            trap = jnp.where(fin, hi + jnp.log(frac), trap)
+        return m[:-1], h, jnp.where(pos, lh + trap, -jnp.inf)
 
     def dust_lnw(self, th, z, m):
         """ln w of the soft-ceiling dust prior on a vector of masses m, at theta th (any
@@ -322,8 +381,9 @@ class MassMarginal:
         inside = jnp.all((x >= 0.0) & (x <= 1.0))
         xc = jnp.clip(x, 0.0, 1.0)
         z, exp_c, log_g, lq_c = self._prior_part(xc)
-        mf, wf, tot = self._fine(xc, z, exp_c, lq_c)
-        log_i = jax.scipy.special.logsumexp(tot + jnp.log(wf))
+        mf, wf, tot, rest = self._fine(xc, z, exp_c, lq_c)
+        log_i = jax.scipy.special.logsumexp(
+            jnp.concatenate([tot + jnp.log(wf)] + [self._cells(m, t, True)[2] for m, t in rest]))
         lp = jnp.where(inside & jnp.isfinite(log_g), log_g, -jnp.inf)
         ll = jnp.where(inside & jnp.isfinite(log_g) & jnp.isfinite(log_i), log_i - log_g,
                        -jnp.inf)
@@ -338,12 +398,13 @@ class MassMarginal:
         return self.logprior_and_loglike(x)[1]
 
     def sample_logmass(self, key, x):
-        """One draw of logmass from L(m, x) q(m; x): a fine-grid cell by its trapezoid mass,
-        then uniform within the cell."""
+        """One draw of logmass from L(m, x) q(m; x): a cell (window or the rest of the range) by
+        its integral, then uniform within the cell."""
         xc = jnp.clip(x, 0.0, 1.0)
         z, exp_c, _, lq_c = self._prior_part(xc)
-        mf, _, tot = self._fine(xc, z, exp_c, lq_c)
-        cell = jnp.logaddexp(tot[:-1], tot[1:])
+        mf, _, tot, rest = self._fine(xc, z, exp_c, lq_c)
+        left, width, lw = (jnp.concatenate(v) for v in
+                           zip(*[self._cells(mf, tot)] + [self._cells(m, t, True) for m, t in rest]))
         k1, k2 = jax.random.split(key)
-        i = jax.random.categorical(k1, cell)
-        return mf[i] + (mf[i + 1] - mf[i]) * jax.random.uniform(k2, dtype=x.dtype)
+        i = jax.random.categorical(k1, lw)
+        return left[i] + width[i] * jax.random.uniform(k2, dtype=x.dtype)

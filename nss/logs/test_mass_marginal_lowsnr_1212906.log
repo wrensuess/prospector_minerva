@@ -1,0 +1,25 @@
+[photometry] minerva_uds_test9.fits: no emulator band for ['f098m']; dropped.
+[1212906] mass integrated out: 25 sampled parameters; coarse grid 111 x 0.0500 dex, fine grid 41
+  [PASS] same theta from u and (x, m): max |dtheta| = 3.9e-16 (SFH ratios 3.6e-06: the expected-ratio table); x inside the cube: True
+  [PASS] finite marginal prior at prior draws: 0 of 5000 non-finite
+  [PASS] tabulated expected ratios vs the current chain: max |d| = 3.5e-06 dex over 2010 z x 557 masses (incl. the kinks at logM 9 and 12 and the z_eff clamps)
+  [PASS] p(Z | m) = 1 / (dZ/du): max relative error 7.4e-08
+  [PASS] p(Z | m) integrates to 1: 1.0e-11
+  [PASS] ratio offset density = 1 / (do/du): max relative error 4.9e-06
+  [PASS] ratio offset density integrates to 1: 4.4e-14
+      4 points with the mass prior below e^-100 of its peak at the likelihood peak (deep tail): max |d| 0.25 nats (reported, not tested)
+  [PASS] log g vs brute force (prior draws): max |d| 7.7e-04 nats, median 2.7e-04
+  [PASS] log L' vs brute force (prior draws, within 1000 nats of the best): 33 points: max |d| 4.8e-04 nats, median 2.5e-04; log L' range -511.1..473.4
+      67 points more than 1000 nats below the best (brute log L' -2862..-553): fast value finite for 67, max |d| there 1.4e+00
+  [PASS] fast -inf only far below the best (prior draws): 0 points with fast -inf, brute log L' up to nan
+  [PASS] log L' vs refined brute force (L q peaking at a prior bound): 25 points (25 at m_lo) of 25 in 20000 prior draws: max |d| 7.9e-03 nats, median 7.2e-03; log L' -56976..286
+[photometry] minerva_uds_test9.fits: no emulator band for ['f098m']; dropped.
+  [PASS] log L' vs refined brute force (faint: total S/N 5.0, errors x75): 100 posterior points: max |d| 5.4e-04 nats, median 2.5e-04. Integral outside the window: median 0.00, max 0.07; the window alone would be off by up to 0.07 nats (median 1.0e-03)
+  [PASS] sampled logmass vs brute force (faint, S/N 5.0): KS distance at the 4 points with the most integral outside the window: 0.016, 0.018, 0.012, 0.017 (4000 draws each; 95% noise 0.021)
+[photometry] minerva_uds_test9.fits: no emulator band for ['f098m']; dropped.
+  [PASS] log L' vs refined brute force (faint: total S/N 3.0, errors x125): 100 posterior points: max |d| 7.0e-04 nats, median 2.3e-04. Integral outside the window: median 0.41, max 1.00; the window alone would be off by up to 7.83 nats (median 5.3e-01)
+  [PASS] sampled logmass vs brute force (faint, S/N 3.0): KS distance at the 4 points with the most integral outside the window: 0.008, 0.017, 0.024, 0.009 (4000 draws each; 95% noise 0.021)
+      batch   100: standard    26.0 us/row, mass-marginal (prior + like)    60.2 us/row, ratio 2.3x  (multi-threaded Mac)
+      batch  1000: standard    26.5 us/row, mass-marginal (prior + like)    32.8 us/row, ratio 1.2x  (multi-threaded Mac)
+
+RESULT: PASS

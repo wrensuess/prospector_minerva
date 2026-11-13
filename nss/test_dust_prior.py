@@ -114,7 +114,7 @@ def main():
         for lab, xs in [("prior draws", xs_prior), ("trap-like", xt)]:
             ll_fast = np.asarray(mmk.batch_loglike(jnp.asarray(xs)))
             ll_nod = np.asarray(mm0.batch_loglike(jnp.asarray(xs)))
-            err, err0, dpen = [], [], []
+            err, err0, dpen, tail = [], [], [], []
             for xx, lf, l0_ in zip(xs, ll_fast, ll_nod):
                 xx = jnp.asarray(xx)
                 q = f_q(xx, grid); l = f_l(xx, grid); w = f_w(xx, grid)
@@ -125,10 +125,15 @@ def main():
                     err.append(abs((lf - l0_) - (lb - lb0)))      # error added by the penalty
                     err0.append(abs(l0_ - lb0))                    # existing integral error
                     dpen.append(lf - l0_)
-            err, err0, dpen = np.array(err), np.array(err0), np.array(dpen)
+                    # deep mass-prior tail at the peak (as in test_mass_marginal.py): the existing
+                    # error there is larger, up to ~0.3 nats (STATUS.md section 6, item A1)
+                    tail.append(float(q[jnp.nanargmax(q + l)] - jnp.max(q)) < -100)
+            err, err0, dpen, tail = np.array(err), np.array(err0), np.array(dpen), np.array(tail, bool)
+            e0 = err0[~tail] if len(err0) else err0
             check(f"{kind}, {lab}", len(err) > 0 and err.max() < 1e-3,
                   f"{len(err)} points within 1000 nats; error ADDED by the penalty max {err.max() if len(err) else np.nan:.1e} nats "
-                  f"(existing integral error without it, max {err0.max() if len(err0) else np.nan:.1e}); "
+                  f"(existing integral error without it, max {e0.max() if len(e0) else np.nan:.1e}, "
+                  f"{tail.sum()} deep-tail points excluded: max {err0[tail].max() if tail.any() else np.nan:.1e}); "
                   f"penalty applied (median, min) {np.median(dpen) if len(dpen) else np.nan:.2f}, {dpen.min() if len(dpen) else np.nan:.2f}")
 
     # 5. ln C
