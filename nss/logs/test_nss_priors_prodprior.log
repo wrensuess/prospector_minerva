@@ -1,0 +1,28 @@
+1. integral of pdf over [a, b] = 1.0000000000 [ok]
+   max |ppf - numerical inverse|: 4.36e-09 dex (u < 1-1e-7) [ok], 1.94e-07 anywhere
+2. max |prospector erfinv form - this ppf|: 4.54e-12 dex for u < 1-1e-6 [ok]; 1.63e-08 anywhere (the erfinv form loses precision at u -> 1)
+   round trip, tail: max rel |mass above x / ((1-u) norm) - 1| = 1.39e-12 [ok] over 14663 u, up to 1-u = 1e-12
+3. max |numpy - JAX| ppf: 8.88e-16 dex [ok]
+4. P(fagn > 0.1) analytic 0.0726, sampled 0.0725 [ok]; P(fagn > 0.32) analytic 0.0031, sampled 0.0031
+5. model fagn bounds 1e-05..3; overrides {'fagn': ('logflat_gausstail', (-1.0, 0.25)), 'duste_qpah': ('truncnormal', (2.0, 2.0)), 'duste_umin': ('truncnormal', (1.0, 10.0)), 'duste_gamma': ('logtruncnormal', (-2.0, 1.0)), 'logmass': ('mass_function_leja20', (6.0, 12.5)), 'zred': ('uniform', (0.01, 15.0))}
+   numpy: other 25 parameters bitwise unchanged [ok]
+   numpy: fagn = new prior [ok]; P(fagn>0.1) = 0.0693 (old prior 0.2658)
+   JAX transform (new): max rel |d fagn| 2.20e-15 [ok]
+   JAX transform (loguniform): max rel |d fagn| 2.01e-15 [ok]
+   MassMarginal.theta: max rel |d fagn| 2.15e-15 [ok]
+
+6. production z / mass / duste priors (defaults since 2026-11-13)
+   bounds {'zred': (0.01, 15.0), 'logmass': (6.0, 12.5), 'duste_qpah': (0.47, 4.58), 'duste_umin': (0.1, 25.0), 'duste_gamma': (0.0001, 1.0)} [ok]
+   mass grid 651 points, const_phi True [ok]
+   numpy z = 0.01 + 14.99 u: max |d| 1.8e-15 [ok]
+   duste_qpah   numpy vs scipy truncnorm 1.4e-15 [ok], JAX vs numpy 1.4e-15 [ok]
+   duste_umin   numpy vs scipy truncnorm 2.6e-14 [ok], JAX vs numpy 6.6e-15 [ok]
+   duste_gamma  numpy vs scipy truncnorm 4.5e-15 [ok], JAX vs numpy 5.6e-15 [ok]
+   mass prior z=6 vs z=3: max |d logM| 0.0e+00 [ok]; P(logM < 7 | z=0.3) = 0.674 [ok]
+   MassMarginal: m 6.0-12.5, coarse grid 131 points [ok]
+   MassMarginal.theta duste_qpah: max rel |d| 9.3e-16 [ok]
+   MassMarginal.theta duste_umin: max rel |d| 2.9e-15 [ok]
+   MassMarginal.theta duste_gamma: max rel |d| 4.6e-15 [ok]
+   efsps settings reproduce efsps's own transform bitwise [ok]
+
+RESULT: PASS

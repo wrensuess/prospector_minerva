@@ -77,15 +77,17 @@ class CallbackLikelihood:
         return out.reshape(shape)
 
 
-def build(phot, fix_z=None, z_window=None, fagn_prior=None):
+def build(phot, fix_z=None, z_window=None, fagn_prior=None, **prior_kw):
     """FitModel for one galaxy, with the NSS-side prior overrides (nss_priors.py) applied.
     fagn_prior: None = nss_priors.DEFAULT_FAGN_PRIOR ("flat1_s025", production since
-    2026-11-11); "loguniform" = efsps's original log-uniform on [1e-5, 3]."""
+    2026-11-11); "loguniform" = efsps's original log-uniform on [1e-5, 3].
+    prior_kw: z_prior, const_phi, mass_min, duste_prior (nss_priors.apply_nss_priors; the
+    defaults match the production dynesty fits since 2026-11-13)."""
     from nss_priors import apply_nss_priors, DEFAULT_FAGN_PRIOR
     emu = PhotEmulator(EMULATOR, bands=phot.bands, expected_md5=list(C.KNOWN_EMULATOR_MD5))
     table = table_for_run(C.PARAMETER_TABLE, fix_z, z_window)
     model = FitModel(emu, phot.bands, phot.flux, phot.err, phot.mu, table=table)
-    return apply_nss_priors(model, fagn_prior or DEFAULT_FAGN_PRIOR)
+    return apply_nss_priors(model, fagn_prior or DEFAULT_FAGN_PRIOR, **prior_kw)
 
 
 def run_nss(model, n_live, num_delete, num_inner_steps, seed, termination=-3.0,

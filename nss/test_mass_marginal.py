@@ -118,7 +118,7 @@ def main():
     # 1b. the tabulated expected SFH ratios against the current (exact) chain
     zz = np.concatenate([np.asarray(pt.batch(jnp.asarray(u[:2000])))[:, model.col["zred"]],
                          [0.01, 0.15, 0.1501, 1.0, 3.0, 6.0, 9.99, 10.0, 12.0, 15.0]])
-    mgrid = jnp.concatenate([jnp.linspace(mm.m_lo, mm.m_hi, 551),
+    mgrid = jnp.concatenate([jnp.linspace(mm.m_lo, mm.m_hi, int(round((mm.m_hi - mm.m_lo) / 0.01)) + 1),
                              jnp.array([8.999, 9.0, 9.001, 11.999, 12.0, 12.001])])
     ex = jax.jit(jax.vmap(lambda z0: jax.vmap(lambda m0: pt.expected_ratios(z0, m0)[mm.r_j])(mgrid)))
     tb = jax.jit(jax.vmap(lambda z0: mm.exp_ratios_tab(mm.log10_age(z0), mgrid)))
@@ -167,7 +167,10 @@ def main():
         sets.append(("late live points", mm.x_from_u(U)[0]))
     for lab, xs in sets:
         lp, ll = (np.asarray(v) for v in mm.batch_both(jnp.asarray(xs)))
-        bg, bl = brute(mm, xs)
+        # edge-refined: since the production prior (2026-11-13: Leja+20 frozen at z = 3 above z = 3)
+        # prior draws at z ~ 12 can have L q peaking at the 12.5 bound only ~50 nats down the prior,
+        # rising ~2400 nats/dex; the uniform 6e-4-dex grid is then off by ~0.15 nats itself
+        bg, bl = brute(mm, xs, edge_refine=True)
         # accuracy where it can matter: within 1000 nats of the best fit (a run's threshold
         # passes far above anything lower in its first iteration), and not deep in the mass
         # prior's tail (prior density at the peak below e^-100 of its maximum). There the

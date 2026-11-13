@@ -54,8 +54,9 @@ from efsps_photfit.emulator import ARSINH_A, ARSINH_B, REF_LOGMASS
 from jax_model import JaxLogLike
 from jax_prior import truncated_t2_ppf, truncnorm_ppf, uniform_ppf, loguniform_ppf, simple_ppf
 
-N_COARSE = 111          # 0.05 dex over the 5.5-dex prior range: the prior integral g(x), and
-                        # the expected SFH ratios (interpolated to the fine grid)
+COARSE_DX = 0.05        # dex: the coarse grid over the whole prior range, for the prior integral
+                        # g(x) and the expected SFH ratios (interpolated to the fine grid); 111
+                        # points over 7-12.5, 131 over 6-12.5
 N_FINE = 41             # the likelihood integral, over +-N_SIG sigma around the peak in mass
 N_SIG = 8.0
 MIN_HALF = 0.02         # dex; the fine grid never spans less than +-MIN_HALF
@@ -65,7 +66,7 @@ N_S_TABLE = 20001       # expected-ratio table in the shifted age s (~1.4 dex: ~
 
 
 class MassMarginal:
-    def __init__(self, model, n_coarse=N_COARSE, n_fine=N_FINE, dust_prior=None, dust_cfg=None):
+    def __init__(self, model, n_coarse=None, n_fine=N_FINE, dust_prior=None, dust_cfg=None):
         self.ll = JaxLogLike(model)
         pt = self.pt = self.ll.pt
         if not pt._m_tab:
@@ -97,6 +98,8 @@ class MassMarginal:
         self.m_dx = float(mg[1] - mg[0])                       # the mass prior's node spacing
         if not np.allclose(np.diff(mg), self.m_dx) or abs(mg[0] - self.m_lo) > 1e-12:
             raise ValueError("expects the mass prior on a uniform grid starting at its lower bound")
+        if n_coarse is None:
+            n_coarse = int(round((self.m_hi - self.m_lo) / COARSE_DX)) + 1
         self.mc = jnp.linspace(self.m_lo, self.m_hi, n_coarse)
         self.wc = self._trap_w(self.mc)
         # outside the window, log L as a quadratic in the amplitude A (see _fine): its constant,

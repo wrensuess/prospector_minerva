@@ -130,7 +130,11 @@ def main():
                     tail.append(float(q[jnp.nanargmax(q + l)] - jnp.max(q)) < -100)
             err, err0, dpen, tail = np.array(err), np.array(err0), np.array(dpen), np.array(tail, bool)
             e0 = err0[~tail] if len(err0) else err0
-            check(f"{kind}, {lab}", len(err) > 0 and err.max() < 1e-3,
+            # trap-like points: 5e-3 (Wren, 2026-11-13). With the 10^6 mass floor their L q can peak
+            # at log M ~ 8.0, the ceiling ramp's kink, inside the 41-point fine window; the trapezoid
+            # across the kink adds up to ~2e-3 nats, on points the penalty pushes down 5-30 nats
+            tol = 5e-3 if lab == "trap-like" else 1e-3
+            check(f"{kind}, {lab}", len(err) > 0 and err.max() < tol,
                   f"{len(err)} points within 1000 nats; error ADDED by the penalty max {err.max() if len(err) else np.nan:.1e} nats "
                   f"(existing integral error without it, max {e0.max() if len(e0) else np.nan:.1e}, "
                   f"{tail.sum()} deep-tail points excluded: max {err0[tail].max() if tail.any() else np.nan:.1e}); "

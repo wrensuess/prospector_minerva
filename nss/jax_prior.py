@@ -81,7 +81,7 @@ def simple_ppf(kind, x, lo, hi, args):
         return loguniform_ppf(x, lo, hi)
     if kind == "truncnormal":
         return truncnorm_ppf(x, args[0], args[1], lo, hi)
-    if kind == "logflat_gausstail":
+    if kind in ("logflat_gausstail", "logtruncnormal"):
         from nss_priors import ppf_value_jax
         return ppf_value_jax(kind, args, x, lo, hi)
     raise ValueError(f"no transform for prior kind {kind!r}")
@@ -261,7 +261,8 @@ class JaxPriorTransform:
                 continue
             lo, hi = model.bounds[name]
             kind, args = over.get(name, (r.kind, tuple(r.args)))
-            if kind not in ("uniform", "loguniform", "truncnormal", "logflat_gausstail"):
+            if kind not in ("uniform", "loguniform", "truncnormal", "logflat_gausstail",
+                            "logtruncnormal"):
                 raise ValueError(f"{name}: no transform for prior kind {kind!r}")
             self._simple.append((col[name], kind, float(lo), float(hi), tuple(args)))
 

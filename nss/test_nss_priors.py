@@ -118,4 +118,55 @@ tm = np.asarray(jax.jit(jax.vmap(mm.theta))(jnp.asarray(x), jnp.asarray(lm)))
 df = np.abs(tm[:, c] - th_new[:2000, c]) / th_new[:2000, c]
 print(f"   MassMarginal.theta: max rel |d fagn| {df.max():.2e} [{check(df.max() < 1e-12, 'marginal fagn')}]")
 
+# ---- 6. production joint prior (uniform z, Leja+20 only, floor 10^6) and duste priors
+from scipy.stats import truncnorm
+from efsps_photfit.model import FitModel
+print("\n6. production z / mass / duste priors (defaults since 2026-11-13)")
+b = m_new.bounds
+want = {"zred": (0.01, 15.0), "logmass": (6.0, 12.5), "duste_qpah": (0.47, 4.58),
+        "duste_umin": (0.1, 25.0), "duste_gamma": (1e-4, 1.0)}
+ok = all(np.allclose(b[k], v, rtol=1e-12) for k, v in want.items())
+print(f"   bounds { {k: b[k] for k in want} } [{check(ok, 'bounds')}]")
+ok = m_new.mprior.grid.size == 651 and abs(m_new.mprior.grid[1] - m_new.mprior.grid[0] - 0.01) < 1e-12
+print(f"   mass grid {m_new.mprior.grid.size} points, const_phi {m_new.mprior.const_phi} "
+      f"[{check(ok and m_new.mprior.const_phi, 'mass grid')}]")
+cz = m_new.col["zred"]
+dz = np.abs(th_new[:, cz] - (0.01 + uu[:, cz] * 14.99)).max()
+print(f"   numpy z = 0.01 + 14.99 u: max |d| {dz:.1e} [{check(dz < 1e-12, 'uniform z')}]")
+ref = {"duste_qpah": truncnorm.ppf(uu[:, m_new.col["duste_qpah"]], (0.47 - 2) / 2, (4.58 - 2) / 2,
+                                   loc=2, scale=2),
+       "duste_umin": truncnorm.ppf(uu[:, m_new.col["duste_umin"]], (0.1 - 1) / 10, (25 - 1) / 10,
+                                   loc=1, scale=10),
+       "duste_gamma": 10 ** truncnorm.ppf(uu[:, m_new.col["duste_gamma"]], (-4 + 2) / 1,
+                                          (0 + 2) / 1, loc=-2, scale=1)}
+pt_new = JaxPriorTransform(m_new)
+tj = np.asarray(pt_new.batch(jnp.asarray(uu)))
+for k, r in ref.items():
+    cc = m_new.col[k]
+    d_np = np.max(np.abs(th_new[:, cc] - r) / r)
+    d_jx = np.max(np.abs(tj[:, cc] - th_new[:, cc]) / th_new[:, cc])
+    print(f"   {k:12s} numpy vs scipy truncnorm {d_np:.1e} [{check(d_np < 1e-9, k + ' numpy')}], "
+          f"JAX vs numpy {d_jx:.1e} [{check(d_jx < 1e-12, k + ' jax')}]")
+# Leja+20 only: the mass prior at z = 6 equals the one at z = 3 (clamped)
+um = uu[:, m_new.col["logmass"]]
+d36 = np.abs(m_new.mprior.ppf(um, np.full(um.size, 6.0)) - m_new.mprior.ppf(um, np.full(um.size, 3.0))).max()
+p7 = np.mean(m_new.mprior.ppf(um, np.full(um.size, 0.3)) < 7.0)
+print(f"   mass prior z=6 vs z=3: max |d logM| {d36:.1e} [{check(d36 == 0, 'const_phi')}]; "
+      f"P(logM < 7 | z=0.3) = {p7:.3f} [{check(p7 > 0, 'floor 6')}]")
+mmn = MassMarginal(m_new)
+print(f"   MassMarginal: m {mmn.m_lo}-{mmn.m_hi}, coarse grid {mmn.mc.size} points "
+      f"[{check(mmn.mc.size == 131 and mmn.m_lo == 6.0, 'marginal grid')}]")
+x6, lm6 = mmn.x_from_u(uu[:2000])
+tm6 = np.asarray(mmn.batch_theta(jnp.asarray(x6), jnp.asarray(lm6)))
+for k in ref:
+    cc = m_new.col[k]
+    d = np.max(np.abs(tm6[:, cc] - th_new[:2000, cc]) / th_new[:2000, cc])
+    print(f"   MassMarginal.theta {k}: max rel |d| {d:.1e} [{check(d < 1e-12, 'marginal ' + k)}]")
+# every setting back to efsps: the efsps transform, bitwise
+m_ef = build(phot, fagn_prior="loguniform", z_prior="nz", const_phi=False, mass_min=7.0,
+             duste_prior="efsps")
+m_raw = FitModel(m_ef.emu, phot.bands, phot.flux, phot.err, phot.mu)
+ok = np.array_equal(m_ef.prior_transform(uu), m_raw.prior_transform(uu))
+print(f"   efsps settings reproduce efsps's own transform bitwise [{check(ok, 'efsps reproduced')}]")
+
 print("\nRESULT:", "PASS" if not FAILS else "FAIL " + ", ".join(FAILS))

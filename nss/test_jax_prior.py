@@ -8,7 +8,7 @@ Same u in, compare theta out. Every comparison is reported by redshift bin.
   3. z windows (the windows of the windowed NSS run, plus narrow ones on the switches)
   4. unit-cube edges: u in {0, 1e-300, 1e-15, 1e-9, 0.5, 1-1e-9, 1-1e-16, 1}; where theta
      differs, judged in probability (see tail_check)
-  4b. const_phi=True (the Leja+20-only mass function and p(z))
+  4b. efsps's own joint prior (n(z), const_phi=False, floor 10^7), the pre-2026-11-13 default
   5. internals in isolation: z_eff and expected ratios vs sfh.ExpectedRatios
   6. single-row call (un-jitted) == jitted vmap; timing
 
@@ -315,21 +315,24 @@ def main():
             print(f"      worst: {me.free[j]} at u={ue[i, j]!r} (z u={ue[i, 0]!r}): "
                   f"numpy {a[i, j]!r} jax {b[i, j]!r}")
 
-    # ---- 4b. the other mass function (const_phi=True: Leja+20 only) ------------------
-    mc = FitModel(model.emu, phot.bands, phot.flux, phot.err, phot.mu,
-                  nzsfh=dict(C.NZSFH, const_phi=True))
-    apply_nss_priors(mc, FAGN_PRIOR)
+    # ---- 4b. the other joint prior: efsps's (n(z) l20t18, const_phi=False, floor 10^7,
+    # efsps duste rows); the default since 2026-11-13 is production's (uniform z,
+    # const_phi=True, floor 10^6, production duste priors) -----------------------------
+    mc = FitModel(model.emu, phot.bands, phot.flux, phot.err, phot.mu)
+    apply_nss_priors(mc, FAGN_PRIOR, z_prior="nz", const_phi=False, mass_min=7.0,
+                     duste_prior="efsps")
     if MASS_PRIOR == "tabulated":
         use_tabulated_mass_prior(mc)
     uc = rng.random((args.n_fixed * 5, mc.n_dim))
     a, b = compare(mc, JaxPriorTransform(mc), uc)
-    report_by_z(mc, uc, a[:, 0], a, b, f"4b. const_phi=True, free z, {uc.shape[0]} random u")
+    report_by_z(mc, uc, a[:, 0], a, b, f"4b. efsps joint prior (n(z), const_phi=False, "
+                f"floor 7), free z, {uc.shape[0]} random u")
 
     # ---- 5. internals ---------------------------------------------------------------
     print("\n== 5. internals vs sfh.ExpectedRatios, by z bin")
     zz = np.concatenate([rng.uniform(0.01, 15, args.n // 2),
                          10 ** rng.uniform(-2, np.log10(15), args.n // 2)])
-    mm = rng.uniform(7.0, 12.5, zz.size)
+    mm = rng.uniform(*model.bounds["logmass"], zz.size)
     ze_np = model.ratios.z_eff(zz, mm)
     ze_jx = np.asarray(jax.jit(jax.vmap(pt.z_eff))(zz, mm))
     er_np = model.ratios(zz, mm)

@@ -1,0 +1,19 @@
+[photometry] minerva_uds_test9.fits: no emulator band for ['f098m']; dropped.
+[1197855] linear logmass coordinate, bounds 6.0-12.5
+  [PASS] density integrates to 1: max |int - 1| = 4.0e-14
+  [PASS] CDF of density at mass_ppf(u) = u: max |u' - u| = 1.6e-10 over 26 z values
+  [PASS] same in the tail, relative to 1 - u (down to 1e-10): max relative error of 1 - u = 1.5e-06
+  [PASS] same theta from u and x_from_u(u): max |dtheta| = 0.0e+00 (logmass 0.0e+00)
+  [PASS] finite log prior at every prior draw: 0 non-finite of 100000
+      z    0-0.5 :   626 rows, max relative |dlogL| 0.0e+00
+      z  0.5-1   :   676 rows, max relative |dlogL| 0.0e+00
+      z    1-2   :  1359 rows, max relative |dlogL| 0.0e+00
+      z    2-3   :  1330 rows, max relative |dlogL| 0.0e+00
+      z    3-4   :  1353 rows, max relative |dlogL| 0.0e+00
+      z    4-6   :  2603 rows, max relative |dlogL| 0.0e+00
+      z    6-8   :  2736 rows, max relative |dlogL| 0.0e+00
+      z    8-12  :  5308 rows, max relative |dlogL| 0.0e+00
+      z   12-15.1:  4009 rows, max relative |dlogL| 0.0e+00
+  [PASS] same log L: max relative |dlogL| = 0.0e+00
+
+RESULT: PASS

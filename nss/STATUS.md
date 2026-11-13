@@ -1,6 +1,6 @@
 # MINERVA SED fitting: project status report
 
-**As of 2026-11-12.** This is the whole-project picture: both fitting paths, what they cost,
+**As of 2026-11-13.** This is the whole-project picture: both fitting paths, what they cost,
 how robust they are, and what to do next. For setup, the code map and pitfalls, read
 [`HANDOFF.md`](HANDOFF.md). Update this file when the picture changes, and keep the date
 current.
@@ -32,7 +32,7 @@ detailed per-galaxy numbers (`PRIVATE_STATUS.md`).
 
 | | A. dynesty + Parrot | B. NSS + E-FSPS |
 |---|---|---|
-| Model | production Prospector-beta model, Parrot emulator, 18 free parameters, AGN pinned off | efsps-photfit model (Joel Leja), E-FSPS emulator (w256), Prospector-beta priors, 26 free parameters, AGN free |
+| Model | production Prospector-beta model, Parrot emulator, 18 free parameters, AGN pinned off | efsps-photfit model (Joel Leja), E-FSPS emulator (w256), Prospector-beta priors (z, mass and dust-emission priors matched to production since 2026-11-13, §6 item 6b), 26 free parameters, AGN free |
 | Sampler | dynesty (rwalk, multi-ellipsoid) | blackjax nested slice sampling (NSS), pure JAX |
 | Where | `prospector_minerva`, branch `speedup-dynesty` (pushed, 6c08ce9); production is `dev_curc` | `prospector_minerva`, branch `nss-efsps`, folder `nss/` |
 | Status | exact speed-ups done; robustness at production settings is poor | main effort; redshift failures fixed on the test set; convergence and production engineering open |
@@ -430,6 +430,7 @@ production one. So the cost comparison below is between pipelines, not a like-fo
 | 2026-11-11 | **Soft-ceiling dust2 prior, mass only, adopted as the NSS default** (Wren): today's flat dust2 prior below a ceiling of A_V = 1 mag at log M < 8, rising to 4 (no change) at log M 9; σ 0.2 penalty above. Only removes the low-z dusty-dwarf trap; no measurable effect on 35 non-trap test galaxies (§6 item 5b). |
 | 2026-11-11 | **32 inner steps** as the default for mass-marginal NSS (Wren). 20-seed Blanca tests at 16/25/32/52/78 on 21 galaxies: 32 is the smallest setting where the hard galaxies still follow the 1/√k scatter law; 25 is 17% cheaper with a worse tail, 16 breaks (R̂ up to 1.075). The strict "R̂ < 1.01 for every parameter" is missed in 6 of 21 galaxies (worst 1.029), but per-seed posteriors and SFHs agree by eye, the standard Wren applies. `nss_jax.py` and `fullfit_layout.sbatch` defaults are now n_live 1000, num_delete 100, 32 steps, tabulated prior, mass integrated out. |
 | 2026-11-11 | Results come back from Blanca by `rsync` pulled from the Mac, never `tar czf` on the login node. |
+| 2026-11-13 | **z, mass and dust-emission priors matched to production** (Wren; §6 item 6b): z uniform (was efsps's n(z)), Leja+20-only mass function, `const_phi=True` (was Leja+20 → Tacchella+18), mass floor 10⁶ (was 10⁷), q_PAH / U_min / γ truncated normals as in production (were uniform / log-uniform). Implemented and tested here; Blanca re-validation pending. The fagn prior flat1_s025 stays and becomes the production default too (Ikki's `dev_curc` AGN prior was a test). |
 | 2026-11-09 | Convergence acceptance (single-solution galaxies, 20 seeds, judged on the median over galaxies; the worst galaxy is a warning, since 20 seeds measure scatter to ~16%). **Parameters:** Gelman–Rubin R̂ < 1.01 for every parameter (Vehtari+2021), i.e. median scatter between seeds ≤ 0.14 posterior half-widths, since R̂ ≈ √(1+S²). A parameter above 2× that threshold (S > 0.28) is a warning. Use rank-normalized R̂ where draws exist, so broad, skewed or edge-piled posteriors (dust2, dust_index) are judged fairly. **Width:** one run's 16–84 width within 10% of a reference posterior (long run or NUTS, not the pooled seeds). **logZ:** seed scatter ≤ 1.5× quoted to start, ideally lower (implementation error well below statistical); otherwise inflate the quoted error by the measured factor. **Plus:** no catastrophic failures (wrong-z or wrong-solution runs). Goal: generally quite good with no big obvious failure modes, not perfect. |
 | standing | One core per fit; robustness before speed; every test spans redshift, uses real galaxies and reports by z bin; never commit to Joel's or Emilie's repos (fork first). |
 
@@ -745,6 +746,52 @@ most important first.
        is not evidence; Wren doubts it's high-z. This departs from Prospector-beta and from
        production, so agree it with Joel and Ikki with numbers in hand. Never change Joel's
        repo; the change goes in our tabulated prior or a fork.
+     - **Superseded in part by item 6b (2026-11-13):** the NSS default is now production's
+       prior, so above z = 3 the mass function is Leja+20 frozen at z = 3 (not T18) and p(z) is
+       flat. The numbers above (T18 penalty, the n(z) cost of ~0.8 nats) describe the old
+       efsps prior; redo them on the new one before designing a high-z floor.
+6b. **Production-matched z, mass and dust-emission priors. IMPLEMENTED and committed
+   2026-11-13; Blanca re-validation pending.** Wren asked for NSS's priors to match the
+   production dynesty fits (`params_prosp_parrot_AGNfree.py`, `params_parrot_phisfh`, on
+   `dev_curc`) wherever the models share a parameter. In `nss_priors.apply_nss_priors`, called
+   by `nss_efsps.build()`; efsps stays unmodified.
+   - **z:** uniform on [0.01, 15]. Production's `PhiSFH` draws z from `FastUniform(1e-3, 20)`:
+     it loads the n(z) table but never uses it. The emulator's trained range sets [0.01, 15].
+   - **Mass function:** Leja+20 only (`const_phi=True`), clamped to its z = 0.2 and z = 3 forms,
+     as in production. efsps used Leja+20 → Tacchella+18 above z = 3.
+   - **Mass floor:** 10⁶ (efsps 10⁷); the mass grid keeps 0.01-dex steps (651 points), and the
+     mass integral's coarse grid keeps 0.05 dex (131 points; `mass_marginal.COARSE_DX`).
+     Under this prior P(logM < 7 | z = 0.3) = 0.67, as in production.
+   - **Dust emission:** q_PAH TruncNormal(2, 2) on [0.47, 4.58] (production [0, 7] cut to the
+     emulator); U_min TruncNormal(1, 10) on [0.1, 25]; γ TruncNormal(−2, 1) in log γ on
+     production's [−4, 0], i.e. γ from 1e-4 to 1 (efsps had 1e-3–0.15). The emulator takes γ
+     linearly on [0, 1]; how densely its training set covers γ near 1 is unchecked.
+   - **Not changed:** fagn (flat1_s025, which becomes the production default too), dust2 (flat +
+     soft ceiling, item 5b), the SFH (10 bins, ratios clipped to the emulator's ±4; production
+     has 7 bins, ±5) and the free nebular parameters (production fixes gas_logu).
+   - **Switches:** `build(..., z_prior="nz", const_phi=False, mass_min=7.0,
+     duste_prior="efsps")` restores efsps's prior, bitwise (`test_nss_priors.py` section 6).
+     No `nss_jax.py` flags yet.
+   - **Tests (Intel Mac, 2026-11-13, logs `logs/test_*_prodprior*.log`):** PASS:
+     `test_nss_priors` (new section 6: bounds, uniform z, duste vs scipy truncnorm ≤3e-14, JAX ≤7e-15,
+     efsps settings reproduce efsps bitwise), `test_tabulated_mass_prior` (now also floor 6),
+     `test_jax_prior` (exact and tabulated, 58858 and 1212906; section 4b now tests the old efsps
+     joint prior), `test_jax_loglike` (exact and tabulated), `test_mass_marginal` on 1197855,
+     1212906, 1174326, 1192179, 1152437, 1215494, 2204022, and `test_linear_mass`.
+     - `test_mass_marginal` section 3 now uses the edge-refined brute force: under Leja+20 frozen
+       at z = 3, prior draws at z ≈ 12 can peak at the 12.5 bound only ~50 nats down the prior,
+       rising ~2400 nats/dex, and the uniform brute grid was itself off by 0.15 nats there (fast
+       integral vs refined brute: 6.8e-3 and 6.1e-3, as for the existing edge check).
+     - `test_dust_prior` PASS after relaxing one tolerance (Wren, 2026-11-13): on trap-like points
+       the penalty adds up to 1.8e-3 nats (old prior 1e-7), so that check's tolerance is now 5e-3
+       (prior draws keep 1e-3). Cause: the L q peak at log M ≈ 8.0, the ceiling ramp's kink, inside
+       the 41-point fine window; a finer coarse grid changes nothing. Only on points the penalty
+       already pushes down by 5–30 nats. Not fixed in code: putting the kinks (log M 8, 9) into
+       the fine grid as nodes would remove it if it ever matters.
+   - **To re-validate on Blanca before production:** everything validated so far ran on the old
+     prior. The dust ceiling was tuned with a 10⁷ floor, and 11 of 13 production trap solutions
+     sit below 10⁷, so rerun the dust48 trap set and the spec-z validation (item 5b), the 21
+     convergence galaxies at 32 steps (§4), and the 9-galaxy test set.
 
 **C. Production engineering**
 
@@ -926,10 +973,11 @@ against production's ~600k. Items 17 and 18 might take it to ~25–40k.
   - the AGN prior: adopted 2026-11-11 (flat1_s025, §6 item 5); implemented in NSS and committed
     2026-11-12, together with the adopted dust prior (§6 item 5b);
   - **a later discussion of model + priors (Wren, 2026-11-12):** why NSS trails production on faint
-    z > 5.5 galaxies (§6 item 5b, "New, separate issue"). NSS and production differ in redshift,
+    z > 5.5 galaxies (§6 item 5b, "New, separate issue"). NSS and production differed in redshift,
     mass and dust2 priors and in the model (E-FSPS with free nebular physics vs Parrot), not only the
-    sampler; the priors explain about a third of the faint-end gap. A clean best-χ² comparison of
-    the two solutions per galaxy was proposed but not run.
+    sampler; the priors explained about a third of the faint-end gap. Since 2026-11-13 the z and
+    mass priors match production (§6 item 6b), so a rerun shows how much of the gap remains. A
+    clean best-χ² comparison of the two solutions per galaxy was proposed but not run.
 
 ## 8. Where things live
 

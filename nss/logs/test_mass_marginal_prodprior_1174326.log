@@ -1,0 +1,24 @@
+[photometry] minerva_uds_test9.fits: no emulator band for ['f098m']; dropped.
+[1174326] mass integrated out: 25 sampled parameters; coarse grid 131 x 0.0500 dex, fine grid 41
+  [PASS] same theta from u and (x, m): max |dtheta| = 3.9e-16 (SFH ratios 4.4e-06: the expected-ratio table); x inside the cube: True
+  [PASS] finite marginal prior at prior draws: 0 of 5000 non-finite
+  [PASS] tabulated expected ratios vs the current chain: max |d| = 4.6e-06 dex over 2010 z x 657 masses (incl. the kinks at logM 9 and 12 and the z_eff clamps)
+  [PASS] p(Z | m) = 1 / (dZ/du): max relative error 7.4e-08
+  [PASS] p(Z | m) integrates to 1: 1.0e-11
+  [PASS] ratio offset density = 1 / (do/du): max relative error 4.9e-06
+  [PASS] ratio offset density integrates to 1: 4.4e-14
+  [PASS] log g vs brute force (prior draws): max |d| 2.8e-04 nats, median 2.5e-04
+  [PASS] log L' vs brute force (prior draws, within 1000 nats of the best): 4 points: max |d| 2.6e-04 nats, median 2.5e-04; log L' range -87.4..439.5
+      96 points more than 1000 nats below the best (brute log L' -4116..-691): fast value finite for 96, max |d| there 1.1e-01
+  [PASS] fast -inf only far below the best (prior draws): 0 points with fast -inf, brute log L' up to nan
+  [PASS] log L' vs refined brute force (L q peaking at a prior bound): 100 points (0 at m_lo) of 4460 in 20000 prior draws: max |d| 9.5e-03 nats, median 5.6e-03; log L' -4114..-2062
+[photometry] minerva_uds_test9.fits: no emulator band for ['f098m']; dropped.
+  [PASS] log L' vs refined brute force (faint: total S/N 5.0, errors x212): 100 posterior points: max |d| 2.4e-03 nats, median 2.5e-04. Integral outside the window: median 0.00, max 0.97; the window alone would be off by up to 3.53 nats (median 2.0e-03)
+  [PASS] sampled logmass vs brute force (faint, S/N 5.0): KS distance at the 4 points with the most integral outside the window: 0.015, 0.021, 0.010, 0.008 (4000 draws each; 95% noise 0.021)
+[photometry] minerva_uds_test9.fits: no emulator band for ['f098m']; dropped.
+  [PASS] log L' vs refined brute force (faint: total S/N 3.0, errors x353): 100 posterior points: max |d| 2.6e-03 nats, median 2.2e-04. Integral outside the window: median 0.92, max 1.00; the window alone would be off by up to 11.27 nats (median 2.6e+00)
+  [PASS] sampled logmass vs brute force (faint, S/N 3.0): KS distance at the 4 points with the most integral outside the window: 0.015, 0.008, 0.014, 0.012 (4000 draws each; 95% noise 0.021)
+      batch   100: standard    16.9 us/row, mass-marginal (prior + like)    33.2 us/row, ratio 2.0x  (multi-threaded Mac)
+      batch  1000: standard     5.3 us/row, mass-marginal (prior + like)    18.2 us/row, ratio 3.4x  (multi-threaded Mac)
+
+RESULT: PASS

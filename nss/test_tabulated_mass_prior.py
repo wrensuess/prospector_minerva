@@ -37,11 +37,12 @@ def cdf_rows(mp, z):
     return cum / cum[:, -1:]
 
 
-def run(const_phi, rng, n=20000):
-    ex = MassPrior(7.0, 12.5, const_phi=const_phi)
-    tp = TabulatedMassPrior(7.0, 12.5, const_phi=const_phi)
-    print(f"\n== const_phi={const_phi}: {tp.pdf_table.shape[0]} table rows, node spacing "
-          f"{tp.dz_low} in 0.2 < z <= 3")
+def run(const_phi, rng, n=20000, lo_m=7.0):
+    n_grid = int(round((12.5 - lo_m) / 0.01)) + 1           # 0.01-dex steps (nss_priors)
+    ex = MassPrior(lo_m, 12.5, const_phi=const_phi, n_grid=n_grid)
+    tp = TabulatedMassPrior(lo_m, 12.5, const_phi=const_phi, n_grid=n_grid)
+    print(f"\n== const_phi={const_phi}, logM {lo_m}-12.5 ({n_grid} grid points): "
+          f"{tp.pdf_table.shape[0]} table rows, node spacing {tp.dz_low} in 0.2 < z <= 3")
     print(f"  {'z bin':12s} {'max|dlogM| ordinary u':>22s} {'all u (incl. 1e-12 edges)':>26s} "
           f"{'KS distance':>12s}")
     edges_u = np.array([1e-12, 1e-9, 1 - 1e-9, 1 - 1e-12])
@@ -84,8 +85,8 @@ def run(const_phi, rng, n=20000):
 
 def main():
     rng = np.random.default_rng(7)
-    for cp in (False, True):
-        run(cp, rng)
+    for cp, lo_m in ((False, 7.0), (True, 7.0), (True, 6.0)):   # last = the NSS default
+        run(cp, rng, lo_m=lo_m)
     print("\nRESULT:", "PASS" if not FAILS else f"FAIL {FAILS}")
     return 0 if not FAILS else 1
 
