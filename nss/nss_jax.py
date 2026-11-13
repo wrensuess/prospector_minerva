@@ -309,6 +309,9 @@ def main():
     p.add_argument("--save-draws", type=int, default=0,
                    help="also write <id>_<tag>_draws.npz: this many equal-weight posterior draws "
                         "of theta (float32), for small transfers from Blanca (0 = off)")
+    p.add_argument("--no-postprocess", action="store_true",
+                   help="don't write <id>_<tag>_post.h5 (postprocess_nss.py: percentiles, SFH, "
+                        "stellar mass, SFRs, model photometry, 1000 draws with their likelihood)")
     p.add_argument("--include-miri", action="store_true",
                    help="fit MIRI bands too. Off by default: MIRI is fitted only when "
                         "explicitly asked for")
@@ -362,15 +365,36 @@ def main():
     summary["bands_used"] = [b for b, ok in zip(phot.bands, phot.valid) if ok]
     os.makedirs(args.out, exist_ok=True)
     stem = os.path.join(args.out, f"{phot.id}_{args.tag}")
-    if not args.no_full_npz:
+
+    def save_full_npz():
         np.savez_compressed(stem + ".npz", u=res["u"], theta=theta, logl=res["logl"], w=res["w"],
                             logz_draws=res["logz_draws"], names=np.array(model.free))
+
+    if not args.no_full_npz:
+        save_full_npz()
     if args.save_draws > 0:
         w = res["w"] / res["w"].sum()
         pick = np.random.default_rng(args.seed).choice(w.size, args.save_draws, p=w)
         np.savez_compressed(stem + "_draws.npz", draws=theta[pick].astype(np.float32),
                             names=np.array(model.free), logZ=summary["logZ"],
                             logZ_err=summary["logZ_err"])
+    # postprocessing BEFORE the json: job scripts take the json as "this fit is finished"
+    if not args.no_postprocess:
+        from postprocess_nss import postprocess
+        try:
+            summary["postprocess"] = postprocess(model, phot, theta, res["w"], summary,
+                                                 stem + "_post.h5", seed=args.seed)
+            print(f"[{phot.id}] postprocessed in {summary['postprocess']['postprocess_s']:.1f} s "
+                  f"-> {summary['postprocess']['file']}", flush=True)
+        except Exception as e:
+            import traceback
+            tb = traceback.format_exc()
+            print(f"[{phot.id}] POSTPROCESSING FAILED: {e!r}\n{tb}", flush=True)
+            summary["postprocess"] = {"error": repr(e), "traceback": tb}
+            if args.no_full_npz:
+                # keep the posterior, so postprocess_nss.py can be rerun on it standalone
+                save_full_npz()
+                summary["postprocess"]["full_npz_saved_for_rerun"] = True
     with open(stem + ".json", "w") as fh:
         json.dump(summary, fh, indent=1)
     s = summary

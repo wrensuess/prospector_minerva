@@ -811,29 +811,55 @@ most important first.
    - **In production use (dust-prior validation, 2026-11-11, 1490 fits on the fast node types,
      malloc tuning on):** no failures; peak RSS per fit median 1.42 GB, max 1.55, against median
      1.71 / max 2.07 in the earlier dust48 run without it (different galaxies, not paired).
-8. **Update postprocessing** (Wren will take this on in a separate thread). Turn NSS fit
-   outputs into the catalogue products `postprocess_parrot.py` makes now (percentiles, SFHs,
-   stellar mass, sSFR, UVJ):
-     - **What a fit writes now:** `<id>_<tag>.npz` holds the full weighted posterior: `theta`
-       (all 26 parameters; with mass integrated out, logmass is drawn back once per sample),
-       `w`, `logl`, `u`, `logz_draws`. `<id>_<tag>.json` has the summary.
-     - `blanca/posterior_draws.py` only resamples 2,000 equal-weight draws per fit, for
-       small transfers in the seed tests. It isn't a step production needs.
-     - **Mapping:** production `postprocess_parrot.run_all` reads the dynesty h5 and calls
-       `resample_equal(chain, weights)`, so `theta` / `w` take the place of `chain` /
-       `weights`. Either write the h5 layout `prospect.io.reader.results_from` expects
-       (fields unchecked), or have the fit write equal-weight draws directly.
-     - **Storage:** 13.6 MB per fit (33,900 float64 samples, ESS ~7,900) is ~7 TB for 500k
-       fits. 4,000 float32 equal-weight draws is ~0.4 MB per fit (~200 GB), still above the
-       1,000 the postprocessing uses.
-     - **Best-fit trap with mass integrated out:** `run_all` appends `chain[-1]` as the
-       maximum-likelihood point. For NSS output with mass integrated out, `logl` is L′ (mass
-       integrated out), so the top sample's logmass is a random draw, not the best fit. A
-       real best fit means maximising over mass at that point; mass_marginal.py already
-       finds the mass peak analytically.
-   - Fix the python-fsps stale-redshift bug on the way (§7, Ikki): the first `predict`
-     after a redshift change returns stale output, and postprocessing calls it once per
-     posterior sample.
+8. **Postprocessing: built 2026-11-13, except spectra and rest-frame colours.**
+   - **At the end of every fit** (`nss_jax.py`; `--no-postprocess` turns it off),
+     `postprocess_nss.py` writes ONE file, `<id>_<tag>_post.h5` (~300 KB), before the
+     `.json`. It replaces the dynesty pipeline's per-galaxy `perc`/`unw`/`spec` files.
+     - Percentiles (0.1–99.9, as `postprocess_parrot.py`) come from the full weighted NSS
+       posterior: all 26 parameters, log fagn/agn_tau/duste_gamma, surviving stellar mass,
+       MWA, SFR and sSFR over 10/30/100 Myr, SFH(t) on the old 100-point grid, and model
+       photometry.
+     - Cumulative formed-mass history on the same grid (mass formed before each lookback
+       time, in Msun and as a fraction of the total), exact from the step SFH. It replaces
+       the old `mformed_t` (formed mass of the bin containing t, which depends on bin width
+       and was never collected; Wren, 2026-11-13).
+     - 1,000 equal-weight draws of all of these, with each draw's own mass, its likelihood
+       at that mass (efsps-photfit `FitModel.loglike`; the fit's own logl is the
+       mass-integrated L′), its 10 per-bin SFRs and the bins' edges.
+     - Best fit = the highest-likelihood sample; chi² uses the fit's own variance (Wren,
+       2026-11-13). Observed photometry and the fit summary are stored too.
+   - **One script after that:** `make_catalog_nss.py` reads each file once (process pool)
+     and writes `quant_`, `sfh_`, `chains_` and `spec_<prior>.h5` (old dataset names, plus
+     the E-FSPS parameters, logZ and `ok`) and the FITS catalogue with the old column names
+     (+ logZ, logZ_err). Unreadable files, duplicate ids (the newest file wins) and files
+     with a different band set are listed, never silent.
+   - **Tests** (`test_postprocess_nss.py`; logs in the private folder): 8 production-setting
+     fits on the Mac (MINERVA UDS z_spec 0.068, 0.14, 0.445, 2.09, 3.97, 6.12; one fixed-z;
+     UNCOVER 58858 with mu). All PASS: per-draw likelihood = FitModel.loglike to 1e-12;
+     percentiles = efsps weighted quantiles to 1e-13; stellar mass, SFR and MWA = efsps
+     `derived_quantities` (float32); SFR by brute-force integration to 1e-6; SFH(t) =
+     `postprocess_parrot.stepInterp` to 1e-15; cumulative formed mass = an independent
+     piecewise-linear reference to 1e-14; draw medians within Monte Carlo error. The
+     catalogue matches the per-galaxy files to float32, with unfitted rows masked.
+     Collected files ~110 KB per galaxy, measured on 1,500 galaxies; nearly all of it is
+     the 1,000 draws in `chains` (35 columns). That's about the same per galaxy as the
+     dynesty spsv1.0 UDS files (chains 14.2 GB + spec 3.5 GB + quant/sfh 0.4 GB). The
+     draws' per-bin SFRs and edges stay out of the collected files: they follow exactly
+     from chains (`postprocess_nss.sfh_bins_from_chains`, equal to 1.5e-6). Spectra, once
+     added, will grow spec_ like the old modspec_map did (11,149 pixels vs FSPS's 5,994).
+   - **Cost** (Mac, one thread): 1.1–1.5 s per fit; ~70 MB peak extra memory. Time on one
+     Blanca core still to measure; it should stay well under 1% of a fit.
+   - **Not done: spectra and rest-frame U V J u g i / g−z / NUV−r−J.** They need E-FSPS
+     `SpecModel` with the stellar library the w256 emulator was trained on. The only
+     library we have, `c3k_a-mist-chabrier`, does not reproduce the emulator (220 prior
+     draws, z 0.05–12: 0.09 mag fainter, 0.08 mag shape scatter that follows z and the
+     SFH). E-FSPS's own notes point to `c3k_hr-mist-afe`; Wren is asking Joel. When it
+     arrives: compare SpecModel with the emulator (should agree to ~0.02 mag), then add
+     spectrum percentiles and rest-frame colours to `postprocess_nss.py`. The catalogue
+     script already fills the rest-frame columns when the per-galaxy files have them.
+   - The python-fsps stale-redshift bug no longer applies: nothing calls python-fsps.
+   - Production jobs still pass `--no-full-npz`; if postprocessing fails, the fit writes
+     the full `.npz` anyway, so `postprocess_nss.py --npz` can rerun it.
 9. **Port into a fork of efsps-photfit** (under `wrensuess`; never commit to Joel's repo).
 10. **A driver that runs many galaxies per process** (saves ~10 s of startup and the ~16 s
     JAX compile per fit).
