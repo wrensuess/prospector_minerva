@@ -2,6 +2,8 @@ import h5py, glob, pdb
 from tqdm import tqdm
 import numpy as np
 from astropy.table import Table
+from pathlib import Path
+import shutil
 
 ver = "EGS_n2.0_v1.3"
 cat_dir = "/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/phot_catalog/"
@@ -118,7 +120,26 @@ print(fittedpathid_all[:100])
 print(postid1[:100])
 not_posted = np.setdiff1d(np.array(fittedpathid_all),postid1)
 print("[Info] postprocess incompleted:",len(not_posted))
-#np.savetxt(cat_dir+"repostid_MINERVA-"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt",not_fitted)
+
+directories = [Path(f"/pl/active/suess-minerva/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS{i}") for i in range(1, 6)]
+destination = Path("/pl/active/suess-minerva/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS6")
+
+found = []
+not_found = []
+for id_post in tqdm(not_posted):
+    filename = "id_"+str(int(not_posted))+"_mcmc_phisfh.h5"
+    for directory in directories:
+        src = directory / filename
+        if src.is_file():
+            #shutil.copy2(src, destination / filename)
+            found.append(filename)
+            break
+    else:
+        not_found.append(filename)
+
+print(f"Found: {len(found)} / {len(not_posted)}")
+print(f"Not found: {len(not_found)}")
+
 pdb.set_trace()
 
 #################################################################
