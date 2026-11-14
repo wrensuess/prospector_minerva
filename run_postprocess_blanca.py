@@ -16,7 +16,7 @@ catalog = '/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/phot_catalo
 #catalog = '/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/phot_catalog/MINERVA-UDS_n3.0_m3.1_v1.2.1_ACS+WEBB_Kf444w_SUPER_CATALOG_wMIRI.fits'
 #catalog = '/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/phot_catalog/MINERVA-COSMOS_n3.0_v1.0_ACS+WEBB_Kf444w_SUPER_CATALOG.fits'
 #indir = '/scratch/alpine/ikmi3774/slurm/chains_parrot_EGS_n2.0_v1.3_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS4/chains_parrot_EGS_n2.0_v1.3_ACS+WEBB_Kf444w_SUPER_spsbeta/'
-indir = '/pl/active/suess-minerva/chains_parrot_EGS_n2.0_v1.3_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS5/chains_parrot_EGS_n2.0_v1.3_ACS+WEBB_Kf444w_SUPER_spsbeta/'
+indir = '/pl/active/suess-minerva/chains_parrot_EGS_n2.0_v1.3_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS6/chains_parrot_EGS_n2.0_v1.3_ACS+WEBB_Kf444w_SUPER_spsbeta/'
 outdir = '/scratch/alpine/ikmi3774/slurm/postprocess_EGS_n2.0_v1.3/'
 log_dir = outdir+'logs/'
 #outdir = '/scratch/alpine1/kasu8993/postprocess_UDS_n3.0_v1.2/'
@@ -49,10 +49,10 @@ print(len(ids))
 print(ids)
 
 process = -1
-process = 0
+#process = 0
 
 if process==-1: ### priority node
-    njobs = 500
+    njobs = 1000
     wtime = int(12) # time
     ids_split = np.array_split(ids, njobs)
     # save each chunk to a separate file
