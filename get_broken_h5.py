@@ -121,7 +121,10 @@ print(postid1[:100])
 not_posted = np.setdiff1d(np.array(fittedpathid_all),postid1)
 print("[Info] postprocess incompleted:",len(not_posted))
 
-directories = [Path(f"/pl/active/suess-minerva/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS{i}") for i in range(1, 6)]
+directories = [
+    Path(f"/pl/active/suess-minerva/chains_parrot_{ver}_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS{i}")
+    for i in range(1, 6)
+]
 destination = Path("/pl/active/suess-minerva/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS6")
 
 found = []
