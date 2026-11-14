@@ -114,6 +114,8 @@ pdb.set_trace()
 '''
 
 ###postprocess umcompleted
+print(fittedpathid_all[:100])
+print(postid1[:100])
 not_posted = np.setdiff1d(postid1,np.array(fittedpathid_all))
 print("[Info] postprocess incompleted:",len(not_posted))
 #np.savetxt(cat_dir+"repostid_MINERVA-"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt",not_fitted)
