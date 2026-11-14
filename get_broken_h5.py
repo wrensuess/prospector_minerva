@@ -134,7 +134,7 @@ for id_post in tqdm(not_posted):
     for directory in directories:
         src = directory / filename
         if src.is_file():
-            shutil.move(src, destination / filename)
+            #shutil.move(src, destination / filename)
             found.append(filename)
             break
     else:
