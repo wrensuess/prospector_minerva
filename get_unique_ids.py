@@ -13,9 +13,9 @@ cat_ori1 = "fitid1_MINERVA-"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt"
 cat_ori2 = "fitid2_MINERVA-"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt"
 cat_ori3 = "fitid3_MINERVA-"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt"
 
-check_dir1 = "/scratch/alpine/ikmi3774/slurm/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS1/"
-check_dir2 = "/scratch/alpine/ikmi3774/slurm/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS2/"
-check_dir3 = "/scratch/alpine/ikmi3774/slurm/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS3/"
+check_dir1 = "/pl/active/suess-minerva/chains_parrot_EGS_n2.0_v1.3_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS1/"
+check_dir2 = "/pl/active/suess-minerva/chains_parrot_EGS_n2.0_v1.3_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS2/"
+check_dir3 = "/pl/active/suess-minerva/chains_parrot_EGS_n2.0_v1.3_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS3/"
 output_name = "chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/"
 
 fitid1 = np.loadtxt(cat_dir+cat_ori1)
