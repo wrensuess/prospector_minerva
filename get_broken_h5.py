@@ -130,6 +130,7 @@ for id_post in tqdm(not_posted):
     filename = "id_"+str(int(id_post))+"_mcmc_phisfh.h5"
     for directory in directories:
         src = directory / filename
+        print(src)
         if src.is_file():
             #shutil.copy2(src, destination / filename)
             found.append(filename)
