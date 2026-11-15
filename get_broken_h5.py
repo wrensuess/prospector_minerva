@@ -126,7 +126,7 @@ print("[Info] postprocess incompleted:",len(not_posted))
 
 directories = [
     Path(f"/pl/active/suess-minerva/chains_parrot_{ver}_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS{i}/chains_parrot_{ver}_ACS+WEBB_Kf444w_SUPER_spsbeta")
-    for i in range(1, 6)
+    for i in range(1, 7)
 ]
 destination = Path("/pl/active/suess-minerva/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS6/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta")
 
