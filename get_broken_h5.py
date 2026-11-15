@@ -13,6 +13,7 @@ check_dir2 = "/pl/active/suess-minerva/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUP
 check_dir3 = "/pl/active/suess-minerva/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS3/"
 check_dir4 = "/pl/active/suess-minerva/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS4/"
 check_dir5 = "/pl/active/suess-minerva/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS5/"
+check_dir6 = "/pl/active/suess-minerva/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS6/"
 output_name = "chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/"
 
 idlist1 = glob.glob(check_dir1+output_name+"id_*_mcmc_phisfh.h5")
@@ -20,13 +21,15 @@ idlist2 = glob.glob(check_dir2+output_name+"id_*_mcmc_phisfh.h5")
 idlist3 = glob.glob(check_dir3+output_name+"id_*_mcmc_phisfh.h5")
 idlist4 = glob.glob(check_dir4+output_name+"id_*_mcmc_phisfh.h5")
 idlist5 = glob.glob(check_dir5+output_name+"id_*_mcmc_phisfh.h5")
+idlist6 = glob.glob(check_dir6+output_name+"id_*_mcmc_phisfh.h5")
 fittedid1 = np.array([int(a.split("/")[-1].split("_")[1]) for a in idlist1])
 fittedid2 = np.array([int(a.split("/")[-1].split("_")[1]) for a in idlist2])
 fittedid3 = np.array([int(a.split("/")[-1].split("_")[1]) for a in idlist3])
 fittedid4 = np.array([int(a.split("/")[-1].split("_")[1]) for a in idlist4])
 fittedid5 = np.array([int(a.split("/")[-1].split("_")[1]) for a in idlist5])
-fittedid_all = np.concatenate([fittedid1,fittedid2,fittedid3,fittedid4,fittedid5])
-fittedpath_all = idlist1+idlist2+idlist3+idlist4+idlist5
+fittedid6 = np.array([int(a.split("/")[-1].split("_")[1]) for a in idlist6])
+fittedid_all = np.concatenate([fittedid1,fittedid2,fittedid3,fittedid4,fittedid5,fittedid6])
+fittedpath_all = idlist1+idlist2+idlist3+idlist4+idlist5+idlist6
 fittedpathid_all = np.array([int(a.split("/")[-1].split("_")[1]) for a in fittedpath_all])
 
 processed_dir = "/scratch/alpine/ikmi3774/slurm/postprocess_"+ver+"/npz/"
