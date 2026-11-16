@@ -19,7 +19,7 @@ fi
 STAGE=$(mktemp -d)
 trap 'rm -rf "$STAGE"' EXIT
 mkdir -p "$STAGE/nss_test/results"
-( cd "$NSS" && cp *.py uncover_test.csv "$STAGE/nss_test/" && cp -R blanca "$STAGE/nss_test/" \
+( cd "$NSS" && cp *.py uncover_test.csv restframe_filters_*.npz surviving_fraction_*.npz "$STAGE/nss_test/" && cp -R blanca "$STAGE/nss_test/" \
   && cp results/58858_free_L1000.npz results/58858_free_L1000.json \
         results/58858_jax_free_L1000.npz results/58858_jax_free_L1000.json "$STAGE/nss_test/results/" )
 shopt -s nullglob
@@ -32,6 +32,13 @@ else
 fi
 rsync -a --exclude '.git' --exclude '__pycache__' --exclude '*.pyc' --exclude '.DS_Store' \
     "$EFSPS/" "$STAGE/efsps-photfit/"
+# provenance: there is no .git on Blanca, so record the commits the bundle was built from
+{
+    echo "built $(date '+%Y-%m-%d %H:%M %Z')"
+    echo "nss: $(git -C "$NSS" rev-parse HEAD 2>/dev/null || echo unknown)" \
+         "$( [ -n "$(git -C "$NSS" status --porcelain -- . 2>/dev/null | grep -v '^??')" ] && echo '(with uncommitted changes)')"
+    echo "efsps-photfit: $(git -C "$EFSPS" rev-parse HEAD 2>/dev/null || echo unknown)"
+} > "$STAGE/nss_test/BUNDLE_INFO.txt"
 find "$STAGE" \( -name '__pycache__' -o -name '.DS_Store' \) -prune -exec rm -rf {} +
 tar -czf "$OUT" -C "$STAGE" nss_test efsps-photfit
 echo "wrote $OUT ($(du -h "$OUT" | cut -f1)); md5 $(md5 -q "$OUT" 2>/dev/null || md5sum "$OUT" | cut -d' ' -f1)"

@@ -77,3 +77,26 @@ jax 0.6.1 and 0.10.2 (tested 2026-10-08). The prospector session measured on Bla
 - nodes without hyperthreading: `mpirun lb` binds each fit to one core;
 - hyperthreaded nodes (Xeon Gold 6130): 21 tasks get 11 physical cores and fits aren't
   bound (~2× slower) unless the job sets `#SBATCH --hint=nomultithread`. All jobs here do.
+
+## Spectra step (spectra_nss.py; once per account)
+
+`tasklist_layout.sbatch` ends each job with ONE `spectra_nss.py` process over that job's
+galaxies (spectrum percentiles, best-fit spectrum, rest-frame colours, added to each
+`_post.h5`). It needs three things on Blanca; without them the job prints `spectra step
+SKIPPED` and the fits are unaffected. Override the paths with `EFSPS_ENV`, `EFSPS_SRC`,
+`EFSPS_LIB` in `--export`; `SPECTRA=0` turns the step off.
+
+1. E-FSPS source (Emily's private repo; read-only copy, no .git), from the Mac:
+   `rsync -a --exclude .git --exclude __pycache__ /Users/wren/Projects/minerva/E-FSPS/ <curc-user>@login.rc.colorado.edu:/projects/$USER/nss_blanca/E-FSPS/`
+2. The weights-only library (241 MB; made on the Mac with `spectra_nss.py --make-slim`):
+   `rsync -a /Users/wren/Software/efsps/c3k_hr-mist-afe_cc1b132_slim <curc-user>@login.rc.colorado.edu:/projects/$USER/nss_blanca/efsps_lib/`
+3. The efsps env: a clone of the nss env plus E-FSPS's imports (jax/numpy pins kept), on a
+   compile node:
+   `acompile`
+   `module load anaconda && conda create -y -p /projects/$USER/software/anaconda/envs/efsps --clone /projects/$USER/software/anaconda/envs/nss`
+   `/projects/$USER/software/anaconda/envs/efsps/bin/pip install arviz numpyro optax dill matplotlib corner dynesty nautilus-sampler jax==0.10.2 jaxlib==0.10.2 numpy==2.4.6`
+   Check: `/projects/$USER/software/anaconda/envs/efsps/bin/python -c "import sys; sys.path.insert(0, '/projects/$USER/nss_blanca/E-FSPS'); import efsps, jax; print('efsps ok, jax', jax.__version__)"`
+
+Catch-up for galaxies a job left without spectra (preempted past its time limit):
+`make_catalog_nss.py` writes `missing_spectra.txt`; run, in a job or on a compile node,
+`EFSPS_SRC=/projects/$USER/nss_blanca/E-FSPS EFSPS_PARENT=/projects/$USER/nss_blanca/efsps-photfit /projects/$USER/software/anaconda/envs/efsps/bin/python spectra_nss.py --libdir /projects/$USER/nss_blanca/efsps_lib/c3k_hr-mist-afe_cc1b132_slim --list missing_spectra.txt`

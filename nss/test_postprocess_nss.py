@@ -108,7 +108,8 @@ if args.fix_z is not None:
           and np.allclose(f["draws/zred"][:], args.fix_z), f"{f['percentiles/zred'][3]}")
 
 # 4. derived quantities of the draws vs efsps-photfit
-der = derived_quantities(model, theta_all[idx], SurvivingFraction())
+from postprocess_nss import SURV_TABLE                          # noqa: E402
+der = derived_quantities(model, theta_all[idx], SurvivingFraction(SURV_TABLE))
 pairs = [("stellar_mass", f["draws/stellar_mass"][:], der["logmstar_surviving"], 2e-6),
          ("mwa", f["draws/mwa"][:], der["mwa_gyr"], 2e-6),
          ("log sfr10", np.log10(f["draws/sfr"][:, 0]), der["logsfr10"], 2e-6),

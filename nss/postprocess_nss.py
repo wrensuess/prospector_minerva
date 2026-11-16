@@ -22,7 +22,8 @@ What is computed, and from what
   - SFH (efsps-photfit sfh.py; 10 bins, Planck18): formed mass per bin, SFR averaged over
     the last 10, 30 and 100 Myr (exact overlap of the step SFH with [0, T]; the dynesty
     pipeline averaged a 2 Myr grid), formed-mass-weighted age (Gyr, bin midpoints, as
-    postprocess_parrot.get_mwa), surviving stellar mass (efsps-photfit survival.py table)
+    postprocess_parrot.get_mwa), surviving stellar mass (efsps-photfit survival.py, with the
+    Chabrier table SURV_TABLE: the emulator's training library is Chabrier)
     and sSFR = SFR / surviving mass (1/yr, as postprocess_parrot).
   - SFH(t) percentiles on postprocess_parrot's grid: 100 points log-spaced from 10 yr to
     the oldest bin edge of any sample (agebins_max = log10 of that, in yr), SFR of the bin
@@ -86,7 +87,11 @@ sys.path.insert(0, os.environ.get("EFSPS_PARENT", "/Users/wren/Projects/MINERVA/
 from efsps_photfit.sfh import agebins_batch, mass_fractions   # noqa: E402
 from efsps_photfit.survival import SurvivingFraction           # noqa: E402
 
-FORMAT_VERSION = 2              # 2: + draws/agebins, percentiles/mformed_cum(_frac)
+FORMAT_VERSION = 3              # 2: + draws/agebins, percentiles/mformed_cum(_frac); 3: Chabrier surviving mass
+#: Surviving-mass table: CHABRIER (build_survival_table.py), because the stellar library the w256
+#: emulator was trained on is Chabrier (imf_type 1; Joel, 2026-11-13). efsps-photfit's own table is
+#: Kroupa; Chabrier is -0.003 to -0.017 dex in surviving mass on the 8 test galaxies.
+SURV_TABLE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "surviving_fraction_mist_chabrier.npz")
 PERCENTS = np.array([0.1, 2.3, 15.9, 50, 84.1, 97.7, 99.9])     # postprocess_parrot.percents
 N_DRAWS = 1000                                                 # postprocess_parrot.nsamp
 SFR_TIMES_YR = np.array([1e7, 3e7, 1e8])                        # 10, 30, 100 Myr
@@ -103,7 +108,7 @@ _SURV = None
 def surviving_fraction():
     global _SURV
     if _SURV is None:
-        _SURV = SurvivingFraction()
+        _SURV = SurvivingFraction(SURV_TABLE)
     return _SURV
 
 
@@ -332,6 +337,8 @@ def postprocess(model, phot, theta, w, summary, out_path, seed=0, n_draws=N_DRAW
                 "n_samples_dropped": int(keep.size - n),
                 "percents": PERCENTS, "spectra": SPECTRA_STATUS,
                 "format_version": FORMAT_VERSION,
+                "surviving_mass_table": json.dumps({"file": os.path.basename(SURV_TABLE),
+                                                    **json.loads(str(np.load(SURV_TABLE)["meta"]))}),
                 "created_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")})
             g = f.create_group("percentiles")
             for k, v in perc.items():

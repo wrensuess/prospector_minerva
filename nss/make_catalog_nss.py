@@ -28,7 +28,11 @@ Outputs in --out (dataset names follow the old files wherever the quantity exist
                      (id, ra, dec, z_spec, z_ml, z/mtot/mstar/met/mwa/dust2/dust_index/
                      dust1_fraction/logfagn/sfr10/30/100/ssfr10/30/100 _16/_50/_84, chi2,
                      nbands) plus logZ, logZ_err; rows without a fit are masked.
-                     Rest-frame U V J u g i columns appear once the per-galaxy files carry them.
+                     Rest-frame U V J u g i and UV/VJ/gi/ug columns come from spectra_nss.py
+                     (masked for galaxies it has not reached yet).
+  quant_ also gets rest_UVJugi, rest_gz, rest_NUVrJ (+ _colors, _map), and spec_ gets
+  modspec_map (best-fit spectrum, observed f_nu per rest pixel) and wavspec, as before.
+  missing_spectra.txt lists galaxies without spectra: spectra_nss.py --list catches up.
   failed_files.txt, duplicate_ids.txt   (only if there are any)
 Rows are sorted by id. Unreadable files keep their row with ok = 0 and NaN data, and are
 listed in failed_files.txt; they are masked in the FITS catalogue.
@@ -61,8 +65,9 @@ NEW_PARAMS = ([f"logsfr_ratios_{i}" for i in range(1, 10)] +
               ["gas_logu", "gas_logn", "delta_ionspec_logLratio2", "delta_ionspec_logLratio3",
                "delta_gas_logqion"])
 CHAIN_COLS = [("logzsol" if k == "met" else k) for k in OLD_QUANT] + NEW_PARAMS + ["loglike"]
-REST_KEYS = ["rest_UVJugi", "rest_UVJugi_colors", "rest_gz", "rest_gz_colors",
+REST_BASE = ["rest_UVJugi", "rest_UVJugi_colors", "rest_gz", "rest_gz_colors",
              "rest_NUVrJ", "rest_NUVrJ_colors"]
+REST_KEYS = REST_BASE + [k + "_map" for k in REST_BASE]     # spectra_nss.py; old names and shapes
 BLOCK = 256                        # rows per write
 
 
@@ -88,6 +93,9 @@ def read_one(path):
             out["quant"] = {k: _pick(pg, s) for k, s in OLD_QUANT.items()}
             out["quant"].update({k: pg[k][()] for k in NEW_PARAMS})
             out["rest"] = {k: pg[k][()] for k in REST_KEYS if k in pg}
+            out["has_spectra"] = "spectra/bestfit" in f
+            out["spec_best"] = f["spectra/bestfit"][()] if out["has_spectra"] else None
+            out["wave_rest"] = f["spectra/wavelength_rest"][()] if out["has_spectra"] else None
             out["agebins_max"] = float(f["sfh_grid"].attrs["agebins_max"])
             out["sfh"] = pg["sfh"][()].T                       # (7, 100), old layout
             out["mformed_cum"] = pg["mformed_cum"][()].T
@@ -151,7 +159,19 @@ def main():
     ref = sample[keys.index(best)]
     K, ncol = ref["chains"].shape
     nb, npc = ref["modmag_perc"].shape
-    has_rest = sorted(ref["rest"])
+    # spectra (spectra_nss.py) may be missing from some files: shapes from the first file that
+    # has them, found cheaply from the file attribute
+    spec_ref = next((r for r in sample if r["has_spectra"]), None)
+    if spec_ref is None:
+        for f in files[50:]:
+            try:
+                with h5py.File(f, "r") as h:
+                    if "spectra/bestfit" in h:
+                        spec_ref = read_one(f)
+                        break
+            except OSError:
+                continue
+    has_rest = [k for k in REST_KEYS if spec_ref is not None and k in spec_ref["rest"]]
     summ0 = json.loads(ref["summary"])
 
     fq = h5py.File(os.path.join(args.out, f"quant_{args.prior}.h5"), "w")
@@ -169,7 +189,7 @@ def main():
                                chunks=(min(n, 4096), npc), **kw)
           for k in list(OLD_QUANT) + NEW_PARAMS}
     for k in has_rest:
-        dq[k] = fq.create_dataset(k, shape=(n,) + ref["rest"][k].shape, dtype=np.float32,
+        dq[k] = fq.create_dataset(k, shape=(n,) + spec_ref["rest"][k].shape, dtype=np.float32,
                                   fillvalue=np.nan, **kw)
     sc = {k: fq.create_dataset(k, shape=(n,), dtype=np.float32, fillvalue=np.nan, **kw)
           for k in ("zred_ml", "logZ", "logZ_err", "ess")}
@@ -190,11 +210,17 @@ def main():
     for k in ("obsmag", "obsmag_unc", "modmag_map"):
         sp[k] = fp.create_dataset(k, shape=(n, nb), dtype=np.float32, fillvalue=np.nan,
                                   chunks=(min(n, 4096), nb), **kw)
+    if spec_ref is not None:          # best-fit spectrum, as the old spec file's modspec_map
+        fp.create_dataset("wavspec", data=spec_ref["wave_rest"])
+        fp["wavspec"].attrs["units"] = "rest-frame A; modspec_map is observed f_nu (maggies) per rest pixel"
+        npix = spec_ref["wave_rest"].size
+        sp["modspec_map"] = fp.create_dataset("modspec_map", shape=(n, npix), dtype=np.float32,
+                                              fillvalue=np.nan, chunks=(min(n, 64), npix), **kw)
     sp["modmag_perc"] = fp.create_dataset("modmag_perc", shape=(n, nb, npc), dtype=np.float32,
                                           fillvalue=np.nan, chunks=(min(n, 1024), nb, npc), **kw)
 
     ok = np.zeros(n, np.int8)
-    failed = []
+    failed, no_spec = [], []
     buf = []
 
     def flush(rows):
@@ -213,7 +239,10 @@ def main():
             if "error" in r:
                 continue
             for k in dq:
-                blk[k][j] = r["quant"][k] if k in r["quant"] else r["rest"][k]
+                if k in r["quant"]:
+                    blk[k][j] = r["quant"][k]
+                elif k in r["rest"]:                           # NaN until spectra_nss.py has run
+                    blk[k][j] = r["rest"][k]
             for k in sc:
                 sca[k][j] = r[k]
             age[j] = r["agebins_max"]
@@ -224,6 +253,8 @@ def main():
             spb["chi2"][j], spb["nbands"][j], spb["zred"][j] = r["chi2"], r["nbands"], r["zred_ml"]
             for k in ("obsmag", "obsmag_unc", "modmag_map", "modmag_perc"):
                 spb[k][j] = r[k]
+            if "modspec_map" in spb and r["has_spectra"]:
+                spb["modspec_map"][j] = r["spec_best"]
         for k, ds in dq.items():
             ds[sl] = blk[k]
         for k, ds in sc.items():
@@ -246,6 +277,8 @@ def main():
             failed.append(f"{r['path']}\t{r['error']}")
         else:
             ok[i] = 1
+            if not r["has_spectra"]:
+                no_spec.append(r["path"])
         buf.append((i, r))
         if len(buf) == BLOCK:
             flush(buf)
@@ -329,7 +362,7 @@ def main():
     emu = summ0.get("emulator", {})
     meta["EMU_MD5"] = str(emu.get("md5", "unknown"))
     meta["NSS_GIT"] = str(summ0.get("postprocess_code", {}).get("git", "unknown"))[:40]
-    meta["SPECTRA"] = "no" if "not computed" in ref["spectra"] else "yes"
+    meta["N_SPEC"] = int(ok.sum()) - len(no_spec)          # galaxies with spectra / rest colours
     cat.meta = meta
     os.makedirs(os.path.join(args.out, "sps_catalog"), exist_ok=True)
     base = os.path.basename(args.catalog)
@@ -341,8 +374,12 @@ def main():
     if failed:
         with open(os.path.join(args.out, "failed_files.txt"), "w") as fh:
             fh.write("\n".join(failed) + "\n")
+    if no_spec:                        # catch up with: spectra_nss.py --list missing_spectra.txt
+        with open(os.path.join(args.out, "missing_spectra.txt"), "w") as fh:
+            fh.write("\n".join(no_spec) + "\n")
     print(f"done in {time.time() - t0:.1f} s: {int(ok.sum())}/{n} galaxies; {len(failed)} failed "
-          f"files; {len(dups)} duplicates; {missing.size} ids not in the catalogue; "
+          f"files; {len(dups)} duplicates; {len(no_spec)} without spectra (missing_spectra.txt); "
+          f"{missing.size} ids not in the catalogue; "
           f"{int(good.sum())} rows filled of {len(cat)} -> {fcat}", flush=True)
 
 

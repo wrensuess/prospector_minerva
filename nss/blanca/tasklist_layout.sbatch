@@ -25,14 +25,15 @@
 #SBATCH --partition=blanca
 #SBATCH --qos=preemptable
 #SBATCH --requeue
-#SBATCH --constraint="epyc9354|gold5418y|5418y|milan|icelake"
-# CPU types within ~10% of the fastest per NSS iteration (STATUS.md section 6 item 13). On Blanca,
-# `milan` is only the two EPYC 7413 nodes (the EPYC 7713 nodes carry epyc7713/epyc7713p instead);
-# `icelake` is three Gold 6342 nodes plus one untimed 32-core node.
-# For large runs also allow EPYC 7452 and Gold 6230 (~1.35x slower, many more nodes): add
-# |rome|cascadelake on the command line, --constraint="epyc9354|gold5418y|5418y|milan|icelake|rome|cascadelake".
-# Those tags also cover some untimed models (the 128- and 256-core Rome nodes, the non-40-core
-# Cascade Lake nodes, which may include the Gold 6254).
+#SBATCH --constraint="epyc9354|gold5418y|5418y|milan|icelake|rome|cascadelake"
+# DEFAULT (Wren, 2026-11-13): every CPU type within ~1.35x of the fastest per NSS iteration
+# (STATUS.md section 6 item 13): EPYC 9354, Gold 5418Y, EPYC 7413 (`milan` is only the two 7413
+# nodes; the EPYC 7713 nodes carry epyc7713/epyc7713p), Gold 6342 (`icelake`, three nodes plus one
+# untimed 32-core node), and EPYC 7452 (`rome`) and Gold 6230 (`cascadelake`), ~1.35x slower but
+# many more nodes. `rome`/`cascadelake` also cover some untimed models (the 128- and 256-core Rome
+# nodes, the non-40-core Cascade Lake nodes, which may include the Gold 6254). Gold 6130 (skylake)
+# and E5-2680 v4 (broadwell), 1.7-1.85x, stay out. Only the fast types, e.g. for timing:
+#   --constraint="epyc9354|gold5418y|5418y|milan|icelake"
 #SBATCH --time=02:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks=21
@@ -77,4 +78,28 @@ sed -n "${FIRST},${LAST}p" "$TASKLIST" | while read -r CAT ID DUST SEED; do
 done > "$TASKS"
 echo "$(wc -l < "$TASKS") fits to run (lines $FIRST-$LAST of $TASKLIST)"
 if [ -s "$TASKS" ]; then $CURC_LB_BIN/mpirun lb "$TASKS"; fi
-echo "===== $(date) done; finished fits in results/$RUN: $(ls $NSS_ROOT/results/$RUN/*/*_seed*.json 2>/dev/null | wc -l)"
+echo "===== $(date) fits done; finished fits in results/$RUN: $(ls $NSS_ROOT/results/$RUN/*/*_seed*.json 2>/dev/null | wc -l)"
+
+# Spectra and rest-frame colours (spectra_nss.py) for this element's galaxies: ONE process
+# after the fits, so E-FSPS SpecModel (~1.5 GB) is loaded once per node, not once per fit.
+# Restartable: galaxies that already have spectra are skipped, so a preempted and requeued
+# element redoes only what is missing; each file is replaced atomically. Skipped with a
+# message (the fits are unaffected) if the efsps env, E-FSPS or the library is missing.
+# Catch-up for anything left without spectra: make_catalog_nss.py writes missing_spectra.txt;
+# run spectra_nss.py --list on it. SPECTRA=0 turns the step off.
+SPECTRA=${SPECTRA:-1}
+EFSPS_ENV=${EFSPS_ENV:-/projects/$USER/software/anaconda/envs/efsps}
+export EFSPS_SRC=${EFSPS_SRC:-/projects/$USER/nss_blanca/E-FSPS}
+export EFSPS_LIB=${EFSPS_LIB:-/projects/$USER/nss_blanca/efsps_lib/c3k_hr-mist-afe_cc1b132_slim}
+if [ "$SPECTRA" = 1 ]; then
+    if [ -x "$EFSPS_ENV/bin/python" ] && [ -d "$EFSPS_SRC/efsps" ] && [ -f "$EFSPS_LIB/meta_data.pkl" ]; then
+        POSTLIST=$NSS_ROOT/results/$RUN/postlist_${SLURM_ARRAY_JOB_ID}_${I}.txt
+        sed -n "${FIRST},${LAST}p" "$TASKLIST" | while read -r CAT ID DUST SEED; do
+            echo "$NSS_ROOT/results/$RUN/$DUST/${ID}_${DUST}_seed${SEED}_post.h5"
+        done > "$POSTLIST"
+        EFSPS_SIDECAR=0 /usr/bin/time -v "$EFSPS_ENV/bin/python" -u spectra_nss.py --libdir "$EFSPS_LIB" --list "$POSTLIST"
+    else
+        echo "spectra step SKIPPED: need $EFSPS_ENV/bin/python, $EFSPS_SRC/efsps and $EFSPS_LIB/meta_data.pkl"
+    fi
+fi
+echo "===== $(date) done"

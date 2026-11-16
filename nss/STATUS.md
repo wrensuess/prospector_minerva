@@ -1,6 +1,6 @@
 # MINERVA SED fitting: project status report
 
-**As of 2026-11-13.** This is the whole-project picture: both fitting paths, what they cost,
+**As of 2026-11-16.** This is the whole-project picture: both fitting paths, what they cost,
 how robust they are, and what to do next. For setup, the code map and pitfalls, read
 [`HANDOFF.md`](HANDOFF.md). Update this file when the picture changes, and keep the date
 current.
@@ -981,7 +981,9 @@ most important first.
    - **In production use (dust-prior validation, 2026-11-11, 1490 fits on the fast node types,
      malloc tuning on):** no failures; peak RSS per fit median 1.42 GB, max 1.55, against median
      1.71 / max 2.07 in the earlier dust48 run without it (different galaxies, not paired).
-8. **Postprocessing: built 2026-11-13, except spectra and rest-frame colours.**
+8. **Postprocessing: built 2026-11-13; ready for production (2026-11-16) apart from one
+   Blanca timing of the spectra step.** Per-fit step + catalogue ran end to end on Blanca in
+   the weekend run (item 15); spectra and the Chabrier table are tested on the Mac only.
    - **At the end of every fit** (`nss_jax.py`; `--no-postprocess` turns it off),
      `postprocess_nss.py` writes ONE file, `<id>_<tag>_post.h5` (~300 KB), before the
      `.json`. It replaces the dynesty pipeline's per-galaxy `perc`/`unw`/`spec` files.
@@ -1017,16 +1019,79 @@ most important first.
      draws' per-bin SFRs and edges stay out of the collected files: they follow exactly
      from chains (`postprocess_nss.sfh_bins_from_chains`, equal to 1.5e-6). Spectra, once
      added, will grow spec_ like the old modspec_map did (11,149 pixels vs FSPS's 5,994).
-   - **Cost** (Mac, one thread): 1.1–1.5 s per fit; ~70 MB peak extra memory. Time on one
-     Blanca core still to measure; it should stay well under 1% of a fit.
-   - **Not done: spectra and rest-frame U V J u g i / g−z / NUV−r−J.** They need E-FSPS
-     `SpecModel` with the stellar library the w256 emulator was trained on. The only
-     library we have, `c3k_a-mist-chabrier`, does not reproduce the emulator (220 prior
-     draws, z 0.05–12: 0.09 mag fainter, 0.08 mag shape scatter that follows z and the
-     SFH). E-FSPS's own notes point to `c3k_hr-mist-afe`; Wren is asking Joel. When it
-     arrives: compare SpecModel with the emulator (should agree to ~0.02 mag), then add
-     spectrum percentiles and rest-frame colours to `postprocess_nss.py`. The catalogue
-     script already fills the rest-frame columns when the per-galaxy files have them.
+   - **Cost** (Mac, one thread): 1.1–1.5 s per fit; ~70 MB peak extra memory. **On one
+     Blanca core (weekend run, 1616 fits, the fits' own logs):** median 3.5 s (10–90%
+     2.3–5.2 s, max 10 s), i.e. 0.6% of the fit's wall + compile time (90% 1.2%, max 1.8%).
+   - **Re-tested 2026-11-16 with the code as committed** (the same 8 Mac fits, rerun from their
+     full `.npz`): postprocessing, `test_postprocess_nss.py` (all 8 PASS), spectra,
+     `test_spectra_nss.py` (PASS) and `make_catalog_nss.py` (the UNCOVER galaxy is listed as
+     a different band set and the fixed-z refit as a duplicate, as they should be).
+   - **Spectra and rest-frame colours: built 2026-11-13** (`spectra_nss.py`), as a separate
+     restartable pass, NOT inside each fit (Wren's call, 2026-11-13): E-FSPS `SpecModel`
+     takes ~1.1 GB just to build and ~1.4–1.8 GB to run, which on top of each fit's ~1.4 GB
+     would break the 20-fits-per-node memory budget.
+     - One process per Blanca job, after the fits (`tasklist_layout.sbatch`, `SPECTRA=1`
+       default): builds SpecModel once, adds to each `_post.h5` the spectrum percentiles and
+       best-fit spectrum (10,992 pixels, observed f_nu per rest pixel, as
+       `postprocess_parrot`'s modspec), rest-frame U V J u g i / g z / NUV r J magnitudes per
+       draw, their percentiles and best-fit values under the old names, and a check of
+       SpecModel photometry against the network the fit used.
+     - Preemptable-safe: galaxies with spectra are skipped (without loading SpecModel when
+       none is left), files are replaced atomically, stray temporary copies are removed.
+       `make_catalog_nss.py` lists galaxies still without spectra (`missing_spectra.txt`);
+       `spectra_nss.py --list` catches them up on any node.
+     - Library: `c3k_hr-mist-afe` from E-FSPS commit cc1b132 (the photometric training
+       set's), shipped as a 241 MB weights-only copy (`--make-slim`; the full one is 18 GB).
+       Settings: every emulator input free, efsps-photfit's fixed values, Kriek & Conroy 2013
+       dust (`dust_type` 4, KC03-style; E-FSPS's default power law, `dust_type` 0, is off by
+       >1 mag), dust emission, nebular emission, AGN torus, IGM.
+     - Emission lines: E-FSPS evaluates a Gaussian per (draw, pixel, line), ~85% of its time
+       and most of its memory. With `eline_sigma` fixed (100 km/s) the profiles are the same
+       for every draw, so `efsps_fast_lines.py` builds them once and uses a matrix product:
+       same spectra to 1e-6, half the time. E-FSPS itself is unmodified.
+     - Rest-frame filters: sedpy's (prosp env, 0.4.1) integration tabulated on the library
+       grid (`make_restframe_filters.py` → `restframe_filters_c3k_hr.npz`): equal to sedpy
+       `getSED` to 7e-15 mag.
+     - **SpecModel vs the emulator: RESOLVED (Joel, 2026-11-16).** With Planck18 distances,
+       SpecModel was fainter than the network by 0.09 mag at z 0.05, falling to 0 by z ≈ 4;
+       WMAP9 distances (E-FSPS's default when the training set was made) halve that, so
+       `spectra_nss.py` uses WMAP9. Joel ran our 22 test vectors: our SpecModel (WMAP9)
+       reproduces the training-set E-FSPS to ≤ 0.002 mag on all 22, so the setup is right. The
+       remaining ~0.05 mag is the **network's own error on realistic SFHs**: it was trained on
+       SFR ratios uniform in ±4 and rarely saw smooth, prior-like histories; on our vectors
+       its error is 0.048 mag (68%) per band, against 0.012 on its uniform held-out set. So
+       spectra and rest-frame colours (exact E-FSPS) are right, and the network photometry
+       the fits use carries that error. Joel will inflate the package's emulator error term
+       (efsps-photfit; the NSS likelihood picks it up, so fits change; re-validate when it
+       lands); the longer-term fix is a retrain with prior-like histories in the training draw.
+       The per-galaxy `phot_check` in each `_post.h5` (−0.005 to +0.052 mag median on the
+       test galaxies) measures exactly this network error.
+     - **IMF: Chabrier everywhere (Wren, 2026-11-16).** The training library is `imf_type` 1
+       (Chabrier; Joel, 2026-11-13), so spectra are Chabrier. The surviving stellar mass uses
+       a Chabrier table built with python-fsps (`build_survival_table.py --imf-type 1` →
+       `surviving_fraction_mist_chabrier.npz`; `postprocess_nss.SURV_TABLE`;
+       FORMAT_VERSION 3), not efsps-photfit's Kroupa table. The fit itself uses no
+       IMF-dependent quantity (the mass prior is on formed mass). Independent check
+       (2026-11-16): for 20 random 10-bin step SFHs the table agrees with python-fsps'
+       own tabular-SFH surviving mass at `imf_type=1` to 3e-5 (median 5e-6). Chabrier
+       surviving mass is 0.007–0.021 dex below the Kroupa table's. (The same check of
+       efsps-photfit's Kroupa table against the local python-fsps `imf_type=2` gives up to
+       3%: built with a different python-fsps/SPS_HOME, presumably. Irrelevant now; worth
+       telling Joel.)
+     - Tests (`test_spectra_nss.py`, 8 galaxies, all PASS): spectra = unpatched E-FSPS to
+       1e-6; best-fit rest mags = sedpy getSED exactly; percentiles = the draws'; restarts
+       (killed while computing / while writing: file untouched; stray copy removed next run).
+     - Cost (Mac, multi-threaded): ~11 s to start (build + compile), ~5.5 s per galaxy
+       (1,001 spectra, rest mags, percentiles, file rewrite), peak 1.6 GB for the process.
+       Rerun 2026-11-16: 8 galaxies in 136 s wall, 19 s to start, but 447 s CPU (it uses
+       several threads), i.e. up to ~55 CPU-s per galaxy, which on one core would be ~10% of
+       a ~8 min fit. **The one open item: one-core Blanca numbers.** The weekend run had no
+       spectra step (its bundle predates it), so there are none yet; time a job's spectra
+       step (the job log has `time -v`) on ~100 weekend `_post.h5` copies. Per-galaxy files
+       grow to ~680 KB (spectrum percentiles); the collected `spec_` file gets only the
+       best-fit spectrum (`modspec_map`, as before), ~45 KB per galaxy.
+     - Blanca setup (once): efsps env, E-FSPS source and the slim library; see
+       `blanca/README.md`, "Spectra step".
    - The python-fsps stale-redshift bug no longer applies: nothing calls python-fsps.
    - Production jobs still pass `--no-full-npz`; if postprocessing fails, the fit writes
      the full `.npz` anyway, so `postprocess_nss.py --npz` can rerun it.
@@ -1044,11 +1109,11 @@ most important first.
     E5-2680 v4 4085 (1.85). The prior start scales about the same way (53–104 s).
     EPYC 9354 not in this set. **Allowed now (2026-11-12, Wren):** EPYC 9354, Gold 5418Y,
     plus EPYC 7413 and Gold 6342 (within ~10% of the fast types). **EPYC 7452 and Gold 6230
-    (~1.35×) are also decent: for large runs they can and should be included** (more
-    nodes beats per-fit speed); not in the default constraint, add `|rome|cascadelake`.
-    Blanca tags: `milan` is only the two EPYC 7413 nodes (EPYC 7713 nodes are tagged
-    `epyc7713`/`epyc7713p`); `icelake` is three Gold 6342 nodes and one untimed 32-core node.
-    `tasklist_layout.sbatch` now uses `epyc9354|gold5418y|5418y|milan|icelake`. Gold 6130 and
+    (~1.35×) are also decent: more nodes beats per-fit speed, so since 2026-11-13 they are in
+    the default (Wren).** Blanca tags: `milan` is only the two EPYC 7413 nodes (EPYC 7713 nodes
+    are tagged `epyc7713`/`epyc7713p`); `icelake` is three Gold 6342 nodes and one untimed
+    32-core node. `tasklist_layout.sbatch` default:
+    `epyc9354|gold5418y|5418y|milan|icelake|rome|cascadelake`. Gold 6130 and
     E5-2680 v4 (1.7–1.85×) stay out. Still to do:
     - time a full node (21 tasks) per type;
     - the Gold 6130 slowness: 1.26× the Gold 6230 here at the same clock (earlier, 51 ms
@@ -1058,7 +1123,13 @@ most important first.
 14. **A production spot check:** refit a random ~1% of galaxies with a second seed at 52
     steps and compare. It's the only way to catch, in production, galaxies harder than the 21
     tested.
-15. **An end-to-end test on ~1000 galaxies** through fit, postprocessing and catalogue.
+15. ~~**An end-to-end test on ~1000 galaxies** through fit, postprocessing and catalogue.~~
+    **Done: the weekend run (2026-11-13; Wren, 2026-11-16: it counts).** 1616/1616 fits
+    finished, 0 without `_post.h5`, 0 postprocessing errors, 0 preemption restarts; 48
+    catalogues built (1616 rows filled of 1616; 0 failed files, 0 duplicates; 1–17 s each);
+    catalogue z_50 = the draws' median (median |d| 0.001). It ran FORMAT_VERSION 2: Kroupa
+    surviving mass (0.007–0.021 dex above Chabrier) and no spectra step. Its stellar masses
+    should not be used as final; redshifts and everything else are unaffected.
 16. ~~Commit and push.~~ Done 2026-11-11: the convergence work and the mass-marginal default
     are committed and pushed to `origin/nss-efsps` on wrensuess/prospector_minerva (public),
     up to `d94c518`.
