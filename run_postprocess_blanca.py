@@ -32,7 +32,7 @@ prior = 'phisfh' # 'phisfhzfixed' if you're using zspec fits
 #code_dir = '/projects/kasu8993/prospector_minerva/'
 code_dir= '/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/prospector_minerva/'
 
-njobs = 130 #1000 #number of job array, max=1000
+njobs = 1000 #1000 #number of job array, max=1000
 wtime = int(12) # time
 jname = 'postproc_{}'.format(prior)
 ts = time.strftime("%y%b%d-%H.%M", time.localtime())
@@ -52,7 +52,7 @@ process = -1
 #process = 0
 
 if process==-1: ### priority node
-    njobs = 1000
+    njobs = 65
     wtime = int(12) # time
     ids_split = np.array_split(ids, njobs)
     # save each chunk to a separate file
