@@ -14,6 +14,7 @@ check_dir3 = "/pl/active/suess-minerva/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUP
 check_dir4 = "/pl/active/suess-minerva/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS4/"
 check_dir5 = "/pl/active/suess-minerva/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS5/"
 check_dir6 = "/pl/active/suess-minerva/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS6/"
+check_dir7 = "/pl/active/suess-minerva/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS7/"
 output_name = "chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/"
 
 idlist1 = glob.glob(check_dir1+output_name+"id_*_mcmc_phisfh.h5")
@@ -22,14 +23,16 @@ idlist3 = glob.glob(check_dir3+output_name+"id_*_mcmc_phisfh.h5")
 idlist4 = glob.glob(check_dir4+output_name+"id_*_mcmc_phisfh.h5")
 idlist5 = glob.glob(check_dir5+output_name+"id_*_mcmc_phisfh.h5")
 idlist6 = glob.glob(check_dir6+output_name+"id_*_mcmc_phisfh.h5")
+idlist7 = glob.glob(check_dir7+output_name+"id_*_mcmc_phisfh.h5")
 fittedid1 = np.array([int(a.split("/")[-1].split("_")[1]) for a in idlist1])
 fittedid2 = np.array([int(a.split("/")[-1].split("_")[1]) for a in idlist2])
 fittedid3 = np.array([int(a.split("/")[-1].split("_")[1]) for a in idlist3])
 fittedid4 = np.array([int(a.split("/")[-1].split("_")[1]) for a in idlist4])
 fittedid5 = np.array([int(a.split("/")[-1].split("_")[1]) for a in idlist5])
 fittedid6 = np.array([int(a.split("/")[-1].split("_")[1]) for a in idlist6])
-fittedid_all = np.concatenate([fittedid1,fittedid2,fittedid3,fittedid4,fittedid5,fittedid6])
-fittedpath_all = idlist1+idlist2+idlist3+idlist4+idlist5+idlist6
+fittedid7 = np.array([int(a.split("/")[-1].split("_")[1]) for a in idlist7])
+fittedid_all = np.concatenate([fittedid1,fittedid2,fittedid3,fittedid4,fittedid5,fittedid6,fittedid7])
+fittedpath_all = idlist1+idlist2+idlist3+idlist4+idlist5+idlist6+idlist7
 fittedpathid_all = np.array([int(a.split("/")[-1].split("_")[1]) for a in fittedpath_all])
 
 processed_dir = "/scratch/alpine/ikmi3774/slurm/postprocess_"+ver+"/npz/"
@@ -126,7 +129,7 @@ print("[Info] postprocess incompleted:",len(not_posted))
 
 directories = [
     Path(f"/pl/active/suess-minerva/chains_parrot_{ver}_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS{i}/chains_parrot_{ver}_ACS+WEBB_Kf444w_SUPER_spsbeta")
-    for i in range(1, 8)
+    for i in range(1, 7)
 ]
 destination = Path("/pl/active/suess-minerva/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS7/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta")
 
