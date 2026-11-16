@@ -69,7 +69,7 @@ print("[Info] fitting incompleted:",len(not_fitted))
 #np.savetxt(cat_dir+"refitid2_MINERVA-"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt",not_fitted)
 pdb.set_trace()
 
-'''
+
 ##########################################################
 ################### for fitting file #####################
 ##########################################################
@@ -82,6 +82,8 @@ for k in range(0,len(id_list)):
     cid = np.where(id_list[k]==fittedpathid_all)[0][0]
     check_path.append(fittedpath_all[cid])
 
+check_path = idlist7
+    
 failed_ids = []
 
 #for obj_id in id_list:
@@ -119,7 +121,7 @@ print("[Info] TOTAL-processed =",len(fittedid_all)-len(all_unique))
 #np.save("./../phot_catalog/brokenid2_MINERVA-"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt",np.array(failed_ids))
 
 pdb.set_trace()
-'''
+
 
 ###postprocess umcompleted
 print(fittedpathid_all[:100])
