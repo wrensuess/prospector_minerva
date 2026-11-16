@@ -430,6 +430,7 @@ production one. So the cost comparison below is between pipelines, not a like-fo
 | 2026-11-11 | **Soft-ceiling dust2 prior, mass only, adopted as the NSS default** (Wren): today's flat dust2 prior below a ceiling of A_V = 1 mag at log M < 8, rising to 4 (no change) at log M 9; σ 0.2 penalty above. Only removes the low-z dusty-dwarf trap; no measurable effect on 35 non-trap test galaxies (§6 item 5b). |
 | 2026-11-11 | **32 inner steps** as the default for mass-marginal NSS (Wren). 20-seed Blanca tests at 16/25/32/52/78 on 21 galaxies: 32 is the smallest setting where the hard galaxies still follow the 1/√k scatter law; 25 is 17% cheaper with a worse tail, 16 breaks (R̂ up to 1.075). The strict "R̂ < 1.01 for every parameter" is missed in 6 of 21 galaxies (worst 1.029), but per-seed posteriors and SFHs agree by eye, the standard Wren applies. `nss_jax.py` and `fullfit_layout.sbatch` defaults are now n_live 1000, num_delete 100, 32 steps, tabulated prior, mass integrated out. |
 | 2026-11-11 | Results come back from Blanca by `rsync` pulled from the Mac, never `tar czf` on the login node. |
+| 2026-11-16 | **Dust ceiling gets a low-mass node** (Wren; §6 items 5b, 6b): A_V 0.5 (dust2 0.46) at log M ≤ 7, linear to A_V 1 at 8, then to no ceiling at 9 as before. Closes the dwarf trap that the 10⁶ floor reopened (reweighting: z > 5.5 majority at z < 1 17 → 11, no low-z collateral). The n(z) / high-z taper results are recorded in item 6b but NOT implemented: a bigger test comes first (Wren). |
 | 2026-11-13 | **z, mass and dust-emission priors matched to production** (Wren; §6 item 6b): z uniform (was efsps's n(z)), Leja+20-only mass function, `const_phi=True` (was Leja+20 → Tacchella+18), mass floor 10⁶ (was 10⁷), q_PAH / U_min / γ truncated normals as in production (were uniform / log-uniform). Implemented and tested here; Blanca re-validation pending. The fagn prior flat1_s025 stays and becomes the production default too (Ikki's `dev_curc` AGN prior was a test). |
 | 2026-11-09 | Convergence acceptance (single-solution galaxies, 20 seeds, judged on the median over galaxies; the worst galaxy is a warning, since 20 seeds measure scatter to ~16%). **Parameters:** Gelman–Rubin R̂ < 1.01 for every parameter (Vehtari+2021), i.e. median scatter between seeds ≤ 0.14 posterior half-widths, since R̂ ≈ √(1+S²). A parameter above 2× that threshold (S > 0.28) is a warning. Use rank-normalized R̂ where draws exist, so broad, skewed or edge-piled posteriors (dust2, dust_index) are judged fairly. **Width:** one run's 16–84 width within 10% of a reference posterior (long run or NUTS, not the pooled seeds). **logZ:** seed scatter ≤ 1.5× quoted to start, ideally lower (implementation error well below statistical); otherwise inflate the quoted error by the measured factor. **Plus:** no catastrophic failures (wrong-z or wrong-solution runs). Goal: generally quite good with no big obvious failure modes, not perfect. |
 | standing | One core per fit; robustness before speed; every test spans redshift, uses real galaxies and reports by z bin; never commit to Joel's or Emilie's repos (fork first). |
@@ -608,7 +609,7 @@ most important first.
    - It fixed 22/40 bright ones in both repeats and broke 1/39 controls.
    - Harsher tails (σ 0.1) fixed no more and broke a real AGN (UDS 1241214).
 
-5b. **Dust prior against the low-z dwarf trap. ADOPTED 2026-11-11 and the NSS default (uncommitted).** Production
+5b. **Dust prior against the low-z dwarf trap. ADOPTED 2026-11-11 and the NSS default; low-mass node (A_V 0.5 at log M ≤ 7) added 2026-11-16 for the 10⁶ floor (item 6b).** Production
    puts z_spec > 5.5 galaxies at z ≈ 0.2 as dusty (dust2 1.2–3.4), old, log M 6–7.7 dwarfs.
    Candidate fix: a dust2 prior conditional on mass and SFR₁₀₀, after Nagaraj+22 (ApJ 932, 54)
    Fig. 7, calibrated on secure-z production fits, applied inside the mass integral
@@ -792,6 +793,128 @@ most important first.
      prior. The dust ceiling was tuned with a 10⁷ floor, and 11 of 13 production trap solutions
      sit below 10⁷, so rerun the dust48 trap set and the spec-z validation (item 5b), the 21
      convergence galaxies at 32 steps (§4), and the 9-galaxy test set.
+   - **Weekend run prepared 2026-11-13** (all defaults, i.e. this prior + dust ceiling `mass`,
+     with postprocessing at the end of every fit and the catalogues built after; 1616 fits;
+     `tasklist_layout.sbatch` then `catalog_runs.sbatch` with a dependency):
+     - `specz1k_pp`: **expanded spec-z set, 1052 galaxies, seed 0** (`blanca/make_specz_sample.py`;
+       `minerva_{uds,cosmos}_specz1k.fits` and `specz1k/specz1k_sample.csv`, private). All 673
+       of the earlier specval set (fit-for-fit comparison with the old prior) plus 379 random
+       non-duplicate spec-z galaxies stratified in z_spec (the old set had none at z 1–3):
+       30 / 40 / 60 / 60 / 70 / 60 / 50 at z 0–0.5 / 0.5–1 / 1–1.5 / 1.5–2 / 2–3 / 3–4 / 4–5.5,
+       plus all 9 left above 5.5. 11 are `spec_suspect` (flagged, kept).
+     - `dust48_pp`: the 48 dust test galaxies × 3 seeds (144).
+     - `conv21_pp`: the 21 convergence galaxies (the 9 UDS test galaxies + the 12 COSMOS
+       bimodal ones) × 20 seeds (420).
+     - Mac smoke test of the exact per-fit command + the catalogue job: 2 fits, postprocessing
+       1.6–2.5 s, both catalogues built. On UDS 1033615 (z_spec 7.21) the iteration count is
+       unchanged (61) vs the old prior, but weight moves: z 7–8 0.33 → 0.51, and 0.26 now at
+       z 10–12 (none before), the effect of uniform z plus Leja+20 frozen at z = 3.
+   - **Weekend run RESULTS (2026-11-16; 1616/1616 fits, every one postprocessed, every catalogue
+     row filled; private `prodprior_weekend/`: `analyze_specz1k.py` + `.log`, `analyze_dust48.log`,
+     `rhat_new.log` vs `rhat_old_k32.log`, `diag_highz.log`, `analyze_catalog_timing.log`).** Old
+     prior = the same galaxies' earlier fits (same dust ceiling, seed 0).
+     - **Overall (1041 spec-z, 11 suspect left out):** NSS f_out 16.6% (NMAD 0.020) vs production
+       dynesty 16.1% (0.021) vs eazy 8.4% (0.016). NSS ≤ production at z < 3 (0–7% vs 0–14%) and at
+       z 3–4 (38% vs 46%); worse above 5.5 (27% vs 20%). z_spec inside the 68% interval 63%
+       (production ~56%), 95%: 89%.
+     - **z_spec > 5.5 (417), old → new:** majority right 272 → 288, f_out 34% → 27%; F444W 26–27 /
+       27–28 / > 28: 0.74 / 0.59 / 0.33 → 0.78 / 0.64 / 0.37 (production 0.85 / 0.80 / 0.63). The
+       faint-end gap mostly remains.
+     - **New failure 1, overshoot to z > 9:** 55 of 403 galaxies at z_spec 5.5–9 put > 0.1 at
+       z > 9 (old prior: 3), 12 a majority; some bright (COSMOS 2075640, F444W 25.5, z_spec 6.76:
+       0.98 → 0.17 at z_spec, median z 9.46; production 6.82). The z > 9 solution sits at
+       (1+z)/(1+z_spec) ≈ 1.30–1.35 at the same mass: [OIII] ↔ [OII] (5007/3727 = 1.34). The old
+       prior charged several nats for z ≈ 9.5 (n(z) and T18); the production prior charges
+       nothing. Production has the same prior but dynesty locks onto one solution.
+     - **New failure 2, the dwarf trap partly back:** z_spec > 5.5 with majority at z < 1: 11 → 17
+       (production 33). 5 of the 17 are the classic PAH trap at z 0.12–0.28, log M 6.1–6.7 (only
+       reachable with the 10⁶ floor), dust2 at the ceiling (0.9–1.1), q_PAH ≈ 3.2. Trap set
+       (dust48, 13 traps, 3 seeds): mean weight at z_spec 0.81 → 0.71, majority right 11 → 11;
+       leaks to z < 1 (0.005 → 0.054) and z > 9 (0.001 → 0.057).
+     - **No collateral at low z:** real z_spec < 1 dwarfs (195) 0.987 → 0.983 at z_spec, 3 drop
+       > 0.1 (faint dwarfs); dust48 non-traps unchanged within seed noise. z_spec < 4: no weight
+       at z > 5 except UDS 1051264 (z_spec 3.53; production and eazy also put it at z ≈ 12).
+     - **Convergence (21 galaxies × 20 seeds):** median R̂ ~1.004 as before; 19 of 21 worst
+       R̂ ≤ 1.027. COSMOS 2137258 worse (median 1.033, worst 1.064; solution weights scatter
+       0.15 between seeds over z 0.8 / 2.5 / 5.9). logZ scatter/quoted median 1.82 (old 1.74).
+       Weights move to high z: 2076167 (spec-z ≈ 5.85, known right) 0.04 → 0.84 at z 5–8;
+       2248619 (no spec-z) 0.12 → 0.50; 2088585 and 2355389 ~0.2 each at z > 5.
+     - **Cost:** iterations ×1.03 fit for fit (10–90% 0.88–1.14). Median 8.2 min/fit across CPU
+       types, 234 core-h for 1616 fits, no preemptions. **Per iteration vs EPYC 9354: EPYC 7542
+       1.36×, Gold 5418Y 1.36×, Gold 6258R 1.50×, Gold 6230 1.98×** (634 fits, 39%), not the
+       ~1.35× of the one-core timings: check the Gold 6230 at full node load (AVX-512 downclock?
+       `XLA_FLAGS=--xla_cpu_max_isa=AVX2`) before relying on cascadelake.
+     - Catalogue z_50 = the draws' median (median |d| 0.001; one bimodal UDS galaxy 1.6).
+     - **Open decision (Wren):** keep production's prior as is, or add back high-z evolution
+       (z > 9 overshoot) and/or the 10⁷ floor (dwarf trap). Reweighting the new draws to those
+       variants gives the numbers without refitting.
+     - **Reweighting results (2026-11-16; private `prodprior_weekend/reweight_variants.py`, `.log`,
+       `reweight_specz1k.csv`; the `cur` row reproduces the refits exactly).** Variants: (A) the
+       mass function switches to Tacchella+18 above z = 3 (const_phi=False), z still uniform;
+       (B05 / B03) dust ceiling A_V 0.5 / 0.3 at log M ≤ 7, linear to A_V 1 at 8, then as now;
+       (F7) reference, the 10⁷ floor.
+
+       | | all f_out | z>5.5 f_out | z>5.5 maj right | z>5.5 maj z<1 | z5.5–9 >0.1 at z>9 | maj z>9 | traps w (z<1) | 2076167 z5–8 |
+       |---|---|---|---|---|---|---|---|---|
+       | cur | 16.6% | 26.6% | 288 | 17 | 55 | 12 | 0.71 (0.054) | 0.84 |
+       | A | 17.7% | 29.3% | 278 | 20 | 26 | 4 | 0.68 (0.128) | 0.37 |
+       | B05 | 16.1% | 25.9% | 292 | 11 | 57 | 14 | 0.75 (0.009) | 0.84 |
+       | B03 | 15.9% | 25.7% | 294 | 9 | 57 | 15 | 0.75 (0.008) | 0.84 |
+       | F7 | 16.2% | 26.4% | 293 | 7 | 57 | 14 | 0.75 (0.009) | 0.85 |
+       | A+B05 | 16.6% | 27.1% | 286 | 13 | 29 | 5 | 0.78 (0.014) | 0.37 |
+
+       - **(A) Tacchella at high z: net worse.** It halves the z > 9 overshoot, but z > 5.5 loses
+         (49 galaxies drop > 0.1 at z_spec, 24 gain), the low-z trap grows (z<1 weight on the
+         traps 0.054 → 0.128), the known-right 2076167 falls 0.84 → 0.37 and SMG 1088165 drops
+         0.35. 5 galaxies have ESS < 200 under A (unreliable there; the verdict doesn't rest on them).
+       - **(B05) closes the dwarf trap at the 10⁶ floor with no collateral:** z > 5.5 majority at
+         z < 1 17 → 11 (= old prior), 17 galaxies gain > 0.1 at z_spec and none lose; real low-z
+         unchanged (no drop > 0.1; 35 dust48 non-traps unchanged). Real low-z galaxies whose right-z
+         solution has log M < 7.5 (9) have right-z dust2 97.5th percentile ≤ 0.69 (median 0.43;
+         the 3 below log M 7: ≤ 0.39), so A_V 0.5 (dust2 0.46) at log M ≤ 7 rising to 0.92 at 8
+         clears them; A_V 0.3 (0.28) does barely better and would cut into them.
+       - **Neither lever fixes the z > 9 overshoot.** The old prior's n(z) is the other candidate
+         lever (testable by reweighting the same way).
+     - **n(z) redshift priors, reweighted (2026-11-16, same script and log).** Method check:
+       reweighting the new draws to the full OLD prior reproduces the old refits of the same 673
+       galaxies (weight at z_spec 0.731 vs 0.725; majority right 487 vs 484; z > 5.5 majority at z < 1
+       10 vs 11). Variants: NZ20 / NZ18 = the l20 (Leja-only) / l20t18 (old) number-density p(z)
+       instead of uniform z; T8 / T9 (exploratory) = uniform up to z 8 / 9, then l20t18's own decline
+       (continuous there); all with B05 unless noted. z ≥ 9 = the 14 spec-z galaxies at z_spec ≥ 9.
+
+       | | all f_out | z>5.5 f_out | z>5.5 maj right | maj z<1 | >0.1 at z>9 | maj z>9 | z≥9 maj right | traps w | 2076167 |
+       |---|---|---|---|---|---|---|---|---|---|
+       | cur | 16.6% | 26.6% | 288 | 17 | 55 | 12 | 12 | 0.71 | 0.84 |
+       | B05 | 16.1% | 25.9% | 292 | 11 | 57 | 14 | 12 | 0.75 | 0.84 |
+       | NZ20+B05 | 17.0% | 26.6% | 288 | 12 | 47 | 7 | 13 | 0.76 | 0.68 |
+       | NZ18+B05 | 18.3% | 30.9% | 281 | 14 | 12 | 1 | 9 | 0.81 | 0.68 |
+       | **T8+B05** | **15.1%** | **23.7%** | **304** | 11 | 18 | 2 | 11 | 0.80 | 0.84 |
+       | T9+B05 | 15.5% | 24.7% | 303 | 11 | 42 | 2 | 11 | 0.79 | 0.84 |
+       | OLD (reference) | 18.7% | 32.1% | 275 | 10 | 6 | 0 | 8 | 0.81 | 0.26 |
+
+       (production dynesty: all 16.1%, z > 5.5 20.1%; eazy 8.4% / 11.5%.)
+       - **The n(z) tables fix the overshoot only by suppressing all of high z:** NZ18 cuts it to
+         12 / 1, but z > 5.5 loses (281 majority right), real z ≥ 9 drop 12 → 9, 2076167 0.84 →
+         0.68. NZ20 is nearly flat above z 6 and barely helps.
+       - **T8+B05 is best on almost every count:** all f_out 15.1% (below production's 16.1%),
+         z > 5.5 majority right 304 (+16 over B05), faint end F444W 27–28 / > 28 0.70 / 0.39, overshoot
+         57 → 18 (majority 14 → 2), traps 0.80, 2076167 kept. Cost: z ≥ 9 majority right 12 → 11
+         (1173365 0.72 → 0.22 and 1219317 0.49 → 0.09; eazy also misses 1173365, 2187194 was
+         already wrong). Caveats: the taper start was chosen with this sample in view; 14 galaxies
+         at z ≥ 9 is little to judge the cost on; the spec-z set over-represents z > 5.5; and it
+         departs from production's uniform z. Confirm by refitting before adopting.
+     - **Decided 2026-11-16 (Wren):** B05 ADOPTED (`dust_prior.CEILING` now has the node at log M 7:
+       `M0` 7, `d_vlo` A_V 0.5; the 2026-11-11 ceiling is kept as `CEILING_20261111`). The n(z)
+       prior and the high-z taper are NOT implemented: a bigger test comes first. Uniform z stays
+       the NSS default for now, so the z > 9 overshoot is still open.
+       - Tests (Mac; `logs/test_dust_prior_lowmassnode*.log`): `test_dust_prior.py` PASS on 1197855
+         (new section 2b: ceiling nodes, unchanged above log M 8 and for the sfr / mass_sfr kinds
+         and the old configs; trap-like error added 1.7e-3 nats). ln C (mass) −1.08 → −1.40.
+       - On 1182609 (a faint z 6.6 trap galaxy, new to this test) the "prior draws" check fails for
+         all three kinds (error added 5–6e-3 nats vs tolerance 1e-3), and **identically with the
+         2026-11-11 ceiling** (`logs/test_dust_prior_oldceiling_1182609.log`): a pre-existing
+         limit of the mass integral on faint galaxies at prior draws (existing integral error
+         there 9e-3), not caused by the node. Its trap-like check passes (7.6e-4). Open, minor.
 
 **C. Production engineering**
 

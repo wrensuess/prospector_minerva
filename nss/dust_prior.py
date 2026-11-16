@@ -24,6 +24,16 @@ reweighting): mean weight at z_spec for 13 trap galaxies 0.65 -> 0.79, and no no
 posterior moves beyond seed noise. The "sfr" and "mass_sfr" kinds (SFR ramp -1 -> 0) are kept for
 reference; they let low-mass dusty solutions with log SFR -1..0 through.
 
+LOW-MASS NODE, ADOPTED 2026-11-16 (Wren), for the 10^6 mass floor (nss_priors, production-matched
+prior): with the floor lowered from 10^7, the trap came back at log M 6.1-6.7 with dust2 at the
+A_V 1 ceiling. The mass ceiling now also has a node at log M 7 (cfg M0, d_vlo):
+    d_max = A_V 0.5 (dust2 0.46) at log M <= 7, linear to A_V 1 (0.92) at 8, linear to 4 at 9.
+Reweighting the weekend refits (STATUS.md section 6 item 6b): z_spec > 5.5 galaxies with most weight
+at z < 1 17 -> 11, the 13 traps 0.71 -> 0.75 at z_spec, no low-z galaxy or dust48 non-trap moves;
+real low-z galaxies with right-z log M < 7.5 need dust2 <= 0.69 there (<= 0.39 below log M 7).
+Configs without M0 (e.g. CEILING_DUST48) keep the old two-node ramp exactly. For kind "mass_sfr" the
+SFR ceiling (from d_lo) is maxed with the mass ceiling, so the low-mass node only acts on "mass".
+
 The joint prior is pi'(theta) = pi(theta) w(theta) / C with ONE global constant C = E_pi[w], not
 renormalised per (M, S): solutions below the ceiling keep exactly their current relative prior
 weight. In NSS, w goes into the likelihood (mass_marginal.MassMarginal: inside the mass integral,
@@ -33,9 +43,13 @@ ln C + the evidence under pi'. ln C is the same for every galaxy (estimated in t
 import numpy as np
 
 KINDS = ("mass", "sfr", "mass_sfr")
-AV_LOW_MASS = 1.0                  # mag: the ceiling below log M 8, as A_V = 1.086 dust2
+AV_LOW_MASS = 1.0                  # mag: the ceiling at log M 8, as A_V = 1.086 dust2
+AV_VERY_LOW_MASS = 0.5             # mag: the ceiling at log M <= 7 (2026-11-16)
 DEFAULT_KIND = "mass"
-CEILING = dict(d_lo=AV_LOW_MASS / 1.086, d_hi=4.0, s=0.2, M1=8.0, M2=9.0, S1=-1.0, S2=0.0)
+CEILING = dict(d_lo=AV_LOW_MASS / 1.086, d_hi=4.0, s=0.2, M1=8.0, M2=9.0, S1=-1.0, S2=0.0,
+               M0=7.0, d_vlo=AV_VERY_LOW_MASS / 1.086)
+#: the 2026-11-11 setting (no low-mass node), for reproducing the dust48_adopted/specval runs
+CEILING_20261111 = dict(d_lo=AV_LOW_MASS / 1.086, d_hi=4.0, s=0.2, M1=8.0, M2=9.0, S1=-1.0, S2=0.0)
 #: the setting of the dust48 Blanca test (2026-11-11), for reproducing it
 CEILING_DUST48 = dict(d_lo=0.8, d_hi=4.0, s=0.2, M1=8.0, M2=10.0, S1=-1.0, S2=0.0)
 T_SFR = 1e8          # SFR averaging time [yr]
@@ -47,6 +61,12 @@ LAST_BIN = 0.9
 def ceiling_np(kind, M, S, cfg=CEILING):
     rM = np.clip((np.asarray(M, float) - cfg["M1"]) / (cfg["M2"] - cfg["M1"]), 0.0, 1.0)
     rS = np.clip((np.asarray(S, float) - cfg["S1"]) / (cfg["S2"] - cfg["S1"]), 0.0, 1.0)
+    if "M0" in cfg and kind != "sfr":
+        dM = np.interp(np.asarray(M, float) + 0.0 * rS, [cfg["M0"], cfg["M1"], cfg["M2"]],
+                       [cfg["d_vlo"], cfg["d_lo"], cfg["d_hi"]])
+        if kind == "mass":
+            return dM
+        return np.maximum(dM, cfg["d_lo"] + (cfg["d_hi"] - cfg["d_lo"]) * rS)
     r = {"mass": rM + 0.0 * rS, "sfr": rS + 0.0 * rM, "mass_sfr": np.maximum(rM, rS)}[kind]
     return cfg["d_lo"] + (cfg["d_hi"] - cfg["d_lo"]) * r
 
@@ -69,6 +89,12 @@ def ceiling_jax(kind, M, S, cfg=CEILING):
     import jax.numpy as jnp
     rM = jnp.clip((M - cfg["M1"]) / (cfg["M2"] - cfg["M1"]), 0.0, 1.0)
     rS = jnp.clip((S - cfg["S1"]) / (cfg["S2"] - cfg["S1"]), 0.0, 1.0)
+    if "M0" in cfg and kind in ("mass", "mass_sfr"):
+        dM = jnp.interp(M + 0.0 * rS, jnp.array([cfg["M0"], cfg["M1"], cfg["M2"]]),
+                        jnp.array([cfg["d_vlo"], cfg["d_lo"], cfg["d_hi"]]))
+        if kind == "mass":
+            return dM
+        return jnp.maximum(dM, cfg["d_lo"] + (cfg["d_hi"] - cfg["d_lo"]) * rS)
     if kind == "mass":
         r = rM + 0.0 * rS
     elif kind == "sfr":

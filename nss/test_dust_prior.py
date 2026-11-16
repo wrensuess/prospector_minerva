@@ -80,6 +80,30 @@ def main():
         r_jx = np.asarray(jax.jit(lambda d_, m_, s_: DPR.lnw_jax(d_, k, m_, s_))(dd, MM, SS))
         check(f"ln w {k}", np.max(np.abs(r_np - r_jx)) < 1e-12 and np.all(r_jx <= 0),
               f"max |d| {np.max(np.abs(r_np - r_jx)):.1e}; penalised fraction of these points {np.mean(r_jx < 0):.3f}")
+    # 2b. the low-mass node (2026-11-16): ceiling values at the nodes; above log M 8 and for the old
+    # configs (no M0) the ceiling is the 2026-11-11 one
+    av = 1 / 1.086
+    Mn = np.array([5.5, 6.0, 7.0, 7.5, 8.0, 8.5, 9.0, 11.0])
+    got = DPR.ceiling_np("mass", Mn, 0.0)
+    exp = np.interp(Mn, [7.0, 8.0, 9.0], [0.5 * av, av, 4.0])
+    check("ceiling nodes (A_V 0.5 at log M <= 7, 1 at 8, dust2 4 at 9)", np.allclose(got, exp, atol=1e-14),
+          "dust2 ceiling at log M " + ", ".join(f"{m:g}: {c:.3f}" for m, c in zip(Mn, got)))
+    hi = MM >= 8.0
+    old = DPR.ceiling_np("mass", MM, SS, DPR.CEILING_20261111)
+    new = DPR.ceiling_np("mass", MM, SS)
+    check("above log M 8 unchanged from 2026-11-11", np.max(np.abs(old[hi] - new[hi])) < 1e-12,
+          f"max |d| {np.max(np.abs(old[hi] - new[hi])):.1e}; below log M 8 the new ceiling is lower everywhere: "
+          f"{bool(np.all(new[~hi] <= old[~hi] + 1e-15))}")
+    for k in ("sfr", "mass_sfr"):
+        r_old = DPR.ceiling_np(k, MM, SS, DPR.CEILING_20261111)
+        r_new = DPR.ceiling_np(k, MM, SS)
+        check(f"{k}: unchanged by the low-mass node", np.max(np.abs(r_old - r_new)) < 1e-12,
+              f"max |d| {np.max(np.abs(r_old - r_new)):.1e}")
+    for k in DPR.KINDS:
+        r_np = DPR.lnw_np(dd, k, MM, SS, DPR.CEILING_DUST48)
+        r_jx = np.asarray(jax.jit(lambda d_, m_, s_: DPR.lnw_jax(d_, k, m_, s_, DPR.CEILING_DUST48))(dd, MM, SS))
+        check(f"ln w {k}, dust48 config (no M0): JAX vs numpy", np.max(np.abs(r_np - r_jx)) < 1e-12,
+              f"max |d| {np.max(np.abs(r_np - r_jx)):.1e}")
 
     # 3. no-penalty ceiling == no prior
     print("3. ceiling at the top of the range == no dust prior")
@@ -88,7 +112,7 @@ def main():
     x, m = mm0.x_from_u(u)
     l0 = np.asarray(mm0.batch_loglike(jnp.asarray(x)))
     for k in DPR.KINDS:
-        mmk = MassMarginal(model, dust_prior=k, dust_cfg=dict(d_lo=4.0, d_hi=4.0))
+        mmk = MassMarginal(model, dust_prior=k, dust_cfg=dict(d_lo=4.0, d_hi=4.0, d_vlo=4.0))
         lk = np.asarray(mmk.batch_loglike(jnp.asarray(x)))
         same = np.array_equal(l0, lk) or np.array_equal(np.nan_to_num(l0, neginf=-1e300), np.nan_to_num(lk, neginf=-1e300))
         check(f"no-penalty {k} bitwise", same, f"max |d| {np.nanmax(np.abs(np.where(np.isfinite(l0), l0 - lk, 0))):.1e}")
