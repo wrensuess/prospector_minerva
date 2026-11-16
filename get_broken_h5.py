@@ -126,7 +126,7 @@ print("[Info] postprocess incompleted:",len(not_posted))
 
 directories = [
     Path(f"/pl/active/suess-minerva/chains_parrot_{ver}_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS{i}/chains_parrot_{ver}_ACS+WEBB_Kf444w_SUPER_spsbeta")
-    for i in range(1, 7)
+    for i in range(1, 8)
 ]
 destination = Path("/pl/active/suess-minerva/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta/EGS7/chains_parrot_"+ver+"_ACS+WEBB_Kf444w_SUPER_spsbeta")
 
@@ -137,7 +137,7 @@ for id_post in tqdm(not_posted):
     for directory in directories:
         src = directory / filename
         if src.is_file():
-            shutil.move(src, destination / filename)
+            #shutil.move(src, destination / filename)
             found.append(filename)
             break
     else:
