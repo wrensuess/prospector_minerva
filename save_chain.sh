@@ -13,7 +13,7 @@
 
 module purge
 
-CHUNK=5
+CHUNK=550
 START=$((SLURM_ARRAY_TASK_ID * CHUNK))
 END=$((START + CHUNK))
 
