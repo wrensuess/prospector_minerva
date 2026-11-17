@@ -5,7 +5,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --time=6:00:00
+#SBATCH --time=12:00:00
 #SBATCH --mem=4G
 #SBATCH --array=0-459%20
 #SBATCH --output=./../log_chain/%x_%A_%a.out
@@ -17,4 +17,4 @@ CHUNK=5
 START=$((SLURM_ARRAY_TASK_ID * CHUNK))
 END=$((START + CHUNK))
 
-python save_chain.py --dir_indiv="/scratch/alpine/ikmi3774/slurm/postprocess_COSMOS_n3.0_v1.0/npz" --dir_collected="/scratch/alpine/ikmi3774/slurm/postprocess_COSMOS_n3.0_v1.0" --n_workers=1 --start $START --end $END --split_id ${START}_${END}
+python save_chain.py --dir_indiv="/scratch/alpine/ikmi3774/slurm/postprocess_EGS_n2.0_v1.3/npz" --dir_collected="/scratch/alpine/ikmi3774/slurm/postprocess_EGS_n2.0_v1.3" --n_workers=1 --start $START --end $END --split_id ${START}_${END}
