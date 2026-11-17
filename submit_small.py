@@ -85,7 +85,7 @@ def run_params(task_dir='hoge', log_dir='hoge', acc='priority', jobname='p', wti
 if __name__ == '__main__':
 
     ### variables
-    outdir = '/scratch/alpine/ikmi3774/slurm/EGS4/'
+    outdir = '/scratch/alpine/ikmi3774/slurm/EGS7/'
     catdir = '../phot_catalog/'
     #field = 'COSMOS'
     #ver = 'n3.0_v1.0'
@@ -103,7 +103,7 @@ if __name__ == '__main__':
     fast_dyn = 0 #0:std run, 1:brief run, 2:debug
 
     cujobname = 'brokenfiles_EGS'
-    cathead = 'refitid2'
+    cathead = 'brokenid3'
 
     fitcatalog = catdir+cathead+'_MINERVA-'+field+'_'+ver+'_ACS+WEBB_Kf444w_SUPER_CATALOG.txt' #file includes your objects
     
