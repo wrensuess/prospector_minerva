@@ -425,6 +425,16 @@ def main():
     r = postprocess(model, phot, d["theta"], d["w"], summary, out, seed=seed)
     print(f"[{phot.id}] postprocessed {r['n_samples']} samples in {r['postprocess_s']:.1f} s "
           f"-> {out}; best-fit chi2 {r['chi2_bestfit']:.1f}")
+    # a rerun after the fit's own postprocessing failed: record it in the fit's json (atomically),
+    # so reports stop counting it as a postprocessing error
+    if os.path.exists(js) and "logZ" in summary:
+        prev = summary.get("postprocess")
+        summary["postprocess"] = dict(r, rerun_standalone=True,
+                                      **({"rerun_after": prev} if prev else {}))
+        tmp = f"{js}.tmp.{os.getpid()}"
+        with open(tmp, "w") as fh:
+            json.dump(summary, fh, indent=1)
+        os.replace(tmp, js)
 
 
 if __name__ == "__main__":

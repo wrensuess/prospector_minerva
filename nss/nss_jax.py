@@ -395,8 +395,12 @@ def main():
                 # keep the posterior, so postprocess_nss.py can be rerun on it standalone
                 save_full_npz()
                 summary["postprocess"]["full_npz_saved_for_rerun"] = True
-    with open(stem + ".json", "w") as fh:
+    # atomically: job scripts take a valid json as "this fit is finished", so a fit killed while
+    # writing it must not leave a truncated one behind
+    tmp = f"{stem}.json.tmp.{os.getpid()}"
+    with open(tmp, "w") as fh:
         json.dump(summary, fh, indent=1)
+    os.replace(tmp, stem + ".json")
     s = summary
     print(f"[{phot.id}] done: logZ {s['logZ']:.2f} +- {s['logZ_err']:.2f}, max logL "
           f"{s['max_logL']:.2f} (chi2 {s['chi2_at_max']:.1f}), ESS {s['ess']:.0f}, "

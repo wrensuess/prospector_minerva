@@ -981,9 +981,9 @@ most important first.
    - **In production use (dust-prior validation, 2026-11-11, 1490 fits on the fast node types,
      malloc tuning on):** no failures; peak RSS per fit median 1.42 GB, max 1.55, against median
      1.71 / max 2.07 in the earlier dust48 run without it (different galaxies, not paired).
-8. **Postprocessing: built 2026-11-13; ready for production (2026-11-16) apart from one
-   Blanca timing of the spectra step.** Per-fit step + catalogue ran end to end on Blanca in
-   the weekend run (item 15); spectra and the Chabrier table are tested on the Mac only.
+8. **Postprocessing: built 2026-11-13; ready for production (2026-11-16).** Per-fit step + catalogue ran end to end on Blanca in the weekend
+   run (item 15); the spectra step ran on one Blanca core (2.5% of a fit per galaxy) and now
+   runs as 10 parallel processes per job; jobs retry and requeue until every fit is done.
    - **At the end of every fit** (`nss_jax.py`; `--no-postprocess` turns it off),
      `postprocess_nss.py` writes ONE file, `<id>_<tag>_post.h5` (~300 KB), before the
      `.json`. It replaces the dynesty pipeline's per-galaxy `perc`/`unw`/`spec` files.
@@ -1084,14 +1084,44 @@ most important first.
      - Cost (Mac, multi-threaded): ~11 s to start (build + compile), ~5.5 s per galaxy
        (1,001 spectra, rest mags, percentiles, file rewrite), peak 1.6 GB for the process.
        Rerun 2026-11-16: 8 galaxies in 136 s wall, 19 s to start, but 447 s CPU (it uses
-       several threads), i.e. up to ~55 CPU-s per galaxy, which on one core would be ~10% of
-       a ~8 min fit. **The one open item: one-core Blanca numbers.** The weekend run had no
-       spectra step (its bundle predates it), so there are none yet; time a job's spectra
-       step (the job log has `time -v`) on ~100 weekend `_post.h5` copies. Per-galaxy files
+       several threads).
+     - **One Blanca core (2026-11-16; jobs 29634675/6, 50 weekend specz1k files each, logs in
+       private `results/blanca/pp_weekend/spectime_*.out`):** 0 failed. Start 26 s (build +
+       compile). **Per galaxy 7.6 s on EPYC 9354 and 16.4 s on Gold 6230** (2.15×, close to
+       the fits' 1.98×), i.e. **2.5% of a fit's time on both** (weekend median fit 5.15 / 10.86
+       min). Peak RSS 2.5 GB (Linux, so real). `phot_check` −0.023 to +0.043 mag, the
+       network error Joel measured. A JAX FutureWarning (float64 → float32 scatter inside
+       E-FSPS) is harmless at the pinned jax 0.10.2.
+     - **Layout problem this exposed, FIXED 2026-11-16:** one spectra process for the
+       element's 100 galaxies after the fits held all 21 cores for 13–27 min with 20 idle
+       (+20–35% node time instead of +2.5%). `tasklist_layout.sbatch` now runs `NSPEC` (10)
+       spectra processes at once under `mpirun lb` (10 × 2.5 GB fits the 32 GB; ~2–3 min
+       for 100 galaxies). Per-galaxy files
        grow to ~680 KB (spectrum percentiles); the collected `spec_` file gets only the
        best-fit spectrum (`modspec_map`, as before), ~45 KB per galaxy.
      - Blanca setup (once): efsps env, E-FSPS source and the slim library; see
        `blanca/README.md`, "Spectra step".
+   - **Restarts until done (2026-11-16, Wren: "if processes are interrupted, they will
+     re-start until all the fits are cleanly run and post-processed").** Each task-list
+     element loops until every one of its fits has a valid json, a valid `_post.h5` of the
+     current format and spectra, judged from the files only (`pipeline_status.py`): passes of
+     fits (or postprocessing reruns from the full `.npz` a failed postprocessing keeps), then
+     parallel spectra; Slurm requeues it on preemption; it requeues itself on USR1 10 min
+     before the time limit (`MAX_REQUEUE` 20); every write is atomic (`nss_jax.py` json now
+     too), stale temporary files are removed; a stage that runs to its end without its output
+     is counted, and after 3 such failures the fit is given up, listed, and the element exits
+     1, so nothing loops forever. The `.out` now appends across restarts. Tests:
+     `test_pipeline_status.py` (every damaged-file state, failure counting, give-up, exit
+     codes: PASS); a Mac rehearsal of the job script itself with fake `mpirun lb`/`scontrol`
+     and `blanca/chaos_monkey.sh` (5 real fits: preempted mid-fit, a truncated json, a deleted
+     `_post.h5` rerun from its `.npz`, a deleted `_post.h5` + `.npz` refitted, stale temporary
+     files removed, a fit and a spectra process SIGKILLed, the time-limit signal; restarts 0 →
+     1 → 2, then 5/5 done: `check_restart_test.py` PASS); **on Blanca (2026-11-16, job
+     29641695 on bgpu-casa1, 9 fits, `CHAOS=1`): `check_restart_test.py` PASS, 18/18.**
+     Requeued with 4 fits done and 5 running; the 4 damages; a fit and a spectra process
+     SIGKILLed; USR1 → self-requeue (Slurm restarts a requeued job after ~2 min); restart 2
+     found 1 fit and 8 spectra missing and ended DONE 9. `scontrol` works inside the job
+     (found before `module purge`). (blanca/README.md, "Restart test".)
    - The python-fsps stale-redshift bug no longer applies: nothing calls python-fsps.
    - Production jobs still pass `--no-full-npz`; if postprocessing fails, the fit writes
      the full `.npz` anyway, so `postprocess_nss.py --npz` can rerun it.
