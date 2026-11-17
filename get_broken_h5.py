@@ -94,7 +94,9 @@ for obj_id in tqdm(check_path):
     try:
         with h5py.File(h5file, "r") as f:
             list(f.keys())
-        #print(f"{obj_id}: OK")
+            if "run_params" not in f.attrs:
+                raise KeyError("run_params missing")
+        print(f"{obj_id}: OK")
         
     except OSError as e:
         msg = str(e).lower()
