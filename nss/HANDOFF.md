@@ -1,8 +1,13 @@
 # NSS + E-FSPS for MINERVA: startup, status, next steps
 
-Handoff guide (2026-11-09) for whoever picks this up next, human or Claude. Read this first,
-then [`STATUS.md`](STATUS.md) for the whole-project picture: both fitting paths, costs,
-robustness, decisions and ranked next steps.
+Handoff guide (2026-11-09; pointers updated 2026-11-16) for whoever picks this up next, human
+or Claude. Read this first, then [`STATUS.md`](STATUS.md) for the whole-project picture (both
+fitting paths, costs, robustness, what has been measured and decided), then
+[`PRODUCTION_PLAN.md`](PRODUCTION_PLAN.md) for what is left before and during production, in
+order. **Sections 5 and 6 below are the state and next steps as of 2026-11-09 and are kept as
+history; where they differ from STATUS.md or PRODUCTION_PLAN.md, those two are current**
+(convergence is solved with the mass integrated out and 32 inner steps, the priors match
+production, postprocessing and restart logic exist).
 The public parts live here, on branch `nss-efsps` of `wrensuess/prospector_minerva`, in
 `nss/`. Unreleased MINERVA photometry and MINERVA-specific results are NOT in this public
 repo; they are in the private handoff folder (see "Data and private files").
@@ -12,7 +17,8 @@ repo; they are in the private handoff folder (see "Data and private files").
 A pure-JAX photometric SED fitter: the efsps-photfit model (Joel Leja; E-FSPS emulator,
 Prospector-beta priors, 26 free parameters) sampled with blackjax **nested slice sampling**
 (NSS; Yallup, Kroupa & Handley 2026, arXiv:2601.23252). The goal is a fast, *robust* fitter
-for ~500k MINERVA galaxies on Blanca, one core per fit. It is a different model from the
+for every MINERVA galaxy with `use_phot = 1` on Blanca, one core per fit: ~720k galaxies in
+the three current fields and 1.63M fits over the three band-set runs (PRODUCTION_PLAN §1). It is a different model from the
 production pipeline (dynesty + Parrot in `prospector_minerva`), so its output would be a new
 catalogue, not a faster copy of the old one.
 
@@ -92,7 +98,7 @@ For MINERVA galaxies, copy `minerva_uds_test9.fits` from the private folder into
 | `blanca/` | Everything for Blanca: `README.md` (run order), `profile_nss.sbatch`, `fullfit_layout.sbatch` (20 seeds of one galaxy in the production layout), `check_binding.*`, `posterior_draws.*`, `high_z_dead_points.py`, `make_bundle.sh`, `requirements_nss.txt`. |
 | `results/`, `logs/` | Reference runs for UNCOVER 58858 (used by the tests), Blanca profiles/runs for 58858, all test/profile logs. |
 
-## 5. Status (2026-11-09)
+## 5. Status as of 2026-11-09 (history; current status is STATUS.md)
 
 **Done and validated**
 - JAX model == numpy to <= 1e-11 relative (theta and log L) at z = 0.01-15, every z bin,
@@ -144,7 +150,7 @@ EPYC 7713P 45). ~230-365 iterations per fit at 1000 live points. At the median C
   quoted error and parameter medians still move between seeds. Also not fixed: the
   inconsistent weights of two genuine solutions. Both are now the main open problems.
 
-## 6. Next steps, in order
+## 6. Next steps as seen on 2026-11-09 (history; current list is PRODUCTION_PLAN.md)
 
 0. **(New, 2026-11-09) Single-solution convergence**, now the main robustness gap. Diagnose
    before buying more inner steps (which is what costs time). Candidates: curved degeneracies
@@ -209,6 +215,9 @@ EPYC 7713P 45). ~230-365 iterations per fit at 1000 live points. At the median C
   switch points) and reports by z bin. Use **real galaxies, not mocks**.
 - Test before committing; commit/push only when Wren says; commit messages describe the
   change in words.
+- Documents stay consistent top to bottom: a change in one place is carried through every
+  section it touches (Wren, 2026-11-16).
+- Real galaxies out to z ≈ 11 are very important: never trade their recovery for lower-z gains.
 - Report before each step of multi-step work; Wren decides.
 - For Blanca: always give **exact, copy-paste commands** (full paths, one per block) for every
   transfer, job submission and progress check.

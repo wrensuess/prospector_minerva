@@ -1,9 +1,12 @@
 # MINERVA SED fitting: project status report
 
 **As of 2026-11-16.** This is the whole-project picture: both fitting paths, what they cost,
-how robust they are, and what to do next. For setup, the code map and pitfalls, read
-[`HANDOFF.md`](HANDOFF.md). Update this file when the picture changes, and keep the date
-current.
+how robust they are, and what has been measured and decided. For setup, the code map and
+pitfalls, read [`HANDOFF.md`](HANDOFF.md). **What is left to do before and during production,
+in what order, with Wren's decisions of 2026-11-16, is in
+[`PRODUCTION_PLAN.md`](PRODUCTION_PLAN.md)**; §6 below keeps the measurements behind it. Update
+this file when the picture changes, keep the date current, and keep the whole file consistent:
+a change in one place is carried through every section it touches (Wren, 2026-11-16).
 
 This repo is public. MINERVA catalogue ids are fine here (Wren, 2026-11-09). MINERVA
 photometry and per-fit result files stay in the private handoff folder, which also has the
@@ -22,11 +25,21 @@ detailed per-galaxy numbers (`PRIVATE_STATUS.md`).
 
 ## 1. Goal and constraints
 
-- **Goal:** fit ~500k MINERVA galaxies on CU Blanca, accurately and fast. Production gives each
-  fit **exactly one core**, so every timing here is single-core.
+- **Goal:** fit every MINERVA galaxy with `use_phot = 1` on CU Blanca, accurately and fast, in
+  three band sets (BB only, BB+MB, BB+MB+MIRI). Counted 2026-11-16 on the current UDS, COSMOS
+  and EGS catalogues: 719,808 galaxies, and **1.63M fits for the three runs** (a galaxy whose
+  band set does not change between runs is not refit); GOODS-N and perhaps GOODS-S come later
+  (PRODUCTION_PLAN §1). Production gives each fit **exactly one core**, so every timing here
+  is single-core.
+- **Real galaxies out to z ≈ 11 are very important** (Wren, 2026-11-16): tests report z 7–9,
+  9–11 and > 11 separately, and nothing is adopted that lowers the recovery of real z ≥ 9
+  galaxies.
+- **Photo-z target** (Wren, 2026-11-16): σ_NMAD and outlier fraction similar to eazy's;
+  individual redshifts are not expected to match a template code's.
 - **Robustness comes before speed** (Wren): sampler settings are the smallest at which repeated
   seeds give the same answer. Slightly longer fits are fine; untrustworthy fits are not.
-- **What "fast" means:** at 500k fits, every minute per fit is ~8.3k core-hours.
+- **What "fast" means:** every minute per fit is ~8.3k core-hours per 500k fits, so ~27k
+  core-hours over the 1.63M production fits.
 
 ## 2. Two paths
 
@@ -35,14 +48,17 @@ detailed per-galaxy numbers (`PRIVATE_STATUS.md`).
 | Model | production Prospector-beta model, Parrot emulator, 18 free parameters, AGN pinned off | efsps-photfit model (Joel Leja), E-FSPS emulator (w256), Prospector-beta priors (z, mass and dust-emission priors matched to production since 2026-11-13, §6 item 6b), 26 free parameters, AGN free |
 | Sampler | dynesty (rwalk, multi-ellipsoid) | blackjax nested slice sampling (NSS), pure JAX |
 | Where | `prospector_minerva`, branch `speedup-dynesty` (pushed, 6c08ce9); production is `dev_curc` | `prospector_minerva`, branch `nss-efsps`, folder `nss/` |
-| Status | exact speed-ups done; robustness at production settings is poor | main effort; redshift failures fixed on the test set; convergence and production engineering open |
+| Status | exact speed-ups done; robustness at production settings is poor | main effort; redshift discovery and convergence solved on the test sets (§4); photo-z gap to eazy at z > 3, speed and production engineering open (PRODUCTION_PLAN) |
 
 **These are different models.** Path B would produce a new catalogue, not a faster copy of the
 production one. So the cost comparison below is between pipelines, not a like-for-like speed-up.
 
-## 3. Cost per fit and for 500k fits (one Blanca core)
+## 3. Cost per fit and per 500k fits (one Blanca core)
 
-| Pipeline | Per fit | 500k fits | Robustness on the 9 test galaxies |
+The "per 500k fits" column is a yardstick for comparing pipelines, kept from when 500k was
+the expected size; production is 1.63M fits (§1), 3.3× these numbers.
+
+| Pipeline | Per fit | Core-hours per 500k fits | Robustness on the 9 test galaxies |
 |---|---|---|---|
 | A, production code (`dev_curc`) | ~60–90 min (Wren's figure: 1–1.5 h) | ~600k core-h | runs lock onto different solutions; 1192179 (dusty, z≈2.3) is at the wrong z in most runs |
 | A, speed-up branch, nlive 1600 | 4–6× cheaper per call (identical outputs); ~20–55 min | ~250k | same problems |
@@ -59,6 +75,11 @@ production one. So the cost comparison below is between pipelines, not a like-fo
   (23.9 min), because its jobs happened to land on slower CPUs. The ~0.8× comes from 20–30%
   fewer iterations at an unchanged cost per step on the one shared CPU type (EPYC 9354, +5%).
   A matched run on the dedicated node bgpu-casa1 would measure it directly.
+- **Production estimate (2026-11-16):** the weekend run of 1616 fits on all allowed CPU types
+  had a median of 8.2 min per fit, slower than the fast-type row above because 39% of its fits
+  ran on Gold 6230 nodes at 1.98× (§6 item 6b). At that median the 1.63M production fits cost
+  ~220k core-hours (~135k at the fast types' ~5 min). Preemptable jobs are capped at 2,000
+  cores per user: ~14,000 fits per hour, ~5 days of continuous full-cap running.
 
 ## 4. Robustness: what's fixed, what isn't
 
@@ -253,7 +274,8 @@ production one. So the cost comparison below is between pipelines, not a like-fo
            - **Blanca results (2026-11-10; `compare_massmarg.py`, log
              `compare_massmarg.log`, private): 21 galaxies × k = 32/52/78 × 20 seeds,
              against standard k=130 (1e6 start).** 1152437 k=52 has 18 seeds: two were
-             killed when the job ran out of memory; a rerun is pending.
+             killed when the job ran out of memory (rerun later and merged; see the k = 16 and 25
+             check below).
 
              | median over galaxies [worst] | standard k=130 | marg k=32 | marg k=52 | marg k=78 |
              |---|---|---|---|---|
@@ -414,8 +436,10 @@ production one. So the cost comparison below is between pipelines, not a like-fo
    points between them drifts at random.
    - PolyChord-style allocation by cluster volume is the known fix.
    - More live points also help.
-3. **Only 9 galaxies tested.** 1152437 needed a start of 10⁵–10⁶; some of the 500k
-   will need more. The broader validation (§6, item 4) measures how often.
+3. **Hand-picked test sets.** Discovery and convergence were tested on 9, then 21, hard
+   galaxies with the full non-MIRI band set; 1152437 needed a start of 10⁵–10⁶, and some of
+   the production galaxies will need more. A representative two-seed sample and the BB-only
+   and MIRI band sets are untested (§6 item 4; PRODUCTION_PLAN tasks R4, R5).
 
 ## 5. Decisions made
 
@@ -431,15 +455,18 @@ production one. So the cost comparison below is between pipelines, not a like-fo
 | 2026-11-11 | **32 inner steps** as the default for mass-marginal NSS (Wren). 20-seed Blanca tests at 16/25/32/52/78 on 21 galaxies: 32 is the smallest setting where the hard galaxies still follow the 1/√k scatter law; 25 is 17% cheaper with a worse tail, 16 breaks (R̂ up to 1.075). The strict "R̂ < 1.01 for every parameter" is missed in 6 of 21 galaxies (worst 1.029), but per-seed posteriors and SFHs agree by eye, the standard Wren applies. `nss_jax.py` and `fullfit_layout.sbatch` defaults are now n_live 1000, num_delete 100, 32 steps, tabulated prior, mass integrated out. |
 | 2026-11-11 | Results come back from Blanca by `rsync` pulled from the Mac, never `tar czf` on the login node. |
 | 2026-11-16 | **Dust ceiling gets a low-mass node** (Wren; §6 items 5b, 6b): A_V 0.5 (dust2 0.46) at log M ≤ 7, linear to A_V 1 at 8, then to no ceiling at 9 as before. Closes the dwarf trap that the 10⁶ floor reopened (reweighting: z > 5.5 majority at z < 1 17 → 11, no low-z collateral). The n(z) / high-z taper results are recorded in item 6b but NOT implemented: a bigger test comes first (Wren). |
-| 2026-11-13 | **z, mass and dust-emission priors matched to production** (Wren; §6 item 6b): z uniform (was efsps's n(z)), Leja+20-only mass function, `const_phi=True` (was Leja+20 → Tacchella+18), mass floor 10⁶ (was 10⁷), q_PAH / U_min / γ truncated normals as in production (were uniform / log-uniform). Implemented and tested here; Blanca re-validation pending. The fagn prior flat1_s025 stays and becomes the production default too (Ikki's `dev_curc` AGN prior was a test). |
+| 2026-11-13 | **z, mass and dust-emission priors matched to production** (Wren; §6 item 6b): z uniform (was efsps's n(z)), Leja+20-only mass function, `const_phi=True` (was Leja+20 → Tacchella+18), mass floor 10⁶ (was 10⁷), q_PAH / U_min / γ truncated normals as in production (were uniform / log-uniform). Implemented and tested here; re-validated on Blanca in the weekend run of 2026-11-13 (§6 item 6b). The fagn prior flat1_s025 stays and becomes the production default too (Ikki's `dev_curc` AGN prior was a test). |
 | 2026-11-09 | Convergence acceptance (single-solution galaxies, 20 seeds, judged on the median over galaxies; the worst galaxy is a warning, since 20 seeds measure scatter to ~16%). **Parameters:** Gelman–Rubin R̂ < 1.01 for every parameter (Vehtari+2021), i.e. median scatter between seeds ≤ 0.14 posterior half-widths, since R̂ ≈ √(1+S²). A parameter above 2× that threshold (S > 0.28) is a warning. Use rank-normalized R̂ where draws exist, so broad, skewed or edge-piled posteriors (dust2, dust_index) are judged fairly. **Width:** one run's 16–84 width within 10% of a reference posterior (long run or NUTS, not the pooled seeds). **logZ:** seed scatter ≤ 1.5× quoted to start, ideally lower (implementation error well below statistical); otherwise inflate the quoted error by the measured factor. **Plus:** no catastrophic failures (wrong-z or wrong-solution runs). Goal: generally quite good with no big obvious failure modes, not perfect. |
+| 2026-11-16 | **Production decisions** (Wren; full text in PRODUCTION_PLAN §3). Selection: everything with `use_phot = 1`. Three runs: BB only (HST + JWST wide + F410M), BB+MB (every other NIRCam medium band), BB+MB+MIRI (mophongo fluxes, error never below the aperture catalogue's for now); unchanged band sets are not refit, but every band-set catalogue is complete on its own. Photo-z target: statistics similar to eazy's, no eazy-agreement flag or hybrid redshift. Real z ≥ 9 galaxies must not lose recovery, so the redshift taper of §6 item 6b is not a candidate as tested. Stored products must allow prior re-weighting. Speed work approved: many galaxies per process, float32 network if it gains on one core, a time-boxed lockstep prototype. Joel retrains the emulator (mixture training draws) before production. Results go on `/scratch/alpine`, finished shards to `/pl/active/suess-minerva/`, nothing under `/projects`. |
 | standing | One core per fit; robustness before speed; every test spans redshift, uses real galaxies and reports by z bin; never commit to Joel's or Emilie's repos (fork first). |
 
 ## 6. Outstanding items to get NSS into production
 
 Convergence (the old item 1) is solved for now: with mass integrated out and 32 steps, the
 21-galaxy tests meet the criteria in spirit (§4, §5). What's left, grouped; within each group,
-most important first.
+most important first. **The ordered task list, with done-criteria, gates and dates, is
+PRODUCTION_PLAN §5–§6**; each item below names its task there where one exists, and this
+section stays the record of what was measured.
 
 **A. Correctness checks still open (before production)**
 
@@ -579,7 +606,10 @@ most important first.
 4. **Broader validation: 50–100 galaxies** across redshift and type (EELGs, dusty, quiescent,
    faint, spec-z as truth), 3–5 seeds each, at the production setting. Measure failure rates;
    compare with spec-z and the production catalogue. The 21 test galaxies were chosen to be
-   hard, so they say little about typical failure rates.
+   hard, so they say little about typical failure rates. Partly done by the 1052-galaxy
+   spec-z run (item 6b: one seed, full band set). Still open, and now planned at production
+   scale: ~2,000 random galaxies × 2 seeds in each band set (PRODUCTION_PLAN task R5), the
+   21 × 20 convergence set in each band set (R4), and a standing spec-z benchmark (Z1).
 
 **B. Model decisions (with Wren, Ikki and Joel)**
 
@@ -752,7 +782,7 @@ most important first.
        flat. The numbers above (T18 penalty, the n(z) cost of ~0.8 nats) describe the old
        efsps prior; redo them on the new one before designing a high-z floor.
 6b. **Production-matched z, mass and dust-emission priors. IMPLEMENTED and committed
-   2026-11-13; Blanca re-validation pending.** Wren asked for NSS's priors to match the
+   2026-11-13; re-validated on Blanca in the weekend run (results below).** Wren asked for NSS's priors to match the
    production dynesty fits (`params_prosp_parrot_AGNfree.py`, `params_parrot_phisfh`, on
    `dev_curc`) wherever the models share a parameter. In `nss_priors.apply_nss_priors`, called
    by `nss_efsps.build()`; efsps stays unmodified.
@@ -789,8 +819,9 @@ most important first.
        the 41-point fine window; a finer coarse grid changes nothing. Only on points the penalty
        already pushes down by 5–30 nats. Not fixed in code: putting the kinks (log M 8, 9) into
        the fine grid as nodes would remove it if it ever matters.
-   - **To re-validate on Blanca before production:** everything validated so far ran on the old
-     prior. The dust ceiling was tuned with a 10⁷ floor, and 11 of 13 production trap solutions
+   - **What had to be re-validated on Blanca (done in the weekend run below, except the
+     9-galaxy set on its own, which is part of the 21):** everything validated before
+     2026-11-13 ran on the old prior. The dust ceiling was tuned with a 10⁷ floor, and 11 of 13 production trap solutions
      sit below 10⁷, so rerun the dust48 trap set and the spec-z validation (item 5b), the 21
      convergence galaxies at 32 steps (§4), and the 9-galaxy test set.
    - **Weekend run prepared 2026-11-13** (all defaults, i.e. this prior + dust ceiling `mass`,
@@ -905,8 +936,21 @@ most important first.
          departs from production's uniform z. Confirm by refitting before adopting.
      - **Decided 2026-11-16 (Wren):** B05 ADOPTED (`dust_prior.CEILING` now has the node at log M 7:
        `M0` 7, `d_vlo` A_V 0.5; the 2026-11-11 ceiling is kept as `CEILING_20261111`). The n(z)
-       prior and the high-z taper are NOT implemented: a bigger test comes first. Uniform z stays
-       the NSS default for now, so the z > 9 overshoot is still open.
+       prior and the high-z taper are NOT implemented. Uniform z stays the NSS default, so the
+       z > 9 overshoot is still open. **Since 2026-11-16 (Wren: real galaxies out to z ≈ 11 are
+       very important) T8 and T9 are not candidates as tested:** by z50 T8+B05 loses 2 of the 14
+       real z ≥ 9 galaxies. The overshoot is to be attacked through nebular/line priors and the
+       Lyα damping wing instead, on a larger benchmark split into tuning and confirmation halves
+       (PRODUCTION_PLAN tasks Z1–Z4).
+     - **The gap to eazy, re-measured 2026-11-16** (same 1041 galaxies; the by-bin tables are in
+       PRODUCTION_PLAN §2). The sample over-represents z > 5.5 and includes 61 galaxies chosen
+       because production failed, so "NSS ≤ production at z 3–4" above is a selection effect: on
+       the 60 randomly drawn galaxies at z 3–4 the outlier rates are NSS 8.3%, production 5.0%,
+       eazy 3.3%. Weighted back to the parent spec-z pool (4561): NSS 8.1 ± 1.2%, eazy 5.0%; NSS
+       matches eazy below z = 3. 163 of the 173 NSS outliers have ≥ 1% of their posterior at the
+       spec-z (108 have > 10%) and the best likelihood there is within ~1 nat of the best
+       elsewhere: priors and model, not the sampler. 172 of the 173 have a grade-3 DJA spectrum,
+       so the truth is clean. At z ≥ 9 NSS is biased +0.04 (eazy −0.005).
        - Tests (Mac; `logs/test_dust_prior_lowmassnode*.log`): `test_dust_prior.py` PASS on 1197855
          (new section 2b: ceiling nodes, unchanged above log M 8 and for the sfr / mass_sfr kinds
          and the old configs; trap-like error added 1.7e-3 nats). ln C (mass) −1.08 → −1.40.
@@ -971,7 +1015,7 @@ most important first.
        Results differ at the 1e-13 level (same iterations and logZ; percentiles move ~1e-13
        half-widths). But each iteration is ~6% slower (+1 to +10%; on the placements where
        other fits ran ~10% fast, it is still no faster than the reference), so likely ~9%.
-       Not adopted: at 500k fits that costs more than the memory is worth, unless memory
+       Not adopted: at production scale that costs more than the memory is worth, unless memory
        turns out to be the binding constraint.
      - Timing noise: fits on some cores of the same node ran ~10% faster (prior start 55 vs
        95 s), so paired ratios are good to ~±5%.
@@ -981,7 +1025,9 @@ most important first.
    - **In production use (dust-prior validation, 2026-11-11, 1490 fits on the fast node types,
      malloc tuning on):** no failures; peak RSS per fit median 1.42 GB, max 1.55, against median
      1.71 / max 2.07 in the earlier dust48 run without it (different galaxies, not paired).
-8. **Postprocessing: built 2026-11-13; ready for production (2026-11-16).** Per-fit step + catalogue ran end to end on Blanca in the weekend
+8. **Postprocessing: built 2026-11-13 and working end to end; not yet in its production
+   form (compact format, re-weighting store, catalogue builder at scale: last bullet of this
+   item).** Per-fit step + catalogue ran end to end on Blanca in the weekend
    run (item 15); the spectra step ran on one Blanca core (2.5% of a fit per galaxy) and now
    runs as 10 parallel processes per job; jobs retry and requeue until every fit is done.
    - **At the end of every fit** (`nss_jax.py`; `--no-postprocess` turns it off),
@@ -1061,9 +1107,10 @@ most important first.
        SFR ratios uniform in ±4 and rarely saw smooth, prior-like histories; on our vectors
        its error is 0.048 mag (68%) per band, against 0.012 on its uniform held-out set. So
        spectra and rest-frame colours (exact E-FSPS) are right, and the network photometry
-       the fits use carries that error. Joel will inflate the package's emulator error term
-       (efsps-photfit; the NSS likelihood picks it up, so fits change; re-validate when it
-       lands); the longer-term fix is a retrain with prior-like histories in the training draw.
+       the fits use carries that error. **The fix is a retrain (Joel, 2026-11-16):** mixture
+       training draws instead of flat ones, ~0.02 mag expected, before the production run
+       (§7); the fits change with it, so the validation gate runs on the new network
+       (PRODUCTION_PLAN D7, task J1).
        The per-galaxy `phot_check` in each `_post.h5` (−0.005 to +0.052 mag median on the
        test galaxies) measures exactly this network error.
      - **IMF: Chabrier everywhere (Wren, 2026-11-16).** The training library is `imf_type` 1
@@ -1121,16 +1168,32 @@ most important first.
      Requeued with 4 fits done and 5 running; the 4 damages; a fit and a spectra process
      SIGKILLed; USR1 → self-requeue (Slurm restarts a requeued job after ~2 min); restart 2
      found 1 fit and 8 spectra missing and ended DONE 9. `scontrol` works inside the job
-     (found before `module purge`). (blanca/README.md, "Restart test".)
+     (found before `module purge`). (blanca/README.md, "Restart test".) Committed 2026-11-16
+     (`4f7d337`). A review the same day found what this does not yet cover at production
+     scale (PRODUCTION_PLAN task O0): the exit status of `mpirun lb` is ignored, there is no
+     stop when most fits of a pass fail, status scans are quadratic in files per directory,
+     a hand-run status check during a run removes live temporary files, and nothing prevents
+     submitting the same run twice.
+   - **Not ready for production scale (review of 2026-11-16; PRODUCTION_PLAN tasks P1–P6,
+     O1–O3):** ~1.08 MB and 4 files per fit (~1.8 TB and 6.5M files for 1.63M fits, against
+     4.2 TB free in the permanent store), where ~0.3 MB would do; no p(z) product,
+     redshift-solution table or quality flags in the catalogue; the code version reads
+     "unknown" in every Blanca product; `catalog_runs.sbatch` handles only UDS and COSMOS and
+     fails above ~50k files; a format change forces refits because no samples are kept; no
+     band-set switch, and the reader finds no MIRI columns in the current `_mophongo`
+     catalogues.
    - The python-fsps stale-redshift bug no longer applies: nothing calls python-fsps.
    - Production jobs still pass `--no-full-npz`; if postprocessing fails, the fit writes
      the full `.npz` anyway, so `postprocess_nss.py --npz` can rerun it.
 9. **Port into a fork of efsps-photfit** (under `wrensuess`; never commit to Joel's repo).
-10. **A driver that runs many galaxies per process** (saves ~10 s of startup and the ~16 s
-    JAX compile per fit).
-11. **Checkpointing:** a preempted job currently restarts all 20 of its fits.
+10. **A driver that runs many galaxies per process** (PRODUCTION_PLAN task S3). Measured
+    2026-11-16 from Blanca logs: fixed overhead is ~58–70 s of a ~390–520 s fit (imports,
+    build, compile, prior start), ~13–15%, because the photometry is compiled in as constants
+    and every galaxy recompiles.
+11. **Checkpointing: not planned.** Since 2026-11-16 a requeued job reruns only its unfinished
+    fits (item 8), so a preemption loses at most part of one fit per core.
 12. **Redshift-mode flags and provenance** in the outputs: solutions found and their weights,
-    code and emulator versions, settings.
+    code and emulator versions, settings (PRODUCTION_PLAN tasks R2, O4, P4).
 13. **CPU types.** **First timings, 2026-11-11** (the memprof jobs above; production
     defaults, one core per fit, but only 8 fits on each node, so a full node may be slower).
     Median ms per NSS iteration, and the ratio to Gold 5418Y (job 29478805):
@@ -1145,13 +1208,14 @@ most important first.
     32-core node. `tasklist_layout.sbatch` default:
     `epyc9354|gold5418y|5418y|milan|icelake|rome|cascadelake`. Gold 6130 and
     E5-2680 v4 (1.7–1.85×) stay out. Still to do:
-    - time a full node (21 tasks) per type;
+    - time a full node (21 tasks) per type (PRODUCTION_PLAN task S1): in the weekend run the
+      Gold 6230 was 1.98× the EPYC 9354 at full load, not the 1.36× above (item 6b);
     - the Gold 6130 slowness: 1.26× the Gold 6230 here at the same clock (earlier, 51 ms
       against 31 ms per call for the Gold 6150, where clock speed explains only 1.3× of the
       1.6×). Test an AVX2 cap (`XLA_FLAGS=--xla_cpu_max_isa=AVX2`) and the hyperthreading
       setup. This serves the "no slow node types" goal.
-14. **A production spot check:** refit a random ~1% of galaxies with a second seed at 52
-    steps and compare. It's the only way to catch, in production, galaxies harder than the 21
+14. **A production spot check** (part of every production run, PRODUCTION_PLAN §6): refit a
+    random ~1% of galaxies with a second seed at 52 steps and compare. It's the only way to catch, in production, galaxies harder than the 21
     tested.
 15. ~~**An end-to-end test on ~1000 galaxies** through fit, postprocessing and catalogue.~~
     **Done: the weekend run (2026-11-13; Wren, 2026-11-16: it counts).** 1616/1616 fits
@@ -1164,23 +1228,34 @@ most important first.
     are committed and pushed to `origin/nss-efsps` on wrensuess/prospector_minerva (public),
     up to `d94c518`.
 
-**D. Optional speed-ups (not blocking)**
+**D. Speed-ups (approved by Wren 2026-11-16; PRODUCTION_PLAN tasks S3–S5)**
 
 17. **blackjax lockstep waste: maybe 1.5–2×, medium effort.** The 100 chains run in
     lockstep, and only ~35% of the likelihood evaluations computed are used by any chain.
     Draw several candidate points per slice at once and take the first valid one (plain
     rejection within the bracket, a valid sampler). Must pass the toy and numerics tests.
-18. **Emulator in float32: maybe 1.3–1.8× on the network's share, low effort.** Rounding at
-    float32 (~1e-7) is far below the emulator's ±2.5% accuracy, but it needs the by-redshift
-    numerics tests. It would also cut memory.
+    A prototype time-boxed to 3 days; adopted only if ≥ 1.4× on one Blanca core with the
+    21-galaxy convergence unchanged.
+18. **Network in float32: switch built 2026-11-16 (uncommitted, off by default); gain on one
+    core unmeasured.** The weights are float32 on file (the network was trained with x64 off;
+    we up-cast them), so float32 hidden layers reproduce the training arithmetic.
+    `jax_model.JaxLogLike(model, emu_dtype="float32")` or `NSS_EMU_DTYPE=float32`. Mac tests
+    on six galaxies, z 0.12–8.5, prior draws over z 0.01–15: with the switch off everything is
+    bitwise equal to the committed code; with it on the network output differs by 1e-6 mag
+    median and ≤ 3e-4 mag in every z bin (emulator error 0.02–0.05 mag), log L at posterior
+    draws by ≤ 5e-3 nats, no finite/non-finite flips. Costs: no bitwise equality with float64
+    fits or the numpy reference, ~1e-4 nats of fine-scale noise in log L. Mac speed (which
+    does not count) only 3–15% in wall time. Next: a matched one-core timing on bgpu-casa1;
+    adopt only if the gain is real.
 19. **25 inner steps** would save another 17%, with a somewhat worse tail (§4). Revisit after
     the broader validation.
 
 **Not worth optimizing now:** prior draws (~20 s, ~5% of a fit) and per-fit startup (~10 s
 plus the ~16 s compile; item 10 removes both).
 
-**Rough ceiling:** at 32 steps, ~40–60k core-hours for 500k fits on the fast node types,
-against production's ~600k. Items 17 and 18 might take it to ~25–40k.
+**Cost at 32 steps:** ~40–60k core-hours per 500k fits on the fast node types (production
+dynesty: ~600k), i.e. ~135k for the 1.63M production fits, or ~220k at the 8.2 min median over
+all allowed types (§3). Items 10, 17 and 18 and the Gold 6230 fix (item 13) are the levers.
 
 ## 7. Open items for other people
 
@@ -1191,8 +1266,14 @@ against production's ~600k. Items 17 and 18 might take it to ~25–40k.
     stale output, and postprocessing calls it once per posterior sample;
   - why `target_n_effective` is 20000;
   - which config made the production SPS catalogue (AGN free, maybe MIRI).
-- **Joel:** before porting the NSS code into efsps-photfit, fork it under `wrensuess`.
-  We depend on commit `6d5ab6d` (v0.2.1), unmodified.
+- **Joel:**
+  - before porting the NSS code into efsps-photfit, fork it under `wrensuess`. We depend on
+    commit `6d5ab6d` (v0.2.1), unmodified;
+  - **retrain the emulator before production** (2026-11-16), once Emilie's E-FSPS is final,
+    with mixture training draws instead of flat ones (his estimate ~0.02 mag; the current
+    network is off by 0.048 mag on realistic SFHs, item 8). He asks for 3–5 days' notice; we
+    need it by about 2026-12-04. Our requests are PRODUCTION_PLAN task J1 (message drafted for
+    Wren to send).
 - **Wren:**
   - the AGN prior: adopted 2026-11-11 (flat1_s025, §6 item 5); implemented in NSS and committed
     2026-11-12, together with the adopted dust prior (§6 item 5b);
@@ -1208,8 +1289,12 @@ against production's ~600k. Items 17 and 18 might take it to ~25–40k.
 - **Code:** `wrensuess/prospector_minerva`, branches `nss-efsps` (this folder) and
   `speedup-dynesty`. efsps-photfit at `6d5ab6d`.
 - **Private data and results:** `nss_private_handoff/` (MINERVA test subset, per-galaxy
-  results, `PRIVATE_STATUS.md`). On Blanca:
-  `/projects/kasu8993/nss_blanca/nss_test/{results,logs,blanca/*.out}`.
+  results, `PRIVATE_STATUS.md`). On Blanca, the test runs so far:
+  `/projects/kasu8993/nss_blanca/nss_test/{results,logs,blanca/*.out}`. `/projects` has 27 GB
+  free (2026-11-16), so production writes to `/scratch/alpine/$USER` (purged 90 days after a
+  file is created) and keeps finished shards and catalogues in `/pl/active/suess-minerva/`
+  (4.2 TB free, shared with Ikki); PRODUCTION_PLAN D6.
+- **Plan:** [`PRODUCTION_PLAN.md`](PRODUCTION_PLAN.md).
 - **Environments:** Linux and Apple silicon use the pip recipe in HANDOFF §3; an Intel Mac uses
   the conda-forge recipe there. Blanca: `/projects/kasu8993/software/anaconda/envs/nss`.
 - **Old-Mac only, not on the current machine:** the dynesty speed-up worktree and its
