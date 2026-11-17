@@ -120,7 +120,7 @@ print("[Info] Failed IDs:")
 print(failed_ids)
 print("[Info] TOTAL-processed =",len(fittedid_all)-len(all_unique))
 
-#np.save("./../phot_catalog/brokenid2_MINERVA-"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt",np.array(failed_ids))
+np.save("./../phot_catalog/brokenid3_MINERVA-"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt",np.array(failed_ids))
 
 pdb.set_trace()
 
