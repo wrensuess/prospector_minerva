@@ -213,4 +213,13 @@ check("9a obs bands, flux, valid", same and (vv == model.valid).all()
       and np.allclose(o["flux"][:][vv], phot.flux[vv], rtol=0, atol=0),
       f"{int(vv.sum())}/{vv.size} valid")
 
+# 10. provenance (provenance.py): the file says which code made it, never "unknown"
+fa = f["fit"].attrs
+pp = json.loads(fa["postprocess_provenance"]) if "postprocess_provenance" in fa else {}
+code = json.loads(fa["summary_json"]).get("postprocess_code", {})
+check("10 provenance attrs, code version known", "provenance" in fa and bool(pp)
+      and not str(pp.get("nss_commit", "unknown")).startswith("unknown")
+      and not str(code.get("git", "unknown")).startswith("unknown"),
+      f"nss {pp.get('nss_commit')} ({pp.get('nss_source')}, dirty {pp.get('nss_dirty')})")
+
 print(f"RESULT: {'PASS' if not fails else 'FAIL ' + ', '.join(fails)}")

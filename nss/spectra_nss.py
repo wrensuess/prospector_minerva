@@ -38,6 +38,7 @@ Products, per galaxy, from its 1,000 equal-weight draws and its best fit:
 
     python spectra_nss.py --libdir LIB --dir RESULTS            # every *_post.h5 below RESULTS
     python spectra_nss.py --libdir LIB --files a_post.h5 b_post.h5
+    python spectra_nss.py --libdir LIB --list L --progress L.started   # as the job script runs it
     python spectra_nss.py --make-slim FULL_LIB SLIM_LIB         # weights-only copy (~250 MB)
 Environment: E-FSPS importable (EFSPS_SRC, default ../E-FSPS next to efsps-photfit) with its
 dependencies (the efsps env, not the nss env); EFSPS_PARENT for efsps-photfit.
@@ -333,6 +334,9 @@ def main():
     p.add_argument("--batch", type=int, default=50)
     p.add_argument("--cosmo", default=COSMO)
     p.add_argument("--redo", action="store_true")
+    p.add_argument("--progress", default=None,
+                   help="append each galaxy's path to this file as it is STARTED (the job script "
+                        "charges a failure only to galaxies a failed process had started)")
     p.add_argument("--no-fast-lines", action="store_true")
     p.add_argument("--make-slim", nargs=2, metavar=("FULL_LIB", "SLIM_LIB"))
     args = p.parse_args()
@@ -373,6 +377,11 @@ def main():
     n_ok = n_skip = n_fail = 0
     for path in files:
         t = time.time()
+        if args.progress:
+            with open(args.progress, "a") as fh:
+                fh.write(path + "\n")
+                fh.flush()
+                os.fsync(fh.fileno())
         try:
             r = process(sp, path, redo=args.redo)
             n_skip += r == "skipped"

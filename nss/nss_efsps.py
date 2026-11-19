@@ -139,22 +139,20 @@ def run_nss(model, n_live, num_delete, num_inner_steps, seed, termination=-3.0,
                 timed_out=timed_out, cb=cb)
 
 
-def summarise(model, res, phot, args, tag):
-    # sampling coordinates other than the standard cube (nss_jax --mass-coord marginal)
-    # come with their own 26-d theta, including a posterior draw of logmass per sample
-    theta = res["theta"] if "theta" in res else model.prior_transform(res["u"])
+def _summary_head(model, res, phot, args, tag):
+    """The summary entries that need no usable posterior weights."""
     w = res["w"]
-    keep = w > 1e-8 * w.max()
-    names = model.free
-    ess = 1.0 / np.sum(w ** 2)
-    out = {
+    with np.errstate(invalid="ignore", divide="ignore"):    # NaN only for "nonfinite" runs
+        ess = 1.0 / np.sum(w ** 2)
+        logz, logz_err = float(np.mean(res["logz_draws"])), float(np.std(res["logz_draws"]))
+    return {
         "id": phot.id, "tag": tag, "n_dim": model.n_dim, "n_bands_used": int(model.valid.sum()),
         "z_catalog": phot.z_catalog, "mu": phot.mu,
         "settings": {"n_live": args.n_live, "num_delete": args.num_delete,
                      "num_inner_steps": args.num_inner_steps, "seed": args.seed,
                      "fix_z": args.fix_z, "z_window": args.z_window,
                      "termination": args.termination},
-        "logZ": float(np.mean(res["logz_draws"])), "logZ_err": float(np.std(res["logz_draws"])),
+        "logZ": logz, "logZ_err": logz_err,
         "max_logL": float(res["logl"].max()),
         "chi2_at_max": None,
         "ess": float(ess), "n_dead": int(len(w)), "iterations": res["iterations"],
@@ -162,8 +160,25 @@ def summarise(model, res, phot, args, tag):
         "callback_calls": res["cb"].n_calls, "model_rows_evaluated": res["cb"].n_rows,
         "rows_outside_cube": res["cb"].n_rows_outside,
         "seconds_in_numpy_model": res["cb"].seconds,
-        "percentiles": {n: weighted_quantiles(theta[keep, i], w[keep]) for i, n in enumerate(names)},
     }
+
+
+def summarise(model, res, phot, args, tag):
+    """-> (summary dict, theta of every sample). A run with status "nonfinite" (nss_jax.py:
+    no usable weights) gets the entries that need no weights, empty percentiles and
+    theta None."""
+    if res.get("status") == "nonfinite":
+        out = _summary_head(model, res, phot, args, tag)
+        out["percentiles"] = {}
+        return out, None
+    # sampling coordinates other than the standard cube (nss_jax --mass-coord marginal)
+    # come with their own 26-d theta, including a posterior draw of logmass per sample
+    theta = res["theta"] if "theta" in res else model.prior_transform(res["u"])
+    w = res["w"]
+    keep = w > 1e-8 * w.max()
+    names = model.free
+    out = _summary_head(model, res, phot, args, tag)
+    out["percentiles"] = {n: weighted_quantiles(theta[keep, i], w[keep]) for i, n in enumerate(names)}
     best = theta[np.argmax(res["logl"])]
     fm, sig_emu, _ = model.model_fluxes(best[None, :])
     v = model.valid

@@ -32,12 +32,37 @@ else
 fi
 rsync -a --exclude '.git' --exclude '__pycache__' --exclude '*.pyc' --exclude '.DS_Store' \
     "$EFSPS/" "$STAGE/efsps-photfit/"
-# provenance: there is no .git on Blanca, so record the commits the bundle was built from
+# provenance: there is no .git on Blanca, so record the commits the bundle was built from.
+# The first lines are for people; provenance.py reads the key=value lines. "dirty" uses
+# provenance.py's rule: a tracked file differs from the commit, or an untracked code file
+# (.py .sh .sbatch, which the bundle copies) is present. Modified files: comma-separated,
+# relative to the repository root, as `git status --porcelain` prints them.
+modified() {    # $1 = checkout; prints the files that make it dirty, comma-separated
+    { git -C "$1" status --porcelain --untracked-files=all -- . 2>/dev/null || true; } \
+        | awk '{ code = substr($0, 1, 2); name = substr($0, 4)
+                 if (code != "??" || name ~ /\.(py|sh|sbatch)$/) print name }' | paste -sd, -
+}
+dirty() {       # $1 = checkout, $2 = its modified list -> true / false / unknown (no checkout)
+    if ! git -C "$1" rev-parse HEAD >/dev/null 2>&1; then echo unknown
+    elif [ -n "$2" ]; then echo true; else echo false; fi
+}
+NSS_MOD=$(modified "$NSS")
+EFSPS_MOD=$(modified "$EFSPS")
 {
     echo "built $(date '+%Y-%m-%d %H:%M %Z')"
     echo "nss: $(git -C "$NSS" rev-parse HEAD 2>/dev/null || echo unknown)" \
-         "$( [ -n "$(git -C "$NSS" status --porcelain -- . 2>/dev/null | grep -v '^??')" ] && echo '(with uncommitted changes)')"
+         "$( [ -n "$NSS_MOD" ] && echo '(with uncommitted changes)')"
     echo "efsps-photfit: $(git -C "$EFSPS" rev-parse HEAD 2>/dev/null || echo unknown)"
+    echo "nss_commit=$(git -C "$NSS" rev-parse HEAD 2>/dev/null || echo unknown)"
+    echo "nss_branch=$(git -C "$NSS" rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)"
+    echo "nss_dirty=$(dirty "$NSS" "$NSS_MOD")"
+    echo "nss_modified=$NSS_MOD"
+    echo "efsps_commit=$(git -C "$EFSPS" rev-parse HEAD 2>/dev/null || echo unknown)"
+    echo "efsps_dirty=$(dirty "$EFSPS" "$EFSPS_MOD")"
+    echo "efsps_modified=$EFSPS_MOD"
+    echo "efsps_pinned=$PIN"
+    echo "created_utc=$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+    echo "builder_host=$(hostname)"
 } > "$STAGE/nss_test/BUNDLE_INFO.txt"
 find "$STAGE" \( -name '__pycache__' -o -name '.DS_Store' \) -prune -exec rm -rf {} +
 tar -czf "$OUT" -C "$STAGE" nss_test efsps-photfit

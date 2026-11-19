@@ -64,7 +64,9 @@ Output layout (<id>_<tag>_post.h5; float64 unless noted; percentile axis last):
            model_flux (nb,), stellar_mass, mwa, sfr (3,), ssfr (3,)
   obs: bands (nb,) strings, flux, err (maggies; NaN = not used), valid (nb,) int8, attrs mu
   model_flux_percentiles (nb, 7) maggies
-  fit: attrs summary_json (the fit's summary, without its percentiles)
+  fit: attrs summary_json (the fit's summary, without its percentiles),
+       provenance (JSON: the fit's provenance, provenance.py; a fresh one if the summary has
+       none), postprocess_provenance (JSON: of the process that wrote this file)
 
     from postprocess_nss import postprocess
     postprocess(model, phot, theta, w, summary, out_path, seed)
@@ -75,7 +77,6 @@ Standalone, from a fit's full sample file (<id>_<tag>.npz, nss_jax.py without --
 import argparse
 import json
 import os
-import subprocess
 import sys
 import time
 from datetime import datetime, timezone
@@ -86,6 +87,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.environ.get("EFSPS_PARENT", "/Users/wren/Projects/MINERVA/efsps-photfit"))
 from efsps_photfit.sfh import agebins_batch, mass_fractions   # noqa: E402
 from efsps_photfit.survival import SurvivingFraction           # noqa: E402
+import provenance as prov                                      # noqa: E402
 
 FORMAT_VERSION = 3              # 2: + draws/agebins, percentiles/mformed_cum(_frac); 3: Chabrier surviving mass
 #: Surviving-mass table: CHABRIER (build_survival_table.py), because the stellar library the w256
@@ -225,17 +227,9 @@ def chi2_at(model, theta_row):
 
 # ------------------------------------------------------------------ provenance
 def code_version():
-    here = os.path.dirname(os.path.abspath(__file__))
-    try:
-        h = subprocess.run(["git", "-C", here, "rev-parse", "HEAD"], capture_output=True,
-                           text=True, timeout=10)
-        if h.returncode == 0:
-            d = subprocess.run(["git", "-C", here, "status", "--porcelain", "--", here],
-                               capture_output=True, text=True, timeout=10)
-            return {"git": h.stdout.strip(), "dirty": bool(d.stdout.strip())}
-    except Exception:                                             # pragma: no cover
-        pass
-    return {"git": "unknown (not a git checkout)", "dirty": None}
+    """{"git": commit, "dirty", ...}: from git in a checkout, from BUNDLE_INFO.txt in the
+    Blanca bundle (provenance.code_version)."""
+    return prov.code_version()
 
 
 def _meta_float(meta, key):
@@ -321,6 +315,9 @@ def postprocess(model, phot, theta, w, summary, out_path, seed=0, n_draws=N_DRAW
     zs = _meta_float(phot.meta or {}, "z_spec")
     s = {k: v for k, v in summary.items() if k != "percentiles"}
     s["postprocess_code"] = code_version()
+    pp_prov = prov.provenance(catalog=(phot.meta or {}).get("source"),
+                              emulator=summary.get("emulator"))
+    fit_prov = summary.get("provenance") or pp_prov
     tmp = f"{out_path}.tmp.{os.getpid()}"
     written = False
     try:
@@ -386,6 +383,9 @@ def postprocess(model, phot, theta, w, summary, out_path, seed=0, n_draws=N_DRAW
 
             fg = f.create_group("fit")
             fg.attrs["summary_json"] = json.dumps(s, default=str)
+            fg.attrs["provenance"] = json.dumps(prov.finite_or_none(fit_prov), default=str)
+            fg.attrs["postprocess_provenance"] = json.dumps(prov.finite_or_none(pp_prov), default=str)
+        prov.fsync_path(tmp)                                    # on disk before it becomes real
         os.replace(tmp, out_path)
         written = True
     finally:
@@ -412,6 +412,9 @@ def main():
     stem = args.npz[:-4] if args.npz.endswith(".npz") else args.npz
     js = args.json or stem + ".json"
     summary = json.load(open(js)) if os.path.exists(js) else {"tag": os.path.basename(stem)}
+    if summary.get("status", "ok") != "ok":            # nss_jax.py STATUSES; old files have none
+        raise SystemExit(f"{js}: fit status {summary['status']}; only status ok fits are "
+                         "postprocessed (the posterior of the others is incomplete)")
     if args.fix_z is None:
         args.fix_z = (summary.get("settings") or {}).get("fix_z")
     phot = read_photometry(args.catalog, [args.id], include_miri=args.include_miri)[0]
@@ -431,10 +434,7 @@ def main():
         prev = summary.get("postprocess")
         summary["postprocess"] = dict(r, rerun_standalone=True,
                                       **({"rerun_after": prev} if prev else {}))
-        tmp = f"{js}.tmp.{os.getpid()}"
-        with open(tmp, "w") as fh:
-            json.dump(summary, fh, indent=1)
-        os.replace(tmp, js)
+        prov.write_json_atomic(js, summary)                    # tmp + fsync + replace, no NaN
 
 
 if __name__ == "__main__":

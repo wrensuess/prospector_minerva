@@ -9,7 +9,8 @@ Outputs in --out (dataset names follow the old files wherever the quantity exist
                      log_fagn, log_agn_tau, gas_logz, duste_qpah, duste_umin, log_duste_gamma,
                      and the E-FSPS parameters the old model did not have (logsfr_ratios_1-9,
                      gas_logu, gas_logn, delta_*); zred_ml, zred_spec (-99 = none),
-                     logZ, logZ_err, ess; ok (row filled)
+                     logZ, logZ_err, ess; ok (row filled); fit_status (int8, codes in
+                     attrs fit_status_codes) and timed_out (int8) for EVERY fit found
   sfh_<prior>.h5     objid, percentiles (fractions), agebins_max (log10 yr),
                      sfh (n, 7, 100) Msun/yr on logspace(1, agebins_max, 100) yr;
                      mformed_cum (n, 7, 100) Msun formed before each lookback time and
@@ -27,7 +28,9 @@ Outputs in --out (dataset names follow the old files wherever the quantity exist
   sps_catalog/<catalogue>_SPScatalog_<version>.fits   every catalogue row; the old columns
                      (id, ra, dec, z_spec, z_ml, z/mtot/mstar/met/mwa/dust2/dust_index/
                      dust1_fraction/logfagn/sfr10/30/100/ssfr10/30/100 _16/_50/_84, chi2,
-                     nbands) plus logZ, logZ_err; rows without a fit are masked.
+                     nbands) plus logZ, logZ_err, ess, timed_out and fit_status ("ok",
+                     "timed_out", "capped", "nonfinite", "bad_input", "post_unusable",
+                     "unknown"; "" = no fit found); rows without a usable fit are masked.
                      Rest-frame U V J u g i and UV/VJ/gi/ug columns come from spectra_nss.py
                      (masked for galaxies it has not reached yet).
   quant_ also gets rest_UVJugi, rest_gz, rest_NUVrJ (+ _colors, _map), and spec_ gets
@@ -36,6 +39,18 @@ Outputs in --out (dataset names follow the old files wherever the quantity exist
   failed_files.txt, duplicate_ids.txt   (only if there are any)
 Rows are sorted by id. Unreadable files keep their row with ok = 0 and NaN data, and are
 listed in failed_files.txt; they are masked in the FITS catalogue.
+
+Fit status (nss_jax.py STATUSES): every fit is found from its <id>_<tag>.json as well as its
+_post.h5, so a fit with no _post.h5 (timed out, capped, non-finite, bad input, or
+postprocessing failed) still gets its row, masked, with its status; never a silently
+missing or silently good row. The status comes from the json ("status"), else from the
+_post.h5's copy of the summary; files from before the status field count as "ok" if they
+have logZ and timed_out is false. "post_unusable": the fit says ok but its _post.h5 is
+missing, unreadable or not in the common layout (failed_files.txt says which).
+Provenance (provenance.py): the distinct nss commits, dirty flags, efsps-photfit commits,
+emulator md5s and library versions of all fits, with counts, go into the HDF5 attrs
+("provenance", JSON) and the FITS header; a run whose fits disagree on the nss commit or
+emulator md5 is reported with a WARNING.
 
     python make_catalog_nss.py --indir RESULTS --catalog PHOT.fits --out OUT [--workers 20]
 """
@@ -69,10 +84,83 @@ REST_BASE = ["rest_UVJugi", "rest_UVJugi_colors", "rest_gz", "rest_gz_colors",
              "rest_NUVrJ", "rest_NUVrJ_colors"]
 REST_KEYS = REST_BASE + [k + "_map" for k in REST_BASE]     # spectra_nss.py; old names and shapes
 BLOCK = 256                        # rows per write
+#: fit_status codes in quant_<prior>.h5 (attrs fit_status_codes); FITS fit_status has the names
+FIT_STATUS = ["ok", "timed_out", "capped", "nonfinite", "bad_input", "post_unusable", "unknown"]
+#: provenance entries collected over the run -> FITS header keywords
+PROV_KEYS = OrderedDict([("nss_commit", "NSS_GIT"), ("nss_dirty", "NSS_DIRT"),
+                         ("nss_source", "NSS_SRC"), ("efsps_commit", "EFSPS_GT"),
+                         ("emulator_md5", "EMU_MD5"), ("v_python", "V_PYTHON"),
+                         ("v_jax", "V_JAX"), ("v_jaxlib", "V_JAXLIB"), ("v_blackjax", "V_BLACKJ"),
+                         ("v_numpy", "V_NUMPY"), ("v_scipy", "V_SCIPY"), ("v_h5py", "V_H5PY"),
+                         ("v_astropy", "V_ASTROP")])
 
 
 def file_id(path):
     return int(re.match(r"(\d+)_", os.path.basename(path)).group(1))
+
+
+def fit_status(summary):
+    """Status of a fit from its summary (json or the _post.h5 copy). Before the status field
+    existed: "ok" if it has logZ and did not time out."""
+    st = summary.get("status")
+    if st is not None:
+        return st if st in FIT_STATUS else "unknown"
+    if summary.get("timed_out"):
+        return "timed_out"
+    return "ok" if "logZ" in summary else "unknown"
+
+
+def prov_brief(summary, prov):
+    """The provenance entries the collected products report (PROV_KEYS), from a fit's
+    provenance (provenance.py), or, for fits made before it, from what the summary has."""
+    p = prov or {}
+    pc = summary.get("postprocess_code") or {}
+    out = {"nss_commit": p.get("nss_commit") or pc.get("git") or "unknown",
+           "nss_dirty": p.get("nss_dirty", pc.get("dirty")),
+           "nss_source": p.get("nss_source") or ("git" if pc.get("git") else "unknown"),
+           "efsps_commit": p.get("efsps_commit") or "unknown",
+           "emulator_md5": p.get("emulator_md5") or (summary.get("emulator") or {}).get("md5")
+           or "unknown"}
+    for k, v in (p.get("versions") or {}).items():
+        out[f"v_{k}"] = v
+    return {k: str(v) for k, v in out.items()}
+
+
+def read_entry(entry):
+    """entry = (id, _post.h5 path or None, json path or None) -> read_one's dict (rows with
+    data) or a dict without data; always with status, timed_out and prov."""
+    gid, post, js = entry
+    summ, jerr = None, None
+    if js is not None:
+        try:
+            with open(js) as fh:
+                summ = json.load(fh)
+        except Exception as e:
+            jerr = f"{type(e).__name__}: {e}"
+    status = fit_status(summ) if summ is not None else None
+    if post is not None and status in (None, "ok"):
+        r = read_one(post)
+        if summ is None and "error" not in r:                   # no json: the copy in the h5
+            summ = json.loads(r["summary"])
+            status = fit_status(summ)
+        prov = r.pop("provenance", None)
+    else:
+        r = {"path": js or post}
+        prov = None
+    summ = summ or {}
+    if status is None:
+        status = "unknown"
+        r.setdefault("error", jerr or "no readable json or _post.h5")
+    elif status == "ok" and "error" in r:
+        status = "post_unusable"
+    elif status == "ok" and post is None:
+        status = "post_unusable"
+        r["error"] = "status ok but no _post.h5"
+    r.update(id=gid, status=status, timed_out=bool(summ.get("timed_out", False)),
+             prov=prov_brief(summ, summ.get("provenance") or prov))
+    if status != "ok":
+        r["no_data"] = True
+    return r
 
 
 def _pick(g, spec):
@@ -112,6 +200,8 @@ def read_one(path):
                               for x in f["obs/bands"][()]],
                        percents=a["percents"][()],
                        summary=f["fit"].attrs["summary_json"])
+            if "provenance" in f["fit"].attrs:
+                out["provenance"] = json.loads(f["fit"].attrs["provenance"])
         if out["id"] != file_id(path):
             raise ValueError(f"file name id {file_id(path)} != stored id {out['id']}")
         return out
@@ -123,6 +213,9 @@ def main():
     p = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     p.add_argument("--indir", required=True, help="searched recursively for --pattern")
     p.add_argument("--pattern", default="*_post.h5")
+    p.add_argument("--json-pattern", default=None,
+                   help="the fits' summary jsons (default: --pattern with _post.h5 -> .json); "
+                        "a fit with a json but no _post.h5 gets a masked row with its status")
     p.add_argument("--catalog", required=True, help="the photometric catalogue the fits used")
     p.add_argument("--out", required=True)
     p.add_argument("--prior", default="nss", help="tag in the collected file names")
@@ -132,28 +225,46 @@ def main():
     t0 = time.time()
     os.makedirs(args.out, exist_ok=True)
 
-    files = glob.glob(os.path.join(args.indir, "**", args.pattern), recursive=True)
-    if not files:
-        raise SystemExit(f"no {args.pattern} under {args.indir}")
-    # one file per id: the most recently written (a rerun replaces an older fit); the rest
+    posts = glob.glob(os.path.join(args.indir, "**", args.pattern), recursive=True)
+    jpat = args.json_pattern or (args.pattern[:-len("_post.h5")] + ".json"
+                                 if args.pattern.endswith("_post.h5") else None)
+    jsons = glob.glob(os.path.join(args.indir, "**", jpat), recursive=True) if jpat else []
+    # one fit = one stem (<id>_<tag>) with its _post.h5 and/or its json
+    fits_by_stem = {}
+    for f in posts:
+        fits_by_stem.setdefault(f[:-len("_post.h5")] if f.endswith("_post.h5") else f, [None, None])[0] = f
+    for f in jsons:
+        if re.match(r"\d+_", os.path.basename(f)):
+            fits_by_stem.setdefault(f[:-len(".json")], [None, None])[1] = f
+    if not fits_by_stem:
+        raise SystemExit(f"no {args.pattern} or {jpat} under {args.indir}")
+
+    def newest(pj):
+        return max(os.path.getmtime(x) for x in pj if x is not None)
+
+    # one fit per id: the most recently written (a rerun replaces an older fit); the rest
     # are listed in duplicate_ids.txt
-    files.sort(key=lambda f: (file_id(f), -os.path.getmtime(f), f))
-    ids_all = np.array([file_id(f) for f in files])
+    entries = sorted(((file_id(next(x for x in pj if x)), pj[0], pj[1])
+                      for pj in fits_by_stem.values()),
+                     key=lambda e: (e[0], -newest(e[1:]), str(e[1:])))
+    ids_all = np.array([e[0] for e in entries])
     first = np.r_[True, ids_all[1:] != ids_all[:-1]]
-    dups = [f for f, keep in zip(files, first) if not keep]
-    files = [f for f, keep in zip(files, first) if keep]
+    dups = [e[1] or e[2] for e, keep in zip(entries, first) if not keep]
+    entries = [e for e, keep in zip(entries, first) if keep]
     ids = ids_all[first]
-    n = len(files)
-    print(f"{n} galaxies ({len(dups)} duplicate files skipped) under {args.indir}", flush=True)
+    n = len(entries)
+    print(f"{n} galaxies ({len(dups)} duplicate fits skipped; {len(posts)} _post.h5, "
+          f"{len(jsons)} json files) under {args.indir}", flush=True)
     if dups:
         with open(os.path.join(args.out, "duplicate_ids.txt"), "w") as fh:
             fh.write("\n".join(dups) + "\n")
 
     # reference layout (band set, draw count): the most common among the first 50 readable
-    # files, so one odd file at the start cannot reject the rest
-    sample = [r for r in (read_one(f) for f in files[:50]) if "error" not in r]
+    # ok fits, so one odd file at the start cannot reject the rest
+    sample = [r for r in (read_entry(e) for e in [e for e in entries if e[1]][:50])
+              if "error" not in r and not r.get("no_data")]
     if not sample:
-        raise SystemExit("none of the first 50 files is readable")
+        raise SystemExit("none of the first 50 _post.h5 files is a readable status-ok fit")
     keys = [(tuple(r["bands"]), r["chains"].shape) for r in sample]
     best = max(set(keys), key=keys.count)
     ref = sample[keys.index(best)]
@@ -163,7 +274,7 @@ def main():
     # has them, found cheaply from the file attribute
     spec_ref = next((r for r in sample if r["has_spectra"]), None)
     if spec_ref is None:
-        for f in files[50:]:
+        for f in [e[1] for e in entries if e[1]][50:]:
             try:
                 with h5py.File(f, "r") as h:
                     if "spectra/bestfit" in h:
@@ -172,7 +283,6 @@ def main():
             except OSError:
                 continue
     has_rest = [k for k in REST_KEYS if spec_ref is not None and k in spec_ref["rest"]]
-    summ0 = json.loads(ref["summary"])
 
     fq = h5py.File(os.path.join(args.out, f"quant_{args.prior}.h5"), "w")
     fs = h5py.File(os.path.join(args.out, f"sfh_{args.prior}.h5"), "w")
@@ -193,6 +303,9 @@ def main():
                                   fillvalue=np.nan, **kw)
     sc = {k: fq.create_dataset(k, shape=(n,), dtype=np.float32, fillvalue=np.nan, **kw)
           for k in ("zred_ml", "logZ", "logZ_err", "ess")}
+    ds_status = fq.create_dataset("fit_status", shape=(n,), dtype=np.int8)
+    ds_status.attrs["fit_status_codes"] = json.dumps({i: k for i, k in enumerate(FIT_STATUS)})
+    ds_timed = fq.create_dataset("timed_out", shape=(n,), dtype=np.int8)
     fs.create_dataset("percentiles", data=ref["percents"] / 100.0)
     ds_age = fs.create_dataset("agebins_max", shape=(n,), dtype=np.float32, fillvalue=np.nan)
     ds_sfh = fs.create_dataset("sfh", shape=(n,) + ref["sfh"].shape, dtype=np.float32,
@@ -220,6 +333,9 @@ def main():
                                           fillvalue=np.nan, chunks=(min(n, 1024), nb, npc), **kw)
 
     ok = np.zeros(n, np.int8)
+    status = np.zeros(n, np.int8)
+    timed = np.zeros(n, np.int8)
+    provs = []
     failed, no_spec = [], []
     buf = []
 
@@ -236,7 +352,7 @@ def main():
                           np.float32 if k != "nbands" else np.int32) for k, ds in sp.items()}
         for i, r in rows:
             j = i - a
-            if "error" in r:
+            if "error" in r or r.get("no_data"):
                 continue
             for k in dq:
                 if k in r["quant"]:
@@ -267,15 +383,19 @@ def main():
 
     done = 0
     pool = Pool(args.workers) if args.workers > 1 else None
-    it = pool.imap(read_one, files, chunksize=32) if pool else map(read_one, files)
+    it = pool.imap(read_entry, entries, chunksize=32) if pool else map(read_entry, entries)
     for i, r in enumerate(it):
-        if "error" not in r:
+        if "error" not in r and not r.get("no_data"):
             if r["bands"] != ref["bands"] or r["chains"].shape != (K, ncol):
-                r = {"path": r["path"], "error": "bands or draw count differ from the common layout "
-                     f"({len(r['bands'])} bands, {r['chains'].shape} vs {nb}, {(K, ncol)})"}
+                r = dict(path=r["path"], status="post_unusable", timed_out=r["timed_out"],
+                         prov=r["prov"], error="bands or draw count differ from the common layout "
+                         f"({len(r['bands'])} bands, {r['chains'].shape} vs {nb}, {(K, ncol)})")
+        status[i] = FIT_STATUS.index(r["status"])
+        timed[i] = int(r["timed_out"])
+        provs.append(r["prov"])
         if "error" in r:
             failed.append(f"{r['path']}\t{r['error']}")
-        else:
+        elif not r.get("no_data"):
             ok[i] = 1
             if not r["has_spectra"]:
                 no_spec.append(r["path"])
@@ -291,8 +411,22 @@ def main():
     if pool:
         pool.close()
         pool.join()
+    ds_status[:] = status
+    ds_timed[:] = timed
+    # provenance over the run: distinct values with counts; warn if the code or emulator differ
+    prov_counts = OrderedDict()
+    for k in PROV_KEYS:
+        c = {}
+        for pb in provs:
+            v = pb.get(k, "unknown")
+            c[v] = c.get(v, 0) + 1
+        prov_counts[k] = dict(sorted(c.items(), key=lambda kv: -kv[1]))
+    for k in ("nss_commit", "emulator_md5"):
+        if len(prov_counts[k]) > 1:
+            print(f"WARNING: the fits disagree on {k}: {prov_counts[k]}", flush=True)
     for h in (fq, fs, fc, fp):
         h["ok"][:] = ok
+        h.attrs["provenance"] = json.dumps(prov_counts)
     zml = fq["zred_ml"][:]
     lz, lze = fq["logZ"][:], fq["logZ_err"][:]
     quant = {k: fq[k][:] for k in OLD_QUANT}
@@ -355,14 +489,31 @@ def main():
     col("nbands", nbands.astype(float))
     col("logZ", lz.astype(float))
     col("logZ_err", lze.astype(float))
+    col("ess", fq["ess"][:].astype(float))
+    # status and timed_out for every fit found, also the masked ones; "" = no fit found
+    have = rows >= 0
+    st = np.full(len(cat), "", dtype="U13")
+    st[rows[have]] = np.array(FIT_STATUS)[status[have]]
+    cat.add_column(st, name="fit_status")
+    to = np.zeros(len(cat), np.int16)
+    to[rows[have]] = timed[have]
+    m = np.ones(len(cat), bool)
+    m[rows[have]] = False
+    cat.add_column(MaskedColumn(data=to, name="timed_out", mask=m))
+    n_status = {k: int((status == i).sum()) for i, k in enumerate(FIT_STATUS) if (status == i).any()}
     meta = OrderedDict()
     meta["AUTHOR"] = "Suess research group"
     meta["CREATED"] = str(date.today())
     meta["SPSCODE"] = "NSS + E-FSPS w256 emulator"
-    emu = summ0.get("emulator", {})
-    meta["EMU_MD5"] = str(emu.get("md5", "unknown"))
-    meta["NSS_GIT"] = str(summ0.get("postprocess_code", {}).get("git", "unknown"))[:40]
+    comments = []
+    for k, key in PROV_KEYS.items():                       # one value, or MIXED + a comment
+        vals = list(prov_counts[k])
+        meta[key] = vals[0][:68] if len(vals) == 1 else f"MIXED ({len(vals)} values)"
+        if len(vals) > 1:
+            comments += [f"{k}: {v} ({c} fits)"[:72] for v, c in prov_counts[k].items()]
     meta["N_SPEC"] = int(ok.sum()) - len(no_spec)          # galaxies with spectra / rest colours
+    comments.append("fit_status counts: " + ", ".join(f"{k} {v}" for k, v in n_status.items()))
+    meta["comments"] = comments                          # FITS COMMENT cards
     cat.meta = meta
     os.makedirs(os.path.join(args.out, "sps_catalog"), exist_ok=True)
     base = os.path.basename(args.catalog)
@@ -377,6 +528,7 @@ def main():
     if no_spec:                        # catch up with: spectra_nss.py --list missing_spectra.txt
         with open(os.path.join(args.out, "missing_spectra.txt"), "w") as fh:
             fh.write("\n".join(no_spec) + "\n")
+    print(f"fit status: {n_status}", flush=True)
     print(f"done in {time.time() - t0:.1f} s: {int(ok.sum())}/{n} galaxies; {len(failed)} failed "
           f"files; {len(dups)} duplicates; {len(no_spec)} without spectra (missing_spectra.txt); "
           f"{missing.size} ids not in the catalogue; "

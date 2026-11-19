@@ -7,3 +7,4 @@ minerva_uds_specz1k.fits 1079508 mass 0
 minerva_uds_specz1k.fits 1131608 mass 0
 minerva_uds_specz1k.fits 1220543 mass 0
 minerva_uds_specz1k.fits 1221619 mass 0
+minerva_uds_specz1k.fits 9999999 mass 0
