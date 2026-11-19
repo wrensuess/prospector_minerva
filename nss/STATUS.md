@@ -1,6 +1,6 @@
 # MINERVA SED fitting: project status report
 
-**As of 2026-11-16.** This is the whole-project picture: both fitting paths, what they cost,
+**As of 2026-11-19.** This is the whole-project picture: both fitting paths, what they cost,
 how robust they are, and what has been measured and decided. For setup, the code map and
 pitfalls, read [`HANDOFF.md`](HANDOFF.md). **What is left to do before and during production,
 in what order, with Wren's decisions of 2026-11-16, is in
@@ -949,8 +949,8 @@ section stays the record of what was measured.
        eazy 3.3%. Weighted back to the parent spec-z pool (4561): NSS 8.1 ± 1.2%, eazy 5.0%; NSS
        matches eazy below z = 3. 163 of the 173 NSS outliers have ≥ 1% of their posterior at the
        spec-z (108 have > 10%) and the best likelihood there is within ~1 nat of the best
-       elsewhere: priors and model, not the sampler. 172 of the 173 have a grade-3 DJA spectrum,
-       so the truth is clean. At z ≥ 9 NSS is biased +0.04 (eazy −0.005).
+       elsewhere: priors and model, not the sampler. (An earlier "172 of the 173 have a grade-3 DJA
+       spectrum" was wrong: the Z1 re-check on 2026-11-17 finds 90 with DJA v3, 98 with v4.2.) At z ≥ 9 NSS is biased +0.04 (eazy −0.005).
        - Tests (Mac; `logs/test_dust_prior_lowmassnode*.log`): `test_dust_prior.py` PASS on 1197855
          (new section 2b: ceiling nodes, unchanged above log M 8 and for the sfr / mass_sfr kinds
          and the old configs; trap-like error added 1.7e-3 nats). ln C (mass) −1.08 → −1.40.
@@ -1236,8 +1236,8 @@ section stays the record of what was measured.
     rejection within the bracket, a valid sampler). Must pass the toy and numerics tests.
     A prototype time-boxed to 3 days; adopted only if ≥ 1.4× on one Blanca core with the
     21-galaxy convergence unchanged.
-18. **Network in float32: switch built 2026-11-16 (uncommitted, off by default); gain on one
-    core unmeasured.** The weights are float32 on file (the network was trained with x64 off;
+18. **Network in float32: switch built 2026-11-16 (uncommitted, off by default); 8–9% faster
+    on one Blanca core.** The weights are float32 on file (the network was trained with x64 off;
     we up-cast them), so float32 hidden layers reproduce the training arithmetic.
     `jax_model.JaxLogLike(model, emu_dtype="float32")` or `NSS_EMU_DTYPE=float32`. Mac tests
     on six galaxies, z 0.12–8.5, prior draws over z 0.01–15: with the switch off everything is
@@ -1245,10 +1245,48 @@ section stays the record of what was measured.
     median and ≤ 3e-4 mag in every z bin (emulator error 0.02–0.05 mag), log L at posterior
     draws by ≤ 5e-3 nats, no finite/non-finite flips. Costs: no bitwise equality with float64
     fits or the numpy reference, ~1e-4 nats of fine-scale noise in log L. Mac speed (which
-    does not count) only 3–15% in wall time. Next: a matched one-core timing on bgpu-casa1;
-    adopt only if the gain is real.
+    does not count) only 3–15% in wall time. **Matched one-core timing on bgpu-casa1
+    (2026-11-16, jobs 29643430 float64 and 29643432 float32; Gold 6230, 20 fits per node,
+    1197855 seeds 0–19): time per iteration ×0.914 paired by seed (16–84% 0.85–0.94), total
+    wall ×0.92 (median 676 → 620 s); 125 iterations in both, logZ 538.35 ± 0.11 against
+    538.30 ± 0.14, z50 and log M unchanged.** One galaxy and one CPU type. Proposed as the
+    default from the configuration freeze on (PRODUCTION_PLAN task S4); Wren to confirm.
+    These fits ran at 4.2 s per iteration, 1.4× the 3.0 s measured with 8 fits on a Gold 6230
+    node (item 13): the full-node slowdown again.
 19. **25 inner steps** would save another 17%, with a somewhat worse tail (§4). Revisit after
     the broader validation.
+20. **Robustness and spec-z work of 2026-11-17/19 (R1, O0, O4 committed 2026-11-19; Z1 tools
+    and the spec-z work uncommitted/private; Blanca restart test PASS; details in
+    PRODUCTION_PLAN tasks R1, O4, O0, Z1, Z1b).** Pre-commit re-run of
+    every unit test on the working tree, 2026-11-19: all PASS (test_prior_start's toy "FAIL"
+    lines are the standard start's known mode loss, identical to the committed log);
+    postprocessing re-tested after the last edit (10 fits, all PASS); the pipeline code Blanca
+    ran is byte-identical to the working tree.
+    - Fit guards (R1): every fit JSON has `status` ok / timed_out / capped / nonfinite /
+      bad_input; NaN-safe termination; defaults `--max-iterations 5000`, `--max-seconds 5400`;
+      postprocessing only for ok; atomic, fsynced, NaN-free JSONs. `test_fit_guards.py` PASS
+      (re-run independently); default path bitwise identical to the committed code.
+    - Provenance (O4): code commit and dirty flag (git or `BUNDLE_INFO.txt`), library versions,
+      host, CPU, Slurm ids, catalogue and emulator checksums in every JSON, `_post.h5` and
+      catalogue header; catalogue gets `fit_status`, `ess`, `timed_out`.
+    - Restart logic (O0): per-task exit codes, circuit breaker, truthful job exit codes,
+      deep `_post.h5` checks, read-only status by hand, linear scan, `RESULTS_ROOT`, lock.
+      `test_pipeline_status.py` PASS (re-run independently); Mac chaos rehearsal 31/31.
+    - Spec-z truth (Z1b): DJA v4.5 grade-3 redshifts attached to the segment with most F444W
+      flux within 0.10" of the spectrum (a centroid within 0.10" wins; no photo-zs in any
+      decision); one source per spec-z, shreds included (the piece with most slit light,
+      meeting 2026-11-18); owner more than 2" away → unassigned; possible blend = another
+      segment with ≥ 20% of the aperture light: 10,396 MINERVA sources (73 possible blends); the
+      catalogue's current z_spec has 260 extra copies on neighbours, 10 on the wrong source,
+      14 different z; 1,282 new. Reproduces all of Wren's current verdicts (3 via by-eye
+      overrides; COSMOS 2211016's z = 0.903 confirmed 2026-11-19).
+      Private: `nss_private_handoff/benchmark/specz_v45/`.
+    - Blanca restart test with chaos (job 29666545, 2026-11-17): **PASS**. Restarts 0–3, circuit
+      breaker, preemption, damaged outputs, SIGKILLed fit, mpirun and spectra kills, USR1
+      requeue; the BAD_INPUT task (R1) recorded once and not retried; exit 0. The first check
+      failed only on a checker double count (one galaxy both preempted and SIGKILLed); with the
+      fixed checker, re-run on the same results, every check passes. `chaos_monkey.sh` now
+      SIGKILLs a fit the preemption did not hit (takes effect in the next bundle).
 
 **Not worth optimizing now:** prior draws (~20 s, ~5% of a fit) and per-fit startup (~10 s
 plus the ~16 s compile; item 10 removes both).

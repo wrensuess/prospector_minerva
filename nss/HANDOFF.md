@@ -1,13 +1,13 @@
 # NSS + E-FSPS for MINERVA: startup, status, next steps
 
-Handoff guide (2026-11-09; pointers updated 2026-11-16) for whoever picks this up next, human
+Handoff guide (2026-11-09; pointers updated 2026-11-19) for whoever picks this up next, human
 or Claude. Read this first, then [`STATUS.md`](STATUS.md) for the whole-project picture (both
 fitting paths, costs, robustness, what has been measured and decided), then
 [`PRODUCTION_PLAN.md`](PRODUCTION_PLAN.md) for what is left before and during production, in
 order. **Sections 5 and 6 below are the state and next steps as of 2026-11-09 and are kept as
 history; where they differ from STATUS.md or PRODUCTION_PLAN.md, those two are current**
 (convergence is solved with the mass integrated out and 32 inner steps, the priors match
-production, postprocessing and restart logic exist).
+production, postprocessing, restart logic, fit guards and provenance exist).
 The public parts live here, on branch `nss-efsps` of `wrensuess/prospector_minerva`, in
 `nss/`. Unreleased MINERVA photometry and MINERVA-specific results are NOT in this public
 repo; they are in the private handoff folder (see "Data and private files").
@@ -70,10 +70,10 @@ For MINERVA galaxies, copy `minerva_uds_test9.fits` from the private folder into
 | `dust_prior.py` | Soft-ceiling dust2 prior against the low-z dusty-dwarf trap (STATUS §6 item 5b): today's flat dust2 below a ceiling, a half-Gaussian penalty above. **Default since 2026-11-11: mass only, ceiling A_V = 1 mag at log M 8 rising to no change at log M 9; since 2026-11-16 also A_V 0.5 at log M ≤ 7, linear to A_V 1 at 8** (`CEILING`; the 2026-11-11 one is `CEILING_20261111`); SFR and mass+SFR kinds kept for reference. Applied inside the mass integral (`MassMarginal(dust_prior=...)`, `nss_jax.py --dust-prior`). Tests: `test_dust_prior.py`. |
 | `blanca/tasklist_layout.sbatch`, `blanca/make_dust_tasks.py` | Job array in the 20-fit layout over a task list of (catalogue, id, dust prior, seed); requeued elements skip finished fits. `nss_jax.py --save-draws 4000` writes the small file to copy back. |
 | `tabulated_mass_prior.py` | Tabulated Prospector-beta mass prior (no mass-function evaluation per call). **Use this** (`--mass-prior tabulated`). |
-| `jax_model.py` | `JaxLogLike`: prior transform + w256 emulator + efsps Gaussian likelihood, pure JAX. |
+| `jax_model.py` | `JaxLogLike`: prior transform + w256 emulator + efsps Gaussian likelihood, pure JAX. `NSS_EMU_DTYPE=float32` runs the network's hidden layers in float32 (opt-in, off by default; PRODUCTION_PLAN task S4). |
 | `photometry.py` | One reader for UNCOVER and MINERVA SUPER catalogues (FITS) and efsps CSV. mu = 1 if no `mu` column; drops F098M (no emulator band); masks fluxes < -5 sigma (as prospector does). |
 | `nss_efsps.py` | Original numpy-callback NSS prototype; also `build()` (FitModel from photometry, emulator path). |
-| `nss_jax.py` | **The runner**: NSS with the pure-JAX likelihood. Summary JSON records settings, photometry handling, emulator md5. Starts from the best n_live of 1e6 prior draws by default (`--n-prior-start`; 0 = standard start); see §5. Defaults since 2026-11-11 are the production setting: n_live 1000, num_delete 100, tabulated mass prior, mass integrated out (`--mass-coord marginal`, `mass_marginal.py`), 32 inner steps (130 if `--mass-coord cdf`), fagn prior flat1_s025, dust prior `mass` (`--dust-prior none` with `--mass-coord cdf`). STATUS.md §5 has the reasons. |
+| `nss_jax.py` | **The runner**: NSS with the pure-JAX likelihood. Summary JSON records settings, photometry handling, a `status` (ok / timed_out / capped / nonfinite / bad_input; defaults `--max-iterations 5000`, `--max-seconds 5400`) and provenance (`provenance.py`: code commit, library versions, host, CPU, Slurm ids, catalogue and emulator checksums). Tests of the guards: `test_fit_guards.py`. Starts from the best n_live of 1e6 prior draws by default (`--n-prior-start`; 0 = standard start); see §5. Defaults since 2026-11-11 are the production setting: n_live 1000, num_delete 100, tabulated mass prior, mass integrated out (`--mass-coord marginal`, `mass_marginal.py`), 32 inner steps (130 if `--mass-coord cdf`), fagn prior flat1_s025, dust prior `mass` (`--dust-prior none` with `--mass-coord cdf`). STATUS.md §5 has the reasons. |
 | `postprocess_nss.py` | Per-galaxy postprocessing, run at the end of every fit by `nss_jax.py` (or standalone on a full `.npz`): one `<id>_<tag>_post.h5` with percentiles from the full posterior, 1,000 draws with each draw's likelihood, best fit and chi², SFH, stellar mass, SFRs, MWA, model photometry. Surviving mass uses the Chabrier table (`surviving_fraction_mist_chabrier.npz`, built by `build_survival_table.py`). Spectra are added later by `spectra_nss.py` (STATUS.md §6 item 8). Tests: `test_postprocess_nss.py`. |
 | `make_catalog_nss.py` | The one script after the fits: gathers every `_post.h5` into the `quant_`/`sfh_`/`chains_`/`spec_` HDF5 files and the FITS SPS catalogue (old column names). |
 | `spectra_nss.py` | Spectra (E-FSPS SpecModel, library c3k_hr-mist-afe) and rest-frame colours, added to the `_post.h5` files by ONE process per Blanca job after its fits; restartable (skips finished galaxies, atomic writes). `--make-slim` writes the weights-only library. Needs the efsps env (E-FSPS and its dependencies). Tests: `test_spectra_nss.py`. |
