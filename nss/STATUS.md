@@ -516,7 +516,7 @@ section stays the record of what was measured.
      and z weights. So 161 points ≈ 1.85× a fit and 401 ≈ 4.4×. A window from the exact
      log(L q), which would fix all three causes, costs ~1.8–3.9× per row and still needs
      tuning. Log-linear interpolation of the prior costs nothing but changes the model.
-   - **Edge guard with an analytic slope: IMPLEMENTED 2026-11-12 (uncommitted)** in
+   - **Edge guard with an analytic slope: IMPLEMENTED 2026-11-12 (committed in `9378612`)** in
      `mass_marginal.py` (`_fine()`, `EDGE_NATS = 12`). When the centre
      lies outside [7, 12.5], the window starts at the bound and spans 12 nats of log(L q).
      The slope comes from the closed form of d log L/dm, which matches a finite difference
@@ -613,7 +613,7 @@ section stays the record of what was measured.
 
 **B. Model decisions (with Wren, Ikki and Joel)**
 
-5. **AGN prior. DECIDED 2026-11-11; IMPLEMENTED here 2026-11-11 (uncommitted).**
+5. **AGN prior. DECIDED 2026-11-11; IMPLEMENTED here 2026-11-11 (committed in `6482a98`).**
    `nss_priors.py`; `nss_efsps.build()` applies it by default (`nss_jax.py --fagn-prior`,
    default `flat1_s025`; summaries record `fagn_prior`). Tests: `test_nss_priors.py` PASS (ppf
    vs numerical inverse ≤ 4e-9 dex, vs the prospector `FastFlatGaussTail` ≤ 5e-12 dex for
@@ -651,7 +651,7 @@ section stays the record of what was measured.
    redshift dependence for now. Wren wants the prior as close to flat as possible, so the form is
    a soft ceiling: today's flat prior × a half-Gaussian penalty only above d_max(M, SFR), with
    d_max 0.8 at low mass / low SFR, ramping to 4 (no prior) by log M 10 / log SFR 0.
-   **Implemented 2026-11-11 (uncommitted):** `dust_prior.py`; `MassMarginal(dust_prior=...)` adds
+   **Implemented 2026-11-11 (committed in `6482a98`):** `dust_prior.py`; `MassMarginal(dust_prior=...)` adds
    ln w inside the mass integral (SFR₁₀₀ = 10^m · f(ratios, z), ported from efsps
    `sfh_quantities`); `nss_jax.py --dust-prior {none,mass,sfr,mass_sfr}` (default none),
    `--save-draws N`. `test_dust_prior.py` PASS: SFR₁₀₀ JAX vs efsps ≤ 7e-13 dex, ln w JAX vs
@@ -983,7 +983,7 @@ section stays the record of what was measured.
    - Job level: the memory cgroup peaked at 20.4 GB for 16 fits (1.27 GB per fit), set by the
      simultaneous compiles at job start. 20 seeds of one galaxy also finish together, so their
      end spikes stack (this is what ran past 30G).
-   - **FIXED 2026-11-11 (uncommitted): `malloc_tools.py`**, called from
+   - **FIXED 2026-11-11 (committed in `6482a98`): `malloc_tools.py`**, called from
      `nss_jax.run_nss_core`: malloc_trim after the prior start and after the step compile;
      large allocations mmapped after the NSS loop. glibc only; `NSS_MALLOC_TUNING=0` turns
      it off; summaries record `malloc_tuning` and `xla_flags`.
@@ -1236,7 +1236,7 @@ section stays the record of what was measured.
     rejection within the bracket, a valid sampler). Must pass the toy and numerics tests.
     A prototype time-boxed to 3 days; adopted only if ≥ 1.4× on one Blanca core with the
     21-galaxy convergence unchanged.
-18. **Network in float32: switch built 2026-11-16 (uncommitted, off by default); 8–9% faster
+18. **Network in float32: switch built 2026-11-16 (committed 2026-11-19, off by default); 8–9% faster
     on one Blanca core.** The weights are float32 on file (the network was trained with x64 off;
     we up-cast them), so float32 hidden layers reproduce the training arithmetic.
     `jax_model.JaxLogLike(model, emu_dtype="float32")` or `NSS_EMU_DTYPE=float32`. Mac tests
