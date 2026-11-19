@@ -9,7 +9,7 @@ import h5py
 ### what we need to execute
 #python combine_chain.py --dir_split /scratch/alpine/ikmi3774/slurm/postprocess_UDS_n3.0_v1.2/chain_split --output /scratch/alpine/ikmi3774/slurm/postprocess_UDS_n3.0_v1.2/chains_phisfh.h5
 
-#python combine_chain.py --dir_split /scratch/alpine/ikmi3774/slurm/postprocess_COSMOS_n3.0_v1.0/chain_split --output /scratch/alpine/ikmi3774/slurm/postprocess_COSMOS_n3.0_v1.0/chains_phisfh.h5
+#python combine_chain.py --dir_split /scratch/alpine/ikmi3774/slurm/postprocess_EGS_n2.0_v1.3/chain_split --output /scratch/alpine/ikmi3774/slurm/postprocess_EGS_n2.0_v1.3/chains_phisfh.h5
 
 def get_start_end(fname):
     """
