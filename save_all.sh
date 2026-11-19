@@ -26,6 +26,6 @@ python save_spec.py --dir_indiv="/scratch/alpine/ikmi3774/slurm/postprocess_EGS_
 python save_perc.py --dir_indiv="/scratch/alpine/ikmi3774/slurm/postprocess_EGS_n2.0_v1.3/npz" --dir_collected="/scratch/alpine/ikmi3774/slurm/postprocess_EGS_n2.0_v1.3" --catalog_path="/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/phot_catalog/MINERVA-EGS_n2.0_v1.3_ACS+WEBB_Kf444w_SUPER_CATALOG.fits" --n_workers=20
 
 ### run individually because pdb in inserted
-python save_final_catalog.py --dir_indiv="/scratch/alpine/ikmi3774/slurm/postprocess_EGS_n2.0_v1.3/npz" --dir_collected="/scratch/alpine/ikmi3774/slurm/postprocess_EGS_n2.0_v1.3" --catalog_path="/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/phot_catalog/MINERVA-EGS_n2.0_v1.3_ACS+WEBB_Kf444w_SUPER_CATALOG.fits"
+#python save_final_catalog.py --dir_indiv="/scratch/alpine/ikmi3774/slurm/postprocess_EGS_n2.0_v1.3/npz" --dir_collected="/scratch/alpine/ikmi3774/slurm/postprocess_EGS_n2.0_v1.3" --catalog_path="/projects/ikmi3774/minerva_sps_git/stellar_pop_catalog_bb/phot_catalog/MINERVA-EGS_n2.0_v1.3_ACS+WEBB_Kf444w_SUPER_CATALOG.fits"
 
 
