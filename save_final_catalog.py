@@ -94,7 +94,7 @@ for i in bad:
     except OSError as e:
         print(f"{all_files[i]}: FAILED ({e})")
 
-dest_dir = "./../npz_broken/"
+dest_dir = "{}/npz_broken/".format(args.dir_collected)
 
 for i in bad:
     objid = all_files[i].split("_")[1]
