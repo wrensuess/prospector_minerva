@@ -2,7 +2,7 @@
 
 import warnings
 warnings.filterwarnings('ignore')
-
+import shutil
 import time, sys, os, pdb
 import numpy as np
 import numpy.ma as ma
@@ -87,13 +87,27 @@ for i in bad:
 
 for i in bad:
     filename = os.path.join(args.dir_indiv, all_files[i])
-
     try:
         with h5py.File(filename, "r") as f:
             print(f"{all_files[i]}: OK, keys={list(f.keys())}")
 
     except OSError as e:
         print(f"{all_files[i]}: FAILED ({e})")
+
+dest_dir = "./../npz_broken/"
+
+for i in bad:
+    objid = all_files[i].split("_")[1]
+
+    for suffix in ["spec", "perc", "unw"]:
+        pattern = os.path.join(
+            args.dir_indiv, f"id_{objid}_{suffix}_{args.prior}.h5"
+        )
+
+        for src in glob.glob(pattern):
+            dst = os.path.join(dest_dir, os.path.basename(src))
+            shutil.move(src, dst)
+            print(f"Moved: {src} -> {dst}")
 
 print("re-run post-process for the following ids")
 for i in bad:
