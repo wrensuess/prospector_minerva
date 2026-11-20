@@ -55,6 +55,10 @@ print("only spec (against sfh)", sorted(set(obj_spec) - set(obj_sfh))[:20])
 print("only sfh (against spec)", sorted(set(obj_sfh) - set(obj_spec))[:20])
 print("only sfh (against perc)", sorted(set(obj_sfh) - set(obj_perc))[:20])
 
+perc = dperc["objid"][:]
+spec = dspec["objid"][:]
+sfh  = dsfh["objid"][:]
+
 for name, a, b in [
     ("perc vs spec", perc, spec),
     ("perc vs sfh", perc, sfh),
