@@ -55,6 +55,18 @@ print("only spec (against sfh)", sorted(set(obj_spec) - set(obj_sfh))[:20])
 print("only sfh (against spec)", sorted(set(obj_sfh) - set(obj_spec))[:20])
 print("only sfh (against perc)", sorted(set(obj_sfh) - set(obj_perc))[:20])
 
+for name, a, b in [
+    ("perc vs spec", perc, spec),
+    ("perc vs sfh", perc, sfh),
+    ("spec vs sfh", spec, sfh),
+]:
+    print(f"\n{name}")
+    print("Same order:", np.array_equal(a, b))
+    print("Only first:", np.setdiff1d(a, b))
+    print("Only second:", np.setdiff1d(b, a))
+    print("Duplicates:", len(a) - len(np.unique(a)),
+          len(b) - len(np.unique(b)))
+
 print(np.where(dspec['objid'][:] == 0))
 
 bad = np.where(dspec['objid'][:] == 0)[0]
