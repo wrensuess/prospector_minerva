@@ -191,7 +191,7 @@ dest_dir = "{}/npz_broken/".format(search_dir)
 
 bad_ids = []
 
-all_files = sorted([f for f in os.listdir(search_dir+"/npz") if f.endswith(f'_spec_{args.prior}.h5')])
+all_files = sorted([f for f in os.listdir(search_dir+"/npz") if f.endswith(f'_spec_phisfh.h5')])
 
 for i in bad:
     objid = all_files[i].split("_")[1]
