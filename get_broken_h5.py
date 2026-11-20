@@ -213,23 +213,22 @@ print(bad_ids)
 base_dir = "/pl/active/suess-minerva/chains_parrot_EGS_n2.0_v1.3_ACS+WEBB_Kf444w_SUPER_spsbeta"
 sub_dir = "chains_parrot_EGS_n2.0_v1.3_ACS+WEBB_Kf444w_SUPER_spsbeta"
 
-for objid in bad_ids:
-    found = []
+target_ids = set(bad_ids)
+found_ids = set()
 
-    for n in range(1, 8):
-        search_dir = os.path.join(base_dir, f"EGS{n}", sub_dir)
+for n in range(1, 8):
+    search_dir = os.path.join(base_dir, f"EGS{n}", sub_dir)
 
-        matches = glob.glob(
-            os.path.join(search_dir, "**", f"id_{objid}_mcmc_phisfh.h5"),
-            recursive=True
-        )
-        found.extend(matches)
+    for root, dirs, files in os.walk(search_dir):
+        for filename in files:
+            if filename.endswith("_mcmc_phisfh.h5"):
+                objid = int(filename.split("_")[1])
 
-    if found:
-        for path in found:
-            print(f"{objid}: {path}")
-    else:
-        print(f"{objid}: NOT FOUND")
+                if objid in target_ids:
+                    print(f"{objid}: EGS{n} | {os.path.join(root, filename)}")
+                    found_ids.add(objid)
+
+print("Not found:", sorted(target_ids - found_ids))
 
 pdb.set_trace()
 
