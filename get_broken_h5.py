@@ -214,22 +214,36 @@ print(bad_ids)
 base_dir = "/pl/active/suess-minerva/chains_parrot_EGS_n2.0_v1.3_ACS+WEBB_Kf444w_SUPER_spsbeta"
 sub_dir = "chains_parrot_EGS_n2.0_v1.3_ACS+WEBB_Kf444w_SUPER_spsbeta"
 
-target_ids = set(bad_ids)
-found_ids = set()
+dest_dir = os.path.join(base_dir, "EGS8", sub_dir)
 
-for n in tqdm(range(1, 8)):
-    search_dir = os.path.join(base_dir, f"EGS{n}", sub_dir)
+not_found = []
 
-    for root, dirs, files in os.walk(search_dir):
-        for filename in files:
-            if filename.endswith("_mcmc_phisfh.h5"):
-                objid = int(filename.split("_")[1])
+for objid in tqdm(bad_ids):
+    found = False
 
-                if objid in target_ids:
-                    print(f"{objid}: EGS{n} | {os.path.join(root, filename)}")
-                    found_ids.add(objid)
+    for n in range(1, 8):
+        src = os.path.join(
+            base_dir, f"EGS{n}", sub_dir,
+            f"id_{objid}_mcmc_phisfh.h5"
+        )
 
-print("Not found:", sorted(target_ids - found_ids))
+        if os.path.isfile(src):
+            dst = os.path.join(dest_dir, os.path.basename(src))
+
+            if os.path.exists(dst):
+                print(f"Already exists: {dst}")
+                found = True
+                break
+
+            # shutil.move(src, dst)
+            print(f"Moved: EGS{n} -> EGS8 | {objid}")
+            found = True
+            break
+
+    if not found:
+        not_found.append(objid)
+
+print("Not found:", not_found)
 
 pdb.set_trace()
 
