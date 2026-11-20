@@ -160,9 +160,10 @@ pdb.set_trace()
 #################################################################
 ################### for post-processed file #####################
 #################################################################
-dperc = h5py.File('{}/quant_{}.h5'.format(args.dir_collected, args.prior), 'r')
-dspec = h5py.File('{}/spec_{}.h5'.format(args.dir_collected, args.prior), 'r')
-dsfh = h5py.File('{}/sfh_{}.h5'.format(args.dir_collected, args.prior), 'r')
+search_dir = "/scratch/alpine/ikmi3774/slurm/postprocess_EGS_n2.0_v1.3"
+dperc = h5py.File(search_dir+'/quant_phisfh.h5', 'r')
+dspec = h5py.File(search_dir+'/spec_phisfh.h5', 'r')
+dsfh = h5py.File(search_dir+'/sfh_phisfh.h5', 'r')
 
 perc = dperc["objid"][:]
 spec = dspec["objid"][:]
@@ -206,7 +207,7 @@ for i in bad:
 
 print("Moved IDs:")
 print(bad_ids)
-
+pdb.set_trace()
 
 ### full check
 failed_ids1 = []
