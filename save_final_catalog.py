@@ -71,6 +71,12 @@ for name, a, b in [
     print("Duplicates:", len(a) - len(np.unique(a)),
           len(b) - len(np.unique(b)))
 
+bad = np.where(spec == 0)[0]
+good = np.where(spec != 0)[0]
+
+print(np.array_equal(perc[good], spec[good]))
+print(perc[bad])
+
 print(np.where(dspec['objid'][:] == 0))
 
 bad = np.where(dspec['objid'][:] == 0)[0]
