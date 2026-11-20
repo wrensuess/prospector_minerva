@@ -85,12 +85,15 @@ all_files = sorted([f for f in os.listdir(args.dir_indiv) if f.endswith(f'_spec_
 for i in bad:
     print("bad file", i, all_files[i])
 
-i = bad[0]
+for i in bad:
+    filename = os.path.join(args.dir_indiv, all_files[i])
 
-with h5py.File(
-    os.path.join(args.dir_indiv, all_files[i]), "r"
-) as f:
-    print(list(f.keys()))
+    try:
+        with h5py.File(filename, "r") as f:
+            print(f"{all_files[i]}: OK, keys={list(f.keys())}")
+
+    except OSError as e:
+        print(f"{all_files[i]}: FAILED ({e})")
 
 print("re-run post-process for the following ids")
 for i in bad:
