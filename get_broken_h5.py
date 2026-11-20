@@ -216,7 +216,7 @@ sub_dir = "chains_parrot_EGS_n2.0_v1.3_ACS+WEBB_Kf444w_SUPER_spsbeta"
 target_ids = set(bad_ids)
 found_ids = set()
 
-for n in range(1, 8):
+for n in tqdm(range(1, 8)):
     search_dir = os.path.join(base_dir, f"EGS{n}", sub_dir)
 
     for root, dirs, files in os.walk(search_dir):
