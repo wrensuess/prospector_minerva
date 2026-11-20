@@ -77,6 +77,13 @@ good = np.where(spec != 0)[0]
 print(np.array_equal(perc[good], spec[good]))
 print(perc[bad])
 
+i = bad[0]
+
+with h5py.File(
+    os.path.join(args.dir_indiv, all_files[i]), "r"
+) as f:
+    print(list(f.keys()))
+
 print(np.where(dspec['objid'][:] == 0))
 
 bad = np.where(dspec['objid'][:] == 0)[0]
