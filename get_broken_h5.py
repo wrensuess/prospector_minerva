@@ -57,7 +57,7 @@ print(not_in_all)
 
 pdb.set_trace()
 
-
+'''
 ### fitting uncompleted
 cat = Table.read(cat_dir+"MINERVA-"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.fits")
 use_photo = cat['use_phot']
@@ -70,7 +70,7 @@ print("[Info] fitting incompleted:",len(not_fitted))
 #np.savetxt(cat_dir+"refitid2_MINERVA-"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt",not_fitted)
 pdb.set_trace()
 
-'''
+
 ##########################################################
 ################### for fitting file #####################
 ##########################################################
@@ -190,6 +190,8 @@ print(perc[bad])
 dest_dir = "{}/npz_broken/".format(search_dir)
 
 bad_ids = []
+
+all_files = sorted([f for f in os.listdir(search_dir+"/npz") if f.endswith(f'_spec_{args.prior}.h5')])
 
 for i in bad:
     objid = all_files[i].split("_")[1]
