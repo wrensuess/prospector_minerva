@@ -77,13 +77,6 @@ good = np.where(spec != 0)[0]
 print(np.array_equal(perc[good], spec[good]))
 print(perc[bad])
 
-i = bad[0]
-
-with h5py.File(
-    os.path.join(args.dir_indiv, all_files[i]), "r"
-) as f:
-    print(list(f.keys()))
-
 print(np.where(dspec['objid'][:] == 0))
 
 bad = np.where(dspec['objid'][:] == 0)[0]
@@ -91,6 +84,13 @@ bad = np.where(dspec['objid'][:] == 0)[0]
 all_files = sorted([f for f in os.listdir(args.dir_indiv) if f.endswith(f'_spec_{args.prior}.h5')])
 for i in bad:
     print("bad file", i, all_files[i])
+
+i = bad[0]
+
+with h5py.File(
+    os.path.join(args.dir_indiv, all_files[i]), "r"
+) as f:
+    print(list(f.keys()))
 
 print("re-run post-process for the following ids")
 for i in bad:
