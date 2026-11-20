@@ -1,4 +1,4 @@
-import h5py, glob, pdb
+import h5py, glob, pdb, os
 from tqdm import tqdm
 import numpy as np
 from astropy.table import Table
