@@ -55,27 +55,6 @@ print("only spec (against sfh)", sorted(set(obj_spec) - set(obj_sfh))[:20])
 print("only sfh (against spec)", sorted(set(obj_sfh) - set(obj_spec))[:20])
 print("only sfh (against perc)", sorted(set(obj_sfh) - set(obj_perc))[:20])
 
-perc = dperc["objid"][:]
-spec = dspec["objid"][:]
-sfh  = dsfh["objid"][:]
-
-for name, a, b in [
-    ("perc vs spec", perc, spec),
-    ("perc vs sfh", perc, sfh),
-    ("spec vs sfh", spec, sfh),
-]:
-    print(f"\n{name}")
-    print("Same order:", np.array_equal(a, b))
-    print("Only first:", np.setdiff1d(a, b))
-    print("Only second:", np.setdiff1d(b, a))
-    print("Duplicates:", len(a) - len(np.unique(a)),
-          len(b) - len(np.unique(b)))
-
-bad = np.where(spec == 0)[0]
-good = np.where(spec != 0)[0]
-
-print(np.array_equal(perc[good], spec[good]))
-print(perc[bad])
 
 print(np.where(dspec['objid'][:] == 0))
 
@@ -94,26 +73,6 @@ for i in bad:
     except OSError as e:
         print(f"{all_files[i]}: FAILED ({e})")
 
-dest_dir = "{}/npz_broken/".format(args.dir_collected)
-
-bad_ids = []
-
-for i in bad:
-    objid = all_files[i].split("_")[1]
-    bad_ids.append(objid)
-
-    for suffix in ["spec", "perc", "unw"]:
-        pattern = os.path.join(
-            args.dir_indiv, f"id_{objid}_{suffix}_{args.prior}.h5"
-        )
-
-        for src in glob.glob(pattern):
-            dst = os.path.join(dest_dir, os.path.basename(src))
-            #shutil.move(src, dst)
-            print(f"Moved: {src} -> {dst}")
-
-print("Moved IDs:")
-print(bad_ids)
 
 print("re-run post-process for the following ids")
 for i in bad:

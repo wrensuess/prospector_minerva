@@ -160,6 +160,55 @@ pdb.set_trace()
 #################################################################
 ################### for post-processed file #####################
 #################################################################
+dperc = h5py.File('{}/quant_{}.h5'.format(args.dir_collected, args.prior), 'r')
+dspec = h5py.File('{}/spec_{}.h5'.format(args.dir_collected, args.prior), 'r')
+dsfh = h5py.File('{}/sfh_{}.h5'.format(args.dir_collected, args.prior), 'r')
+
+perc = dperc["objid"][:]
+spec = dspec["objid"][:]
+sfh  = dsfh["objid"][:]
+
+for name, a, b in [
+    ("perc vs spec", perc, spec),
+    ("perc vs sfh", perc, sfh),
+    ("spec vs sfh", spec, sfh),
+]:
+    print(f"\n{name}")
+    print("Same order:", np.array_equal(a, b))
+    print("Only first:", np.setdiff1d(a, b))
+    print("Only second:", np.setdiff1d(b, a))
+    print("Duplicates:", len(a) - len(np.unique(a)),
+          len(b) - len(np.unique(b)))
+
+bad = np.where(spec == 0)[0]
+good = np.where(spec != 0)[0]
+
+print(np.array_equal(perc[good], spec[good]))
+print(perc[bad])
+
+dest_dir = "{}/npz_broken/".format(args.dir_collected)
+
+bad_ids = []
+
+for i in bad:
+    objid = all_files[i].split("_")[1]
+    bad_ids.append(objid)
+
+    for suffix in ["spec", "perc", "unw"]:
+        pattern = os.path.join(
+            args.dir_indiv, f"id_{objid}_{suffix}_{args.prior}.h5"
+        )
+
+        for src in glob.glob(pattern):
+            dst = os.path.join(dest_dir, os.path.basename(src))
+            #shutil.move(src, dst)
+            print(f"Moved: {src} -> {dst}")
+
+print("Moved IDs:")
+print(bad_ids)
+
+
+### full check
 failed_ids1 = []
 failed_ids2 = []
 failed_ids3 = []

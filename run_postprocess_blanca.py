@@ -45,6 +45,7 @@ ids = np.array([int(i.split('_')[1]) for i in os.listdir(indir)])
 # code is implemented to *DELETE* these ids' postprocess files once, because default postprocess code skip the existing ids
 #ids = np.loadtxt(outdir+"ids_broken_spec.txt")
 
+
 print(len(ids))
 print(ids)
 
