@@ -189,22 +189,23 @@ print(perc[bad])
 
 dest_dir = "{}/npz_broken/".format(search_dir)
 
-bad_ids = []
+bad_ids = perc[bad].astype(int).tolist()
 
-all_files = sorted([f for f in os.listdir(search_dir+"/npz") if f.endswith(f'_spec_phisfh.h5')])
+print("Bad IDs:")
+print(bad_ids)
 
-for i in bad:
-    objid = all_files[i].split("_")[1]
-    bad_ids.append(objid)
+dest_dir = f"{search_dir}/npz_broken/"
+os.makedirs(dest_dir, exist_ok=True)
 
+for objid in bad_ids:
     for suffix in ["spec", "perc", "unw"]:
-        pattern = os.path.join(
-            search_dir+"/npz", f"id_{objid}_{suffix}_phisfh.h5"
+        src = os.path.join(
+            search_dir, "npz", f"id_{objid}_{suffix}_phisfh.h5"
         )
 
-        for src in glob.glob(pattern):
+        if os.path.exists(src):
             dst = os.path.join(dest_dir, os.path.basename(src))
-            #shutil.move(src, dst)
+            # shutil.move(src, dst)
             print(f"Moved: {src} -> {dst}")
 
 print("Moved IDs:")
