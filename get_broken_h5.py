@@ -69,7 +69,7 @@ print("[Info] fitting incompleted:",len(not_fitted))
 #np.savetxt(cat_dir+"refitid2_MINERVA-"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt",not_fitted)
 pdb.set_trace()
 
-
+'''
 ##########################################################
 ################### for fitting file #####################
 ##########################################################
@@ -120,7 +120,7 @@ print("[Info] Failed IDs:")
 print(failed_ids)
 print("[Info] TOTAL-processed =",len(fittedid_all)-len(all_unique))
 
-np.save("./../phot_catalog/brokenid3_MINERVA-"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt",np.array(failed_ids))
+#np.save("./../phot_catalog/brokenid3_MINERVA-"+ver+"_ACS+WEBB_Kf444w_SUPER_CATALOG.txt",np.array(failed_ids))
 
 pdb.set_trace()
 
@@ -154,6 +154,7 @@ print(f"Found: {len(found)} / {len(not_posted)}")
 print(f"Not found: {len(not_found)}")
 
 pdb.set_trace()
+'''
 
 #################################################################
 ################### for post-processed file #####################
