@@ -235,7 +235,7 @@ for objid in tqdm(bad_ids):
                 found = True
                 break
 
-            # shutil.move(src, dst)
+            shutil.move(src, dst)
             print(f"Moved: EGS{n} -> EGS8 | {objid}")
             found = True
             break
