@@ -199,7 +199,7 @@ for i in bad:
 
     for suffix in ["spec", "perc", "unw"]:
         pattern = os.path.join(
-            search_dir+"/npz", f"id_{objid}_{suffix}_{args.prior}.h5"
+            search_dir+"/npz", f"id_{objid}_{suffix}_phisfh.h5"
         )
 
         for src in glob.glob(pattern):
