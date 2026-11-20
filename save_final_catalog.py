@@ -96,6 +96,8 @@ for i in bad:
 
 dest_dir = "{}/npz_broken/".format(args.dir_collected)
 
+bad_ids = []
+
 for i in bad:
     objid = all_files[i].split("_")[1]
 
@@ -106,8 +108,11 @@ for i in bad:
 
         for src in glob.glob(pattern):
             dst = os.path.join(dest_dir, os.path.basename(src))
-            shutil.move(src, dst)
+            #shutil.move(src, dst)
             print(f"Moved: {src} -> {dst}")
+
+print("Moved IDs:")
+print(bad_ids)
 
 print("re-run post-process for the following ids")
 for i in bad:
