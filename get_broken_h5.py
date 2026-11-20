@@ -209,6 +209,28 @@ for i in bad:
 
 print("Moved IDs:")
 print(bad_ids)
+
+base_dir = "/pl/active/suess-minerva/chains_parrot_EGS_n2.0_v1.3_ACS+WEBB_Kf444w_SUPER_spsbeta"
+sub_dir = "chains_parrot_EGS_n2.0_v1.3_ACS+WEBB_Kf444w_SUPER_spsbeta"
+
+for objid in bad_ids:
+    found = []
+
+    for n in range(1, 8):
+        search_dir = os.path.join(base_dir, f"EGS{n}", sub_dir)
+
+        matches = glob.glob(
+            os.path.join(search_dir, "**", f"id_{objid}_mcmc_phisfh.h5"),
+            recursive=True
+        )
+        found.extend(matches)
+
+    if found:
+        for path in found:
+            print(f"{objid}: {path}")
+    else:
+        print(f"{objid}: NOT FOUND")
+
 pdb.set_trace()
 
 ### full check
