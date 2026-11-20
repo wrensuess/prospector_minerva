@@ -51,6 +51,7 @@ print("[Info] all fitting ids in TOTAL:",len(fittedid_all))
 print("[Info] post-process runned:",len(postid1))
 print("[Info] post-process completed:",len(all_unique))
 print("[Info] post-process interrupted?:",len(not_in_all))
+print("[Info] post-process 3outputs?:",len(postid1),len(postid2),len(postid3))
 print("[Info] Interrupted IDs:")
 print(not_in_all)
 
