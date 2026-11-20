@@ -187,7 +187,7 @@ good = np.where(spec != 0)[0]
 print(np.array_equal(perc[good], spec[good]))
 print(perc[bad])
 
-dest_dir = "{}/npz_broken/".format(args.dir_collected)
+dest_dir = "{}/npz_broken/".format(search_dir)
 
 bad_ids = []
 
