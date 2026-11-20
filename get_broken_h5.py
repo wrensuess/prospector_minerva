@@ -210,6 +210,7 @@ for objid in bad_ids:
 
 print("Moved IDs:")
 print(bad_ids)
+pdb.set_trace()
 
 base_dir = "/pl/active/suess-minerva/chains_parrot_EGS_n2.0_v1.3_ACS+WEBB_Kf444w_SUPER_spsbeta"
 sub_dir = "chains_parrot_EGS_n2.0_v1.3_ACS+WEBB_Kf444w_SUPER_spsbeta"
@@ -235,7 +236,7 @@ for objid in tqdm(bad_ids):
                 found = True
                 break
 
-            shutil.move(src, dst)
+            #shutil.move(src, dst)
             print(f"Moved: EGS{n} -> EGS8 | {objid}")
             found = True
             break
@@ -244,7 +245,6 @@ for objid in tqdm(bad_ids):
         not_found.append(objid)
 
 print("Not found:", not_found)
-
 pdb.set_trace()
 
 ### full check
