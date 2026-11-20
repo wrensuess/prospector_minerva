@@ -100,6 +100,7 @@ bad_ids = []
 
 for i in bad:
     objid = all_files[i].split("_")[1]
+    bad_ids.append(objid)
 
     for suffix in ["spec", "perc", "unw"]:
         pattern = os.path.join(
