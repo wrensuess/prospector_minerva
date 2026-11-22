@@ -1287,7 +1287,8 @@ section stays the record of what was measured.
       `unassigned_in_f444w.csv`. Private: `nss_private_handoff/benchmark/specz_v45/`.
     - Benchmark sample (Z1), rebuilt on that truth 2026-11-19/22: 9,642 galaxies, all
       `use_phot = 1`; clean (no possible blend, no conflicting spectra, blend check possible;
-      Wren 2026-11-22) 9,436; eazy on clean 7.0% outliers, NMAD 0.014 (6.3% / 0.013 on those
+      Wren 2026-11-22) 9,436; the FITS subsets keep the catalogue's values, z_spec included, and
+      the truth is only in `benchmark_sample.csv`; eazy on clean 7.0% outliers, NMAD 0.014 (6.3% / 0.013 on those
       clean in the old sample too). `blanca/make_benchmark_sample.py`, `photoz_metrics.py`
       (`test_photoz_metrics.py` PASS). Fits not yet run (~4.0k core-hours for 3 band sets).
       Private: `nss_private_handoff/benchmark/v45/`.

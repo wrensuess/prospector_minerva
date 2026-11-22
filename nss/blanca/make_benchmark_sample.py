@@ -53,10 +53,11 @@ COSMOS; row-matched, ids and ra/dec checked identical), in_specz1k, specz1k_grou
 spec_suspect_specz1k.
 
 Writes (PRIVATE; MINERVA data never goes in this repo):
-  <OUT>/benchmark_sample.csv
+  <OUT>/benchmark_sample.csv                      the validation file: z_spec here is the
+        benchmark truth (DJA v4.5, Z1b), joined to fit results by (field, id)
   <OUT>/minerva_{uds,cosmos,egs}_benchmark.fits   catalogue rows (sorted by id), all columns,
-        identical to the catalogue EXCEPT z_spec, which is the benchmark truth (so fit summaries
-        and make_catalog_nss.py carry it); the catalogue's value is kept in z_spec_catalog
+        byte-for-byte the catalogue's values, z_spec included (Wren 2026-11-22: the MINERVA
+        catalogues and copies of them are never changed; the truth lives only in the csv)
   <OUT>/benchmark_tasks.txt                       CATALOG ID DUST SEED (blanca/
         tasklist_layout.sbatch), DUST = mass, SEED = 0
 
@@ -236,31 +237,23 @@ def field_block(field, P, sz, s1k):
     return out, rows, hdul
 
 
-def write_subset(hdul, rows, z_spec, path, specz_file):
-    """Catalogue rows, all columns; z_spec replaced by the benchmark truth, the catalogue's
-    value moved to z_spec_catalog. Checked column by column after writing."""
+def write_subset(hdul, rows, path):
+    """Catalogue rows, all columns, values unchanged (z_spec included; the benchmark truth is
+    only in benchmark_sample.csv). Checked column by column after writing."""
     hdu = hdul[1]
     data = hdu.data[rows]
-    zcat = np.array(data["z_spec"], copy=True)
-    cols = [fits.Column(name=c.name, format=c.format, unit=c.unit, dim=c.dim, null=c.null,
-                        disp=c.disp, array=np.array(data[c.name], copy=True))
-            for c in hdu.columns]
-    cols.append(fits.Column(name="z_spec_catalog", format="D", array=zcat.astype(float)))
-    sub = fits.BinTableHDU.from_columns(fits.ColDefs(cols), header=hdu.header)
-    sub.data["z_spec"] = z_spec
+    sub = fits.BinTableHDU(data=data, header=hdu.header)
     sub.header["HISTORY"] = (f"Z1 benchmark subset ({len(rows)} rows) of "
-                             f"{os.path.basename(hdul.filename())} (make_benchmark_sample.py)")
-    sub.header["HISTORY"] = (f"z_spec = DJA v4.5 grade-3 truth from {os.path.basename(specz_file)}"
-                             "; catalogue value in z_spec_catalog")
+                             f"{os.path.basename(hdul.filename())} (make_benchmark_sample.py); "
+                             "values unchanged")
     fits.HDUList([fits.PrimaryHDU(header=hdul[0].header), sub]).writeto(path, overwrite=True)
     a = fits.open(path)[1].data
+    if a.columns.names != hdu.columns.names:
+        raise SystemExit(f"{path}: columns differ from the catalogue")
     for c in hdu.columns.names:
-        x = np.asarray(a[c])
-        y = z_spec if c == "z_spec" else np.asarray(data[c])
+        x, y = np.asarray(a[c]), np.asarray(data[c])
         if not (np.array_equal(x, y) or (x.dtype.kind == "f" and np.array_equal(x, y, equal_nan=True))):
-            raise SystemExit(f"{path}: column {c} differs from what was meant to be written")
-    if not np.array_equal(np.asarray(a["z_spec_catalog"]), zcat.astype(float), equal_nan=True):
-        raise SystemExit(f"{path}: z_spec_catalog differs from the catalogue z_spec")
+            raise SystemExit(f"{path}: column {c} differs from the catalogue")
 
 
 def main():
@@ -278,7 +271,7 @@ def main():
     for field, P in CATS.items():
         df, rows, hdul = field_block(field, P, sz, s1k)
         fn = f"minerva_{field.lower()}_benchmark.fits"
-        write_subset(hdul, rows, df.z_spec.values, os.path.join(a.out, fn), a.specz)
+        write_subset(hdul, rows, os.path.join(a.out, fn))
         df["catalog_file"] = fn
         tasks += [f"{fn} {i} mass 0" for i in df.id]
         allrows.append(df)
