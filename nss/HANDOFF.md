@@ -95,6 +95,9 @@ For MINERVA galaxies, copy `minerva_uds_test9.fits` from the private folder into
 | `sim_ideal_ns.py` | The floor: seed scatter of a *perfect* nested sampler with the NSS bookkeeping (26-d Gaussian toy, exact constrained-prior draws). Log: `logs/sim_ideal_ns.log`. |
 | `compare_runs.py`, `combine_windows.py`, `audit_prior_draws.py` | Older analysis helpers (two-run comparison; z-window evidence combination; brute-force best logL per z bin). |
 | `make_minerva_subset.py`, `make_csv.py`, `make_mocks.py`, `mass_ppf_candidates.py` | Helpers / superseded experiments. |
+| `dja_specz_catalog.py` | Spec-z truth (PRODUCTION_PLAN Z1b): DJA v4.5 grade-3 redshifts attached to MINERVA sources by F444W light in the segmentation map at the spectrum position; every rule and its date in the docstring. Inputs (DJA table, veto, overrides, verdicts) and outputs are private paths given as arguments. ~8 min. |
+| `photoz_metrics.py` | The one frozen photo-z metrics script (Z1): outlier fraction, NMAD, bias, by z (7–9, 9–11, > 11 separate) and F444W magnitude, raw and weighted. Tests: `test_photoz_metrics.py`. |
+| `blanca/make_benchmark_sample.py` | Builds the Z1 benchmark (catalogue subsets, task list, flags incl. `clean`, tune/confirm halves) from `dja_specz_catalog.py`'s output; `use_phot = 1` only. Writes private files. |
 | `blanca/` | Everything for Blanca: `README.md` (run order), `profile_nss.sbatch`, `fullfit_layout.sbatch` (20 seeds of one galaxy in the production layout), `check_binding.*`, `posterior_draws.*`, `high_z_dead_points.py`, `make_bundle.sh`, `requirements_nss.txt`. |
 | `results/`, `logs/` | Reference runs for UNCOVER 58858 (used by the tests), Blanca profiles/runs for 58858, all test/profile logs. |
 

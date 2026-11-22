@@ -1,6 +1,6 @@
 # MINERVA SED fitting: project status report
 
-**As of 2026-11-19.** This is the whole-project picture: both fitting paths, what they cost,
+**As of 2026-11-22.** This is the whole-project picture: both fitting paths, what they cost,
 how robust they are, and what has been measured and decided. For setup, the code map and
 pitfalls, read [`HANDOFF.md`](HANDOFF.md). **What is left to do before and during production,
 in what order, with Wren's decisions of 2026-11-16, is in
@@ -1255,8 +1255,8 @@ section stays the record of what was measured.
     node (item 13): the full-node slowdown again.
 19. **25 inner steps** would save another 17%, with a somewhat worse tail (§4). Revisit after
     the broader validation.
-20. **Robustness and spec-z work of 2026-11-17/19 (R1, O0, O4 committed 2026-11-19; Z1 tools
-    and the spec-z work uncommitted/private; Blanca restart test PASS; details in
+20. **Robustness and spec-z work of 2026-11-17/22 (R1, O0, O4 committed 2026-11-19; Z1 tools,
+    the benchmark builder and the spec-z script committed with this update; data private; Blanca restart test PASS; details in
     PRODUCTION_PLAN tasks R1, O4, O0, Z1, Z1b).** Pre-commit re-run of
     every unit test on the working tree, 2026-11-19: all PASS (test_prior_start's toy "FAIL"
     lines are the standard start's known mode loss, identical to the committed log);
@@ -1276,11 +1276,21 @@ section stays the record of what was measured.
       flux within 0.10" of the spectrum (a centroid within 0.10" wins; no photo-zs in any
       decision); one source per spec-z, shreds included (the piece with most slit light,
       meeting 2026-11-18); owner more than 2" away → unassigned; possible blend = another
-      segment with ≥ 20% of the aperture light: 10,396 MINERVA sources (73 possible blends); the
-      catalogue's current z_spec has 260 extra copies on neighbours, 10 on the wrong source,
-      14 different z; 1,282 new. Reproduces all of Wren's current verdicts (3 via by-eye
-      overrides; COSMOS 2211016's z = 0.903 confirmed 2026-11-19).
-      Private: `nss_private_handoff/benchmark/specz_v45/`.
+      segment with ≥ 20% of the aperture light; owner with `use_phot = 0` → unassigned
+      (Wren 2026-11-19): 9,642 MINERVA sources, all `use_phot = 1` (71 possible blends; 335 at
+      z ≥ 7, 42 at z ≥ 9); the catalogue's current z_spec has 195 extra copies on neighbours,
+      8 on the wrong source, 14 different z; 1,263 new. Reproduces all of Wren's current
+      verdicts (3 via by-eye overrides; COSMOS 2211016's z = 0.903 confirmed 2026-11-19; EGS
+      3371994 superseded, `use_phot = 0`). Script in the repo as `dja_specz_catalog.py`
+      (reproduces the private outputs byte for byte). List of spectra in the F444W area with
+      no owner (1,276 spectra, 786 targets, mostly EGS `use_phot = 0`):
+      `unassigned_in_f444w.csv`. Private: `nss_private_handoff/benchmark/specz_v45/`.
+    - Benchmark sample (Z1), rebuilt on that truth 2026-11-19/22: 9,642 galaxies, all
+      `use_phot = 1`; clean (no possible blend, no conflicting spectra, blend check possible;
+      Wren 2026-11-22) 9,436; eazy on clean 7.0% outliers, NMAD 0.014 (6.3% / 0.013 on those
+      clean in the old sample too). `blanca/make_benchmark_sample.py`, `photoz_metrics.py`
+      (`test_photoz_metrics.py` PASS). Fits not yet run (~4.0k core-hours for 3 band sets).
+      Private: `nss_private_handoff/benchmark/v45/`.
     - Blanca restart test with chaos (job 29666545, 2026-11-17): **PASS**. Restarts 0–3, circuit
       breaker, preemption, damaged outputs, SIGKILLed fit, mpirun and spectra kills, USR1
       requeue; the BAD_INPUT task (R1) recorded once and not retried; exit 0. The first check
