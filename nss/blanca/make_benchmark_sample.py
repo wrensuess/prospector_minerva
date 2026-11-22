@@ -46,7 +46,7 @@ Old (DJA v3, nearest-centroid) criteria and what became of them
 
 Other columns: F444W magnitude (28.9 - 2.5 log10 f, 10 nJy units), total S/N (quadrature sum of
 f/e over valid BB+MB bands), n_bb / n_mb / n_miri valid bands (D3 lists below; valid = the
-reader's mask: e > 0, f finite, not f + 5 e < 0; MIRI only COUNTED, for the third band set:
+reader's mask: e > 0, f finite, not f + 5 e < 0; MIRI counted with the reader's MIRI rule:
 flag_mophongo = 0, e = max(e_mophongo, e_ap)), n_bands_mb (catalogue's own), eazy z_phot / z160
 / z840 (row-matched zout; the baseline), production dynesty z_16/50/84 (spsv1.0, UDS and
 COSMOS; row-matched, ids and ra/dec checked identical), in_specz1k, specz1k_group,
@@ -60,6 +60,8 @@ Writes (PRIVATE; MINERVA data never goes in this repo):
         catalogues and copies of them are never changed; the truth lives only in the csv)
   <OUT>/benchmark_tasks.txt                       CATALOG ID DUST SEED (blanca/
         tasklist_layout.sbatch), DUST = mass, SEED = 0
+  <OUT>/benchmark_tasks_miri.txt                  the same lines for galaxies with n_miri > 0
+        (the MIRI run, EXTRA="--no-full-npz --include-miri")
 
   ~/envs/nss/bin/python blanca/make_benchmark_sample.py [--specz CSV] [--out DIR]
   (needs DarkPhoenix; ~1 min)
@@ -187,11 +189,13 @@ def field_block(field, P, sz, s1k):
         out[key] = cnt
     out["snr_tot"] = np.sqrt(snr2)
     # MIRI: counted only (for the BB+MB+MIRI band set); never read into a fit here
-    miri = sorted({c[2:-9] for c in names if c.startswith("f_") and c.endswith("_mophongo")})
+    # mophongo SUPER catalogues (2026-11-20): f_/e_<band> = mophongo, _ap = aperture; the same
+    # rule as photometry.py with include_miri (flag_mophongo == 0, e = max(e, e_ap))
+    miri = sorted(c[len("flag_mophongo_"):] for c in names if c.startswith("flag_mophongo_"))
     cnt = np.zeros(len(rows), int)
     for b in miri:
-        fm = np.asarray(d[f"f_{b}_mophongo"], float)[rows]
-        em = np.asarray(d[f"e_{b}_mophongo"], float)[rows]
+        fm = np.asarray(d[f"f_{b}"], float)[rows]
+        em = np.asarray(d[f"e_{b}"], float)[rows]
         ea = np.asarray(d[f"e_{b}_ap"], float)[rows] if f"e_{b}_ap" in names else np.full(len(rows), np.nan)
         e = np.fmax(em, ea)
         cnt += valid_flux(fm, e) & (np.asarray(d[f"flag_mophongo_{b}"])[rows] == 0)
@@ -282,7 +286,13 @@ def main():
     out.to_csv(os.path.join(a.out, "benchmark_sample.csv"), index=False, float_format="%.10g")
     with open(os.path.join(a.out, "benchmark_tasks.txt"), "w") as fh:
         fh.write("\n".join(tasks) + "\n")
-    print(f"total {len(out)} rows, {len(tasks)} tasks", file=sys.stderr)
+    # the MIRI run (same fits with --include-miri): only galaxies with >= 1 usable MIRI band; for
+    # the others the no-MIRI fit is the answer (PRODUCTION_PLAN S7)
+    tm = [t for t, n in zip(tasks, out.n_miri) if n > 0]
+    with open(os.path.join(a.out, "benchmark_tasks_miri.txt"), "w") as fh:
+        fh.write("\n".join(tm) + "\n")
+    print(f"total {len(out)} rows, {len(tasks)} tasks; {len(tm)} with MIRI "
+          "(benchmark_tasks_miri.txt)", file=sys.stderr)
 
 
 if __name__ == "__main__":

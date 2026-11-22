@@ -1290,7 +1290,10 @@ section stays the record of what was measured.
       Wren 2026-11-22) 9,436; the FITS subsets keep the catalogue's values, z_spec included, and
       the truth is only in `benchmark_sample.csv`; eazy on clean 7.0% outliers, NMAD 0.014 (6.3% / 0.013 on those
       clean in the old sample too). `blanca/make_benchmark_sample.py`, `photoz_metrics.py`
-      (`test_photoz_metrics.py` PASS). Fits not yet run (~4.0k core-hours for 3 band sets).
+      (`test_photoz_metrics.py` PASS). Fits not yet run: without MIRI (9,642, ~1.35k core-hours)
+      and with MIRI (6,871 with usable MIRI, ~0.95k core-hours). MIRI reader rule (D3: mophongo
+      columns, `flag_mophongo` = 0, e = max(e, e_ap)) added 2026-11-22; postprocessing reruns keep
+      the fit's band set.
       Private: `nss_private_handoff/benchmark/v45/`.
     - Blanca restart test with chaos (job 29666545, 2026-11-17): **PASS**. Restarts 0–3, circuit
       breaker, preemption, damaged outputs, SIGKILLed fit, mpirun and spectra kills, USR1

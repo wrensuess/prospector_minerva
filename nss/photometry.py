@@ -12,6 +12,13 @@ FITS, both surveys (same layout, same units):
     --include-miri). Excluded MIRI bands are printed and listed in meta["excluded_miri"].
     This matters for the wMIRI catalogues (e.g. UDS n3.0_m3.1_v1.2.1), which would
     otherwise add MIRI to the fit silently;
+  - MIRI when asked (PRODUCTION_PLAN D3, Wren 2026-11-22): only from the mophongo SUPER
+    catalogues (built 2026-11-20), where f_/e_<band> are the mophongo photometry, f_/e_<band>_ap
+    the aperture photometry and flag_mophongo_<band> 0 = fitted. A MIRI band counts only where
+    flag_mophongo_<band> == 0, and its error is max(e_<band>, e_<band>_ap) (the mophongo errors
+    are underestimated; README_SUPER_CATALOG_mophongo.txt). A catalogue without
+    flag_mophongo_<band> for a MIRI band is refused with include_miri (older wMIRI catalogues
+    have aperture photometry in f_<band>);
   - magnification: the 'mu' column if there is one (UNCOVER), else mu = 1 (MINERVA; UDS is
     not lensed). mu only scales the model fluxes;
   - mask (prospector_minerva load_obs, used there for both surveys): a band counts only if
@@ -80,10 +87,14 @@ def read_fits(path: str, ids: Sequence[str], mask_negative: bool = True,
                 continue
             if "e_" + s not in names:
                 raise CatalogRefusal(f"{path}: flux column {n} has no error column e_{s}.")
-            unit = (cols[n].unit or "").strip()
-            if unit != DR3_FITS_UNIT:
-                raise CatalogRefusal(f"{path}: column {n} declares unit {unit!r}, not "
-                                     f"{DR3_FITS_UNIT!r}; refusing to guess the conversion.")
+            if s in MIRI_BANDS and "flag_mophongo_" + s not in names:
+                raise CatalogRefusal(f"{path}: MIRI band {s} has no flag_mophongo_{s}; MIRI is "
+                                     "fitted only from the mophongo SUPER catalogues.")
+            for c in [n] + ([f"e_{s}_ap"] if s in MIRI_BANDS and f"e_{s}_ap" in names else []):
+                unit = (cols[c].unit or "").strip()
+                if unit != DR3_FITS_UNIT:
+                    raise CatalogRefusal(f"{path}: column {c} declares unit {unit!r}, not "
+                                         f"{DR3_FITS_UNIT!r}; refusing to guess the conversion.")
             shorts.append(s)
             bands.append(DR3_BAND_MAP[s])
         if verbose and dropped:
@@ -106,7 +117,14 @@ def read_fits(path: str, ids: Sequence[str], mask_negative: bool = True,
             row = data[r]
             flux = np.array([row["f_" + s] for s in shorts], dtype=float) * fac
             err = np.array([row["e_" + s] for s in shorts], dtype=float) * fac
-            use = (err > 0) & np.isfinite(flux)
+            miri_ok = np.ones(len(shorts), bool)
+            for k, s in enumerate(shorts):
+                if s in MIRI_BANDS:          # only with include_miri (D3 rule, docstring)
+                    if f"e_{s}_ap" in names:
+                        err[k] = np.fmax(err[k], float(row[f"e_{s}_ap"]) * fac)
+                    fl = float(row["flag_mophongo_" + s])
+                    miri_ok[k] = np.isfinite(fl) and fl == 0
+            use = (err > 0) & np.isfinite(flux) & miri_ok
             n_neg = 0
             if mask_negative:
                 neg = use & (flux < 0) & (flux + 5 * err < 0)
@@ -125,6 +143,8 @@ def read_fits(path: str, ids: Sequence[str], mask_negative: bool = True,
             meta.update(source=os.path.abspath(path), row=int(r), flux_unit="10nJy",
                         dropped_bands=dropped, masked_negative=n_neg,
                         excluded_miri=list(excluded_miri), include_miri=include_miri,
+                        miri_rule=("mophongo, flag_mophongo == 0, e = max(e, e_ap)"
+                                   if include_miri else None),
                         mu_source="catalog" if has_mu else "assumed 1 (no mu column)")
             out.append(Photometry(i, list(bands), flux, err, mu, zc, meta))
     return out

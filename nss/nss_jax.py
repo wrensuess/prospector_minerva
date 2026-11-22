@@ -443,7 +443,8 @@ def main():
     summary["provenance"] = provenance(catalog=args.catalog, emulator=summary["emulator"])
     summary["photometry"] = {k: phot.meta.get(k) for k in ("dropped_bands", "masked_negative",
                                                          "mu_source", "z_spec",
-                                                         "excluded_miri", "include_miri")}
+                                                         "excluded_miri", "include_miri",
+                                                         "miri_rule")}
     summary["bands_used"] = [b for b, ok in zip(phot.bands, phot.valid) if ok]
     os.makedirs(args.out, exist_ok=True)
     stem = os.path.join(args.out, f"{phot.id}_{args.tag}")

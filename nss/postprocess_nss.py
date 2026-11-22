@@ -405,7 +405,9 @@ def main():
                    "(default: next to the npz)")
     p.add_argument("--out", default=None, help="output file (default <npz stem>_post.h5)")
     p.add_argument("--fix-z", type=float, default=None)
-    p.add_argument("--include-miri", action="store_true")
+    p.add_argument("--include-miri", action="store_true",
+                   help="fit's photometry had MIRI; default: as recorded in the fit's json "
+                        "(photometry.include_miri), so reruns use the fit's own band set")
     args = p.parse_args()
     from photometry import read_photometry
     from nss_efsps import build
@@ -417,7 +419,12 @@ def main():
                          "postprocessed (the posterior of the others is incomplete)")
     if args.fix_z is None:
         args.fix_z = (summary.get("settings") or {}).get("fix_z")
-    phot = read_photometry(args.catalog, [args.id], include_miri=args.include_miri)[0]
+    include_miri = args.include_miri or bool((summary.get("photometry") or {}).get("include_miri"))
+    phot = read_photometry(args.catalog, [args.id], include_miri=include_miri)[0]
+    used = summary.get("bands_used")
+    if used is not None and [b for b, ok in zip(phot.bands, phot.valid) if ok] != list(used):
+        raise SystemExit(f"{args.catalog} {args.id}: bands {phot.bands} differ from the fit's "
+                         f"bands_used {used}")
     model = build(phot, args.fix_z, None)
     d = np.load(args.npz, allow_pickle=False)
     if list(d["names"]) != list(model.free):
